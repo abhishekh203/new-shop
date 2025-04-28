@@ -10,16 +10,17 @@ import OTTSubscriptionInfo from "../../components/Ottsubscriptioninfo/OTTSubscri
 import Testimonial from "../../components/testimonial/Testimonial";
 import FooterOtt from "../../components/footerott/FooterOtt";
 import CombinedChat from "../../components/chat/CombinedChat";
-import FeaturedGames from "../../components/FeaturedGames";
+// import FeaturedGames from "../../components/FeaturedGames";
+
 
 const HomePage = () => {
   return (
     <Layout>
       <div className="bg-gradient-to-b from-gray-200 via-blue-200 to-blue-500">
         <HeroSection />
-        <Category />
+        {/* <Category /> */}
         <HomePageProductCard />
-        <FeaturedGames />
+        {/* <FeaturedGames /> */}
         <Track />
       
 
@@ -30,6 +31,7 @@ const HomePage = () => {
          <BrandsStock />
          <SubscriptionPage />
         <Testimonial />
+      
           <FooterOtt />
         <CombinedChat />
       </div>

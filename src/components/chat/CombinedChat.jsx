@@ -1,221 +1,177 @@
 import React, { useState, useEffect } from "react";
-import { FaWhatsapp } from "react-icons/fa";
-import { collection, addDoc, getDocs, deleteDoc } from "firebase/firestore";
-import { fireDB } from "../../firebase/FirebaseConfig";
-import { IconButton } from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
-import ChatIcon from "@mui/icons-material/Chat";
+import { 
+  AiOutlineWechat,
+  AiOutlineWhatsApp,
+  AiOutlineMessage 
+} from "react-icons/ai";
+import { IoMdClose } from "react-icons/io";
+import { FaWhatsapp, FaTelegramPlane } from "react-icons/fa";
+import { motion, AnimatePresence } from "framer-motion";
 
-// Combined WhatsApp and ChatBot component
-const CombinedChat = () => {
-  const phoneNumber = "+9779807677391";
-  const message = "Hello, I want to Purchase a Subscription!";
-  const [input, setInput] = useState("");
-  const [messages, setMessages] = useState([]);
-  const [isOpen, setIsOpen] = useState(false);
+const CombinedChat = ({ darkMode = false }) => {
+  const [showPopup, setShowPopup] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
-  // WhatsApp chat handler
-  const handleWhatsAppClick = () => {
-    const whatsappURL = `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(message)}`;
-    window.open(whatsappURL, "_blank");
+  const chatLinks = {
+    whatsapp: "https://wa.me/9779807677391",
+    telegram: "https://t.me/digitalshopnepal",
+    messenger: "https://m.me/digitalshopnepal"
   };
 
-  // Fetch chat history from Firestore
+  // Check if mobile on component mount
   useEffect(() => {
-    const fetchMessages = async () => {
-      const querySnapshot = await getDocs(collection(fireDB, "chatMessages"));
-      const fetchedMessages = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setMessages(fetchedMessages);
+    const checkIfMobile = () => {
+      setIsMobile(window.innerWidth < 768);
     };
-
-    fetchMessages();
-
-    // Reset chat after 100 seconds
-    const resetChatTimer = setInterval(() => {
-      resetChat();
-    }, 60000); // 1 min
-
-    return () => {
-      clearInterval(resetChatTimer);
-    };
+    
+    checkIfMobile();
+    window.addEventListener('resize', checkIfMobile);
+    return () => window.removeEventListener('resize', checkIfMobile);
   }, []);
 
-  // Reset chat by clearing messages from Firestore and local state
-  const resetChat = async () => {
-    const querySnapshot = await getDocs(collection(fireDB, "chatMessages"));
-    const deletePromises = querySnapshot.docs.map((doc) => deleteDoc(doc.ref));
-    await Promise.all(deletePromises);
-    setMessages([]); // Clear local state
-  };
+  // Blinking effect for large screens only
+  useEffect(() => {
+    if (isMobile) return;
 
-  // Handle form submission (user sends message)
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (input.trim()) {
-      const userMessage = { text: input, sender: "user", timestamp: new Date() };
+    const interval = setInterval(() => {
+      setIsVisible(prev => !prev);
+    }, 3000);
 
-      try {
-        // Add the user message to Firestore
-        await addDoc(collection(fireDB, "chatMessages"), userMessage);
+    return () => clearInterval(interval);
+  }, [isMobile]);
 
-        // Generate a bot response
-        const botResponse = {
-          text: generateBotResponse(input),
-          sender: "bot",
-          timestamp: new Date(),
-        };
+  // Show chat button when user moves mouse (for large screens)
+  useEffect(() => {
+    if (isMobile) return;
 
-        // Add the bot response to Firestore
-        await addDoc(collection(fireDB, "chatMessages"), botResponse);
+    const handleMouseMove = () => {
+      setIsVisible(true);
+      // Hide again after 3 seconds of inactivity
+      const timer = setTimeout(() => {
+        setIsVisible(false);
+      }, 3000);
+      return () => clearTimeout(timer);
+    };
 
-        // Update the state
-        setMessages((prev) => [...prev, userMessage, botResponse]);
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, [isMobile]);
 
-        // Clear input
-        setInput("");
-      } catch (error) {
-        console.error("Error adding message: ", error);
-      }
-    }
-  };
-
-  // Simple bot response generator
-  const generateBotResponse = (userMessage) => {
-    const message = userMessage.toLowerCase();
-
-    if (message.includes("netflix")) {
-      return `Netflix subscription details
-Get private 4K quality on 1 screen for a steal! 🖥
-
-- Monthly: Rs. 399
-- 3 Months: Rs. 1169
-- 6 Months: Rs. 2300
-- Yearly: Rs. 4499
-
-Remember to follow the rules:
-
-- Use only the provided profile
-- Don't change the account email or password
-- Don't add a mobile number
-- Limit login to 1 device
-`;
-    } else if (message.includes("prime")) {
-      return `Amazon Prime subscription details...
-✅ 1 Month *₹199npr
-✅ 1 Year *₹1449npr
-
-Personal Account:
-👉 Email & Password provided
-👉 Supports TV
-👉 Up to 2 devices for yearly subscription
-`;
-    } else if (message.includes("canva")) {
-      return `Canva subscription details...
-🌠 𝐂𝐀𝐍𝐕𝐀 Pro Yearly 🌠
-
-_______________________
-▪ On Your Own Mail
-▪ Only mail needed
-▪ Done Through Invite
-▪ Payment via eSewa, Khalti, IMEpay 
-▪ May Work More than One Year
---------------------------------------------------------
-➡ Price: ₹1999/- ✅
-`;
-    } else if (message.includes("spotify")) {
-      return `Spotify subscription details...
-🎶 Unlock the magic of Spotify Premium with amazing sound quality at a great price! 
-
-Price: ₹1669 on your personal Email`;
-    } else if (message.includes("disney")) {
-      return `Disney+ Hotstar subscription details...
-Enjoy premium 4K resolution content for just ₹2699 with VPN (6 months).
-✅ Single screen access
-✅ Secure OTP-based login
-✅ Full warranty coverage`;
-    } else if (message.includes("youtube")) {
-      return `YouTube Premium details...
-Enjoy ad-free content, background play, and YouTube Music with this offer:
-~ ₹2999/year
-~ ₹1699/6 months
-
-Delivered to your personal email.`;
-    } else if (message.includes("hi") || message.includes("hello")) {
-      return `Hello! How can I assist you?`;
-    } else {
-      return `Please reach out to us on WhatsApp by clicking the icon below.`;
-    }
-  };
+  // Don't render anything on mobile
+  if (isMobile) return null;
 
   return (
     <>
-      {/* WhatsApp Chat Button */}
-      <div className="fixed bottom-5 right-5">
-        <button
-          onClick={handleWhatsAppClick}
-          className="bg-green-500 p-2 rounded-full shadow-lg hover:bg-green-600 transition-colors"
-          aria-label="Chat on WhatsApp"
-        >
-          <FaWhatsapp size={24} className="text-white" />
-        </button>
-      </div>
-
-      {/* Bot Chat Icon */}
-      <div className="fixed bottom-16 right-5 mb-3">
-        {!isOpen && (
-          <IconButton
-            onClick={() => setIsOpen(true)}
-            style={{ backgroundColor: "#007bff", color: "white" }}
-            aria-label="Open chat"
+      {/* Floating Contact Button with Animation */}
+      <AnimatePresence>
+        {isVisible && (
+          <motion.div
+            className="fixed bottom-6 left-6 z-50"
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ 
+              opacity: 1, 
+              scale: 1,
+              y: [0, -15, 0] 
+            }}
+            exit={{ opacity: 0, scale: 0.5 }}
+            transition={{ 
+              y: { repeat: Infinity, duration: 2, ease: "easeInOut" },
+              default: { duration: 0.3 }
+            }}
+            whileHover={{ scale: 1.1 }}
           >
-            <ChatIcon />
-          </IconButton>
-        )}
-      </div>
-
-      {/* Chat window */}
-      {isOpen && (
-        <div className="fixed bottom-24 right-4 w-80 bg-gradient-to-b from-blue-600 to-black p-4 rounded-lg shadow-lg border border-gray-700">
-          <div className="flex justify-between items-center mb-2">
-            <h2 className="text-lg font-bold text-white">Chat with us!</h2>
-            <IconButton onClick={() => setIsOpen(false)} size="small" aria-label="Close chat">
-              <CloseIcon style={{ color: "white" }} />
-            </IconButton>
-          </div>
-          <div className="chat-window overflow-y-auto h-64 bg-gray-800 p-2 border border-gray-600 rounded-lg">
-            {messages.map((message) => (
-              <div key={message.id} className={`message ${message.sender}`}>
-                <p
-                  className={`text-${message.sender === "user" ? "right" : "left"} text-sm text-white`}
-                  style={{ whiteSpace: "pre-line" }}  // Preserve formatting
-                >
-                  {message.sender === "user" ? "You: " : "Bot: "}
-                  {message.text}
-                </p>
-              </div>
-            ))}
-          </div>
-          <form onSubmit={handleSubmit} className="mt-4 flex">
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              className="flex-1 p-2 border border-gray-600 rounded-lg bg-gray-700 text-white"
-              placeholder="Type a message..."
-              aria-label="Chat input"
-            />
             <button
-              type="submit"
-              className="ml-2 bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600 transition duration-200"
+              onClick={() => setShowPopup(!showPopup)}
+              className={`w-16 h-16 ${darkMode ? 'bg-blue-600' : 'bg-orange-500'} text-white rounded-full flex flex-col items-center justify-center shadow-xl transition-all`}
             >
-              Send
+              <AiOutlineWechat size={28} className="mb-1" />
+              <span className="text-[10px] font-medium">Need Help?</span>
             </button>
-          </form>
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Chat Options Popup */}
+      <AnimatePresence>
+        {showPopup && (
+          <motion.div
+            className="fixed bottom-28 left-6 w-72 z-50"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.2 }}
+          >
+            <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} p-4 rounded-xl shadow-2xl border`}>
+              <div className="flex justify-between items-center mb-3">
+                <h3 className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                  Contact Support
+                </h3>
+                <button 
+                  onClick={() => setShowPopup(false)}
+                  className={`p-1 rounded-full ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+                >
+                  <IoMdClose className={darkMode ? 'text-gray-300' : 'text-gray-500'} />
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                <motion.a
+                  whileHover={{ x: 5 }}
+                  href={chatLinks.whatsapp}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`flex items-center gap-3 p-3 rounded-lg ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-50 hover:bg-gray-100'} transition-colors`}
+                >
+                  <div className={`p-2 rounded-full ${darkMode ? 'bg-green-700/30' : 'bg-green-100'}`}>
+                    <FaWhatsapp size={24} className="text-green-500" />
+                  </div>
+                  <div>
+                    <p className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-800'}`}>WhatsApp Support</p>
+                    <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-orange-500'}`}>Instant response for sales & payments</p>
+                  </div>
+                </motion.a>
+
+                <motion.a
+                  whileHover={{ x: 5 }}
+                  href={chatLinks.telegram}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`flex items-center gap-3 p-3 rounded-lg ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-50 hover:bg-gray-100'} transition-colors`}
+                >
+                  <div className={`p-2 rounded-full ${darkMode ? 'bg-blue-700/30' : 'bg-blue-100'}`}>
+                    <FaTelegramPlane size={24} className="text-blue-500" />
+                  </div>
+                  <div>
+                    <p className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-800'}`}>Telegram Support</p>
+                    <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-blue-500'}`}>For technical issues & replacements</p>
+                  </div>
+                </motion.a>
+
+                <motion.a
+                  whileHover={{ x: 5 }}
+                  href={chatLinks.messenger}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`flex items-center gap-3 p-3 rounded-lg ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-50 hover:bg-gray-100'} transition-colors`}
+                >
+                  <div className={`p-2 rounded-full ${darkMode ? 'bg-blue-600/30' : 'bg-blue-100'}`}>
+                    <AiOutlineMessage size={24} className="text-blue-400" />
+                  </div>
+                  <div>
+                    <p className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-800'}`}>Messenger</p>
+                    <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-blue-400'}`}>General inquiries</p>
+                  </div>
+                </motion.a>
+              </div>
+
+              <p className={`text-center text-xs mt-3 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                Powered by <span className={`font-semibold ${darkMode ? 'text-blue-400' : 'text-orange-500'}`}>Digital Shop Nepal</span>
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 };

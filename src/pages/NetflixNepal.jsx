@@ -1,146 +1,251 @@
 import React from "react";
+import { motion } from "framer-motion";
 import { Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'; // Importing icons for lists
-import Layout from "../components/layout/Layout";  // Import Layout component
+import { 
+  CheckCircleOutline as CheckIcon,
+  Devices as DevicesIcon,
+  HighQuality as QualityIcon,
+  Lock as LockIcon,
+  Autorenew as RenewIcon,
+  Security as SecurityIcon,
+  Public as NoVpnIcon,
+  LocalMovies as MoviesIcon,
+  Discount as DiscountIcon,
+  Support as SupportIcon
+} from '@mui/icons-material';
+import { Helmet, HelmetProvider } from 'react-helmet-async';
+import Layout from "../components/layout/Layout";
 import Nepal from "./nepal";
 
 const NetflixNepal = () => {
+    const meta = {
+        title: "Netflix Nepal - Stream Movies & TV Shows Online",
+        description: "Watch Netflix movies & TV shows online or stream right to your smart TV, game console, PC, Mac, mobile, tablet and more in Nepal. Ultra HD, quick delivery, no VPN required.",
+        keywords: "Netflix Nepal, netflix premium nepal, Netflix subscription nepal, buy netflix premium nepal, how to buy netflix in nepal, how to purchase netflix in nepal, netflix purchase nepal, netflix subscription nepal, Watch Netflix Nepal, Stream Netflix Nepal, Buy Netflix account in Nepal, Ultra HD Netflix Nepal, VPN Free Netflix, Purchase Netflix in Nepal, Netflix Nepal subscription, Streaming services in Nepal",
+        canonical: "https://www.digitalshopnepal.com/NetflixNepal"
+    };
+
+    const pricingPlans = [
+        { duration: "1 Month", price: "Rs. 399" },
+        { duration: "3 Months", price: "Rs. 1,169", discount: "Save 2%" },
+        { duration: "6 Months", price: "Rs. 2,300", discount: "Save 4%" },
+        { duration: "1 Year", price: "Rs. 4,499", discount: "Save 6%" }
+    ];
+
+    const features = [
+        { icon: <DevicesIcon className="text-red-500" />, text: "1 Screen means only 1 user but private profile" },
+        { icon: <LockIcon className="text-red-500" />, text: "Pin-Locked Profile: A secure profile protected with a PIN" },
+        { icon: <QualityIcon className="text-red-500" />, text: "Ultra HD Streaming: Experience high-quality streaming" },
+        { icon: <RenewIcon className="text-red-500" />, text: "Easily renew your account without losing settings" },
+        { icon: <SecurityIcon className="text-red-500" />, text: "100% secure accounts, delivered with Email ID and Password" },
+        { icon: <NoVpnIcon className="text-red-500" />, text: "No VPN required for any country" }
+    ];
+
+    const benefits = [
+        { icon: <DevicesIcon />, text: "One Screen Access: Stream content on one device at a time" },
+        { icon: <QualityIcon />, text: "Ultra HD for an immersive viewing experience" },
+        { icon: <LockIcon />, text: "Secure PIN-locked profile" },
+        { icon: <RenewIcon />, text: "Seamless subscription renewals" },
+        { icon: <NoVpnIcon />, text: "Works in Nepal without VPN" },
+        { icon: <SupportIcon />, text: "Dedicated support for account-related issues" },
+        { icon: <DiscountIcon />, text: "Access to promotions and discounts" },
+        { icon: <MoviesIcon />, text: "Unlimited access to Netflix's entire library" }
+    ];
+
+    const rules = [
+        "Use only the provided profile to ensure smooth streaming",
+        "Do not change the account email or password",
+        "Do not add a mobile number to the account settings",
+        "Log out from the current device before logging in on another"
+    ];
+
     return (
-        <Layout>
-            <div className="min-h-screen bg-gradient-to-b from-black via-blue-900 to-black p-8 text-white relative">
-                {/* Adding a background image for a more cinematic look */}
-                
+        <HelmetProvider>
+            <Layout>
+                <Helmet>
+                    <title>{meta.title}</title>
+                    <meta name="description" content={meta.description} />
+                    <meta name="keywords" content={meta.keywords} />
+                    <link rel="canonical" href={meta.canonical} />
+                </Helmet>
 
-                {/* Content Section */}
-                <div className="relative z-10">
-
+                <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.5 }}
+                    className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black text-white"
+                >
                     {/* Hero Section */}
-                    <section className="text-center p-10 fade-in">
-                        <h1 className="text-5xl font-bold text-red-600 mb-6">Netflix Nepal</h1>
-                       <p className="text-xl text-gray-300 text-justify w-full leading-relaxed">
-    Looking for a Netflix subscription in Nepal that fits your personal needs? Our 1 private profile Screen Netflix Nepal subscription allows one user to enjoy Netflix on one device at a time. With this affordable plan, you can stream your favorite movies and TV shows on your smart TV, PC, mobile phone, or tablet without any interruptions. It’s perfect for personal use, and with Ultra HD quality, your viewing experience will be crisp and immersive.
-</p>
-
-                        <ul className="text-gray-400 list-disc list-inside text-left mt-8 max-w-3xl mx-auto">
-                            <li className="mb-1 flex items-center">
-                                <CheckCircleOutlineIcon className="text-green-500 mr-2" />
-                                1 Screen means only 1 user but private profile.
-                            </li>
-                            <li className="mb-1 flex items-center">
-                                <CheckCircleOutlineIcon className="text-green-500 mr-2" />
-                                Pin-Locked Profile: A secure profile protected with a PIN.
-                            </li>
-                            <li className="mb-1 flex items-center">
-                                <CheckCircleOutlineIcon className="text-green-500 mr-2" />
-                                Ultra HD Streaming: Experience high-quality streaming.
-                            </li>
-                            <li className="mb-1 flex items-center">
-                                <CheckCircleOutlineIcon className="text-green-500 mr-2" />
-                                Easily renew your account without losing settings.
-                            </li>
-                            <li className="mb-1 flex items-center">
-                                <CheckCircleOutlineIcon className="text-green-500 mr-2" />
-                                100% secure accounts, delivered with Email ID and Password.
-                            </li>
-                            <li className="mb-1 flex items-center">
-                                <CheckCircleOutlineIcon className="text-green-500 mr-2" />
-                                No VPN required for any country.
-                            </li>
-                        </ul>
-                    </section>
-
-                    {/* Accordion Sections */}
-                    <div className="my-8 max-w-4xl mx-auto">
-                        {/* Description Section */}
-                        <Accordion>
-                            <AccordionSummary
-                                expandIcon={<ExpandMoreIcon />}
-                                className="bg-gray-800 text-white hover:bg-gray-700 transition duration-300"
+                    <div className="relative overflow-hidden">
+                        <div className="absolute inset-0 bg-black/60 z-0"></div>
+                        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+                            <motion.div
+                                initial={{ y: -20, opacity: 0 }}
+                                animate={{ y: 0, opacity: 1 }}
+                                transition={{ duration: 0.5 }}
+                                className="text-center"
                             >
-                                <h2 className="text-lg font-semibold">Description</h2>
-                            </AccordionSummary>
-                            <AccordionDetails className="bg-gray-900 shadow-md border-t border-gray-700 transition-all">
-                                <p className="text-gray-300">
-                                    When you purchase a Netflix Nepal subscription, you get a personalized profile with a secure PIN lock for added privacy. Each profile allows access to your own content, with Netflix streaming on one device at a time, in stunning Ultra HD quality.
+                                <h1 className="text-4xl md:text-5xl font-bold text-red-600 mb-6">
+                                    Netflix Nepal Subscription
+                                </h1>
+                                <p className="text-xl text-gray-300 max-w-3xl mx-auto">
+                                    Premium streaming with Ultra HD quality. No VPN required. Private profile with PIN protection.
                                 </p>
-                                <ul className="text-gray-400 list-disc list-inside mt-3">
-                                    <p className="mt-3 text-white"><strong>Subscription Validity and Pricing:</strong></p>
-                                    <li>Monthly Subscription: Rs. 399</li>
-                                    <li>3 Months Subscription: Rs. 1,169</li>
-                                    <li>6 Months Subscription: Rs. 2,300</li>
-                                    <li>Yearly Subscription: Rs. 4,499</li>
-                                </ul>
-                            </AccordionDetails>
-                        </Accordion>
-
-                        {/* Subscription Benefits Section */}
-                        <Accordion>
-                            <AccordionSummary
-                                expandIcon={<ExpandMoreIcon />}
-                                className="bg-gray-800 text-white hover:bg-gray-700 transition duration-300"
-                            >
-                                <h2 className="text-lg font-semibold">Subscription Benefits</h2>
-                            </AccordionSummary>
-                            <AccordionDetails className="bg-gray-900 shadow-md border-t border-gray-700 transition-all">
-                                <ul className="text-gray-400 list-disc list-inside">
-                                    <li>One Screen Access: Stream content on one device at a time.</li>
-                                    <li>Ultra HD for an immersive viewing experience.</li>
-                                    <li>Secure PIN-locked profile.</li>
-                                    <li>Seamless subscription renewals.</li>
-                                    <li>Works in Nepal without VPN.</li>
-                                    <li>Dedicated support for account-related issues.</li>
-                                    <li>Access to promotions and discounts.</li>
-                                </ul>
-                            </AccordionDetails>
-                        </Accordion>
-
-                        {/* How to Use Section */}
-                        <Accordion>
-                            <AccordionSummary
-                                expandIcon={<ExpandMoreIcon />}
-                                className="bg-gray-800 text-white hover:bg-gray-700 transition duration-300"
-                            >
-                                <h2 className="text-lg font-semibold">How to Use</h2>
-                            </AccordionSummary>
-                            <AccordionDetails className="bg-gray-900 shadow-md border-t border-gray-700 transition-all">
-                                <p className="text-gray-300">
-                                    After subscribing, you'll receive a personal account under our shared subscription. You can start watching instantly. The 1 Screen subscription allows only one active device at a time.
-                                </p>
-                                <ul className="text-gray-400 list-disc list-inside mt-2">
-                                    <li>For mobile, laptop, or tablet access, follow the instructions sent to your email to request a login code.</li>
-                                    <li>For TV, sign in using a provided code or by contacting us for support.</li>
-                                </ul>
-                            </AccordionDetails>
-                        </Accordion>
-
-                        {/* Rules Section */}
-                        <Accordion>
-                            <AccordionSummary
-                                expandIcon={<ExpandMoreIcon />}
-                                className="bg-gray-800 text-white hover:bg-gray-700 transition duration-300"
-                            >
-                                <h2 className="text-lg font-semibold">Rules to Follow</h2>
-                            </AccordionSummary>
-                            <AccordionDetails className="bg-gray-900 shadow-md border-t border-gray-700 transition-all">
-                                <ul className="text-gray-400 list-disc list-inside">
-                                    <li>Use only the provided profile to ensure smooth streaming.</li>
-                                    <li>Do not change the account email or password.</li>
-                                    <li>Do not add a mobile number to the account settings.</li>
-                                    <li>Log out from the current device before logging in on another.</li>
-                                </ul>
-                            </AccordionDetails>
-                        </Accordion>
+                            </motion.div>
+                        </div>
                     </div>
-                    <Nepal/>
 
-                    {/* Footer Section */}
-                    <footer className="text-center mt-16 text-gray-500">
-                        <p>&copy; 2024 Netflix Nepal. All Rights Reserved.</p>
+                    {/* Main Content */}
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                        {/* Features Section */}
+                        <motion.section 
+                            initial={{ opacity: 0 }}
+                            whileInView={{ opacity: 1 }}
+                            transition={{ duration: 0.5 }}
+                            viewport={{ once: true }}
+                            className="mb-16"
+                        >
+                            <h2 className="text-3xl font-bold mb-8 text-center">Why Choose Our Netflix Subscription?</h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {features.map((feature, index) => (
+                                    <motion.div
+                                        key={index}
+                                        whileHover={{ y: -5 }}
+                                        className="bg-gray-800/50 p-6 rounded-lg border border-gray-700"
+                                    >
+                                        <div className="flex items-start space-x-4">
+                                            <div className="flex-shrink-0">
+                                                {feature.icon}
+                                            </div>
+                                            <p className="text-gray-300">{feature.text}</p>
+                                        </div>
+                                    </motion.div>
+                                ))}
+                            </div>
+                        </motion.section>
+
+                        {/* Pricing Section */}
+                        <motion.section
+                            initial={{ opacity: 0 }}
+                            whileInView={{ opacity: 1 }}
+                            transition={{ duration: 0.5, delay: 0.2 }}
+                            viewport={{ once: true }}
+                            className="mb-16"
+                        >
+                            <h2 className="text-3xl font-bold mb-8 text-center">Subscription Plans</h2>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                                {pricingPlans.map((plan, index) => (
+                                    <motion.div
+                                        key={index}
+                                        whileHover={{ scale: 1.03 }}
+                                        className={`bg-gradient-to-br ${index % 2 === 0 ? 'from-gray-800 to-gray-900' : 'from-red-900/80 to-gray-900'} rounded-xl p-6 shadow-lg border border-gray-700`}
+                                    >
+                                        <h3 className="text-xl font-bold mb-2">{plan.duration}</h3>
+                                        <p className="text-2xl font-bold mb-2">{plan.price}</p>
+                                        {plan.discount && (
+                                            <p className="text-green-400 text-sm mb-4">{plan.discount}</p>
+                                        )}
+                                        <button className="w-full bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg transition duration-300">
+                                            Get Now
+                                        </button>
+                                    </motion.div>
+                                ))}
+                            </div>
+                        </motion.section>
+
+                        {/* Accordion Sections */}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            whileInView={{ opacity: 1 }}
+                            transition={{ duration: 0.5, delay: 0.4 }}
+                            viewport={{ once: true }}
+                            className="max-w-4xl mx-auto space-y-4"
+                        >
+                            <Accordion className="bg-gray-800/50 border border-gray-700 rounded-lg overflow-hidden">
+                                <AccordionSummary
+                                    expandIcon={<ExpandMoreIcon className="text-white" />}
+                                    className="hover:bg-gray-700/50 transition"
+                                >
+                                    <h2 className="text-xl font-semibold">Subscription Benefits</h2>
+                                </AccordionSummary>
+                                <AccordionDetails className="bg-gray-900/50">
+                                    <ul className="space-y-3">
+                                        {benefits.map((benefit, index) => (
+                                            <li key={index} className="flex items-start space-x-3">
+                                                <span className="text-red-500 mt-1">{benefit.icon}</span>
+                                                <span className="text-gray-300">{benefit.text}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </AccordionDetails>
+                            </Accordion>
+
+                            <Accordion className="bg-gray-800/50 border border-gray-700 rounded-lg overflow-hidden">
+                                <AccordionSummary
+                                    expandIcon={<ExpandMoreIcon className="text-white" />}
+                                    className="hover:bg-gray-700/50 transition"
+                                >
+                                    <h2 className="text-xl font-semibold">How to Use</h2>
+                                </AccordionSummary>
+                                <AccordionDetails className="bg-gray-900/50">
+                                    <p className="text-gray-300 mb-4">
+                                        After subscribing, you'll receive a personal account under our shared subscription. You can start watching instantly.
+                                    </p>
+                                    <ul className="space-y-2 text-gray-300">
+                                        <li className="flex items-start">
+                                            <CheckIcon className="text-green-500 mr-2 mt-1" />
+                                            <span>For mobile, laptop, or tablet access, follow the instructions sent to your email</span>
+                                        </li>
+                                        <li className="flex items-start">
+                                            <CheckIcon className="text-green-500 mr-2 mt-1" />
+                                            <span>For TV, sign in using a provided code or by contacting us for support</span>
+                                        </li>
+                                    </ul>
+                                </AccordionDetails>
+                            </Accordion>
+
+                            <Accordion className="bg-gray-800/50 border border-gray-700 rounded-lg overflow-hidden">
+                                <AccordionSummary
+                                    expandIcon={<ExpandMoreIcon className="text-white" />}
+                                    className="hover:bg-gray-700/50 transition"
+                                >
+                                    <h2 className="text-xl font-semibold">Rules to Follow</h2>
+                                </AccordionSummary>
+                                <AccordionDetails className="bg-gray-900/50">
+                                    <ul className="space-y-2">
+                                        {rules.map((rule, index) => (
+                                            <li key={index} className="flex items-start">
+                                                <CheckIcon className="text-red-500 mr-2 mt-1" />
+                                                <span className="text-gray-300">{rule}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </AccordionDetails>
+                            </Accordion>
+                        </motion.div>
+
+                        {/* Nepal Component */}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            whileInView={{ opacity: 1 }}
+                            transition={{ duration: 0.5, delay: 0.6 }}
+                            viewport={{ once: true }}
+                            className="mt-16"
+                        >
+                            <Nepal />
+                        </motion.div>
+                    </div>
+
+                    {/* Footer */}
+                    <footer className="bg-black/50 py-8 text-center text-gray-400">
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                            <p>&copy; {new Date().getFullYear()} Digital Shop Nepal. All Rights Reserved.</p>
+                        </div>
                     </footer>
-                </div>
-            </div>
-        </Layout>
+                </motion.div>
+            </Layout>
+        </HelmetProvider>
     );
 };
 

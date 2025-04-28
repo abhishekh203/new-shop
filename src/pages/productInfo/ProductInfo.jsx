@@ -1,144 +1,331 @@
 import { useContext, useEffect, useState } from "react";
 import Layout from "../../components/layout/Layout";
 import myContext from "../../context/myContext";
-import { useParams } from "react-router";
+import { useParams, useNavigate } from "react-router-dom";
 import { fireDB } from "../../firebase/FirebaseConfig";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, increment, updateDoc } from "firebase/firestore";
 import Loader from "../../components/loader/Loader";
 import { useDispatch, useSelector } from "react-redux";
 import { addToCart, deleteFromCart } from "../../redux/cartSlice";
 import toast from "react-hot-toast";
-import { TextField } from "@mui/material"; // Material UI TextField for a text-box like appearance
+import { 
+  TextField, 
+  Rating, 
+  Button, 
+  Chip, 
+  IconButton,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle
+} from "@mui/material";
+import { 
+  AddShoppingCart, 
+  RemoveShoppingCart, 
+  Favorite, 
+  FavoriteBorder,
+  Share,
+  ArrowBack
+} from "@mui/icons-material";
 
 const ProductInfo = () => {
     const context = useContext(myContext);
-    const { loading, setLoading } = context;
-
-    const [product, setProduct] = useState('');
-
+    const { loading, setLoading, user } = context;
+    const [product, setProduct] = useState(null);
+    const [quantity, setQuantity] = useState(1);
+    const [isFavorite, setIsFavorite] = useState(false);
+    const [openShareDialog, setOpenShareDialog] = useState(false);
+    const [shareLink, setShareLink] = useState("");
     const { id } = useParams();
-
-    // Redux cart management
+    const navigate = useNavigate();
     const cartItems = useSelector((state) => state.cart);
     const dispatch = useDispatch();
+    const [reviewCount, setReviewCount] = useState(107); // Changed from hardcoded 24 to 107
 
     const getProductData = async () => {
+        if (!id) return;
+
         setLoading(true);
         try {
-            const productTemp = await getDoc(doc(fireDB, "products", id));
-            setProduct(productTemp.data());
-            setLoading(false);
+            const productDoc = await getDoc(doc(fireDB, "products", id));
+            if (productDoc.exists()) {
+                setProduct({ id: productDoc.id, ...productDoc.data() });
+                setShareLink(`${window.location.origin}/productinfo/${id}`);
+            } else {
+                toast.error("Product not found");
+                navigate("/");
+            }
         } catch (error) {
-            console.log(error);
-            setLoading(false);
+            console.error("Error fetching product:", error);
+            toast.error("Failed to load product");
+        }
+        setLoading(false);
+    };
+
+    const addCart = async (item) => {
+        dispatch(addToCart({...item, quantity}));
+        toast.success(`Added ${quantity} ${item.title} to cart`);
+        
+        // Update view count in Firebase
+        try {
+            await updateDoc(doc(fireDB, "products", id), {
+                views: increment(1)
+            });
+        } catch (error) {
+            console.error("Error updating view count:", error);
         }
     };
 
-    // Function to add product to cart
-    const addCart = (item) => {
-        dispatch(addToCart(item));
-        toast.success("Added to cart");
-    };
-
-    // Function to remove product from cart
     const deleteCart = (item) => {
         dispatch(deleteFromCart(item));
         toast.success("Removed from cart");
     };
 
+    const toggleFavorite = () => {
+        setIsFavorite(!isFavorite);
+        toast.success(!isFavorite ? "Added to favorites" : "Removed from favorites");
+    };
+
+    const handleShare = () => {
+        setOpenShareDialog(true);
+    };
+
+    const copyToClipboard = () => {
+        navigator.clipboard.writeText(shareLink);
+        toast.success("Link copied to clipboard!");
+        setOpenShareDialog(false);
+    };
+
+    const handleBuyNow = (item) => {
+        dispatch(addToCart({...item, quantity}));
+        toast.success(`Added ${quantity} ${item.title} to cart`);
+        navigate("/cart"); // Redirect to cart page
+    };
+
     useEffect(() => {
         getProductData();
-    }, []);
+    }, [id]);
 
     return (
         <Layout>
-            <section className="py-8 lg:py-16 bg-black">
+            <section className="py-8 lg:py-16 bg-gradient-to-b from-gray-900 to-black min-h-screen">
                 {loading ? (
                     <div className="flex justify-center items-center min-h-screen">
                         <Loader />
                     </div>
-                ) : (
-                    <div className="max-w-6xl px-4 mx-auto">
-                        <div className="flex flex-wrap mb-12 -mx-4">
-                            <div className="w-full px-4 mb-8 md:w-1/2 md:mb-0">
-                                <div className="relative">
+                ) : product ? (
+                    <div className="max-w-7xl px-4 mx-auto">
+                        <Button 
+                            startIcon={<ArrowBack />}
+                            onClick={() => navigate(-1)}
+                            className="mb-6 text-white"
+                        >
+                            Back to Products
+                        </Button>
+
+                        <div className="flex flex-col lg:flex-row gap-8">
+                            {/* Product Image Gallery */}
+                            <div className="w-full lg:w-1/2">
+                                <div className="relative bg-gray-800 rounded-2xl shadow-2xl p-6">
                                     <img
-                                        className="w-full h-[40vh] object-cover rounded-lg shadow-lg transition-transform transform hover:scale-105"
+                                        className="w-full h-auto max-h-[60vh] object-contain rounded-xl"
                                         src={product?.productImageUrl}
                                         alt={product?.title}
                                     />
+                                    <div className="absolute top-4 right-4 flex gap-2">
+                                        <IconButton 
+                                            onClick={toggleFavorite}
+                                            className="bg-gray-700 hover:bg-gray-600"
+                                        >
+                                            {isFavorite ? 
+                                                <Favorite className="text-red-500" /> : 
+                                                <FavoriteBorder className="text-white" />
+                                            }
+                                        </IconButton>
+                                        <IconButton 
+                                            onClick={handleShare}
+                                            className="bg-gray-700 hover:bg-gray-600"
+                                        >
+                                            <Share className="text-white" />
+                                        </IconButton>
+                                    </div>
                                 </div>
                             </div>
-                            <div className="w-full px-4 md:w-1/2">
-                                <div className="lg:pl-12">
-                                    <h2 className="text-2xl font-bold text-white dark:text-gray-300 mb-4">
-                                        {product?.title}
-                                    </h2>
-                                    <div className="flex items-center mb-4">
-                                        <div className="flex mb-4 mr-2">
-                                            {[...Array(5)].map((_, index) => (
-                                                <svg
-                                                    key={index}
-                                                    xmlns="http://www.w3.org/2000/svg"
-                                                    width={20}
-                                                    height={20}
-                                                    fill="currentColor"
-                                                    className={`bi bi-star ${index < 4 ? 'text-yellow-400' : 'text-gray-600'}`} // Fixed syntax here
-                                                    viewBox="0 0 16 16"
-                                                >
-                                                    <path d="M2.866 14.85c-.078.444.36.791.746.593l4.39-2.256 4.389 2.256c.386.198.824-.149.746-.592l-.83-4.73 3.522-3.356c.33-.314.16-.888-.282-.95l-4.898-.696L8.465.792a.513.513 0 0 0-.927 0L5.354 5.12l-4.898.696c-.441.062-.612.636-.283.95l3.523 3.356-.83 4.73zm4.905-2.767-3.686 1.894.694-3.957a.565.565 0 0 0-.163-.505L1.71 6.745l4.052-.576a.525.525 0 0 0 .393-.288L8 2.223l1.847 3.658a.525.525 0 0 0 .393.288l4.052.575-2.906 2.77a.565.565 0 0 0-.163.506l.694 3.957-3.686-1.894a.503.503 0 0 0-.461 0z"></path>
-                                                </svg>
-                                            ))}
-                                        </div>
-                                        <p className="text-xl font-semibold text-white dark:text-gray-400">
-                                            ₹{product?.price}
-                                        </p>
+                            
+                            {/* Product Info */}
+                            <div className="w-full lg:w-1/2">
+                                <div className="bg-gray-800 rounded-2xl shadow-2xl p-8">
+                                    <div className="flex justify-between items-start mb-4">
+                                        <h1 className="text-3xl font-bold text-white">
+                                            {product?.title}
+                                        </h1>
+                                        <Chip 
+                                            label={`${product?.category}`}
+                                            color="primary"
+                                            className="bg-blue-600 text-white"
+                                        />
                                     </div>
+
+                                    {/* Rating & Price */}
+                                    <div className="flex items-center justify-between mb-6">
+                                        <div className="flex items-center">
+                                            <Rating 
+                                                value={4.5} 
+                                                precision={0.5} 
+                                                readOnly 
+                                                className="mr-2"
+                                            />
+                                            <span className="text-gray-300">({reviewCount} reviews)</span> {/* Updated to use reviewCount state */}
+                                        </div>
+                                        <div className="text-right">
+                                            {product?.oldPrice && (
+                                                <span className="text-gray-400 line-through mr-2">
+                                                    रु{product.oldPrice}
+                                                </span>
+                                            )}
+                                            <span className="text-2xl font-bold text-white">
+                                                रु{product?.price}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {/* Quantity Selector */}
                                     <div className="mb-6">
-                                        <h3 className="text-lg font-semibold text-gray-200 dark:text-gray-300 mb-2">
-                                            Description:
+                                        <label className="block text-gray-300 mb-2">Quantity:</label>
+                                        <div className="flex items-center gap-4">
+                                            <Button 
+                                                variant="contained" 
+                                                onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                                                disabled={quantity <= 1}
+                                                className="min-w-0 w-10 h-10"
+                                            >
+                                                -
+                                            </Button>
+                                            <span className="text-xl text-white px-4">{quantity}</span>
+                                            <Button 
+                                                variant="contained" 
+                                                onClick={() => setQuantity(quantity + 1)}
+                                                className="min-w-0 w-10 h-10"
+                                            >
+                                                +
+                                            </Button>
+                                        </div>
+                                    </div>
+
+                                    {/* Product Description */}
+                                    <div className="mb-8">
+                                        <h3 className="text-xl font-semibold text-white mb-4">
+                                            Product Details
                                         </h3>
                                         <TextField
                                             fullWidth
                                             multiline
                                             value={product?.description}
                                             variant="outlined"
-                                            inputProps={{
+                                            InputProps={{
                                                 readOnly: true,
                                                 style: {
-                                                    fontFamily: 'monospace',
-                                                    whiteSpace: 'pre-line', // Maintain line breaks and text format
                                                     color: 'lightgray',
+                                                    backgroundColor: 'rgba(31, 41, 55, 0.5)',
+                                                    borderRadius: '12px',
+                                                    padding: '16px'
                                                 },
                                             }}
-                                            rows={10} // Increased the rows to make the textarea bigger
-                                            className="bg-gray-800 rounded-lg p-6 shadow-lg text-white" // Increased padding for better appearance
+                                            rows={6}
                                         />
                                     </div>
-                                    <div className="mb-6">
-                                        <div className="flex justify-center">
-                                            {cartItems.some((p) => p.id === product?.id) ? (
-                                                <button
-                                                    onClick={() => deleteCart(product)}
-                                                    className="w-full px-4 py-3 text-center text-white bg-red-600 border border-red-500 rounded-xl shadow-lg transition-transform transform hover:scale-105 hover:bg-red-700 focus:outline-none"
-                                                >
-                                                    Remove from Cart
-                                                </button>
-                                            ) : (
-                                                <button
-                                                    onClick={() => addCart(product)}
-                                                    className="w-full px-4 py-3 text-center text-white bg-gradient-to-r from-pink-500 to-pink-900 border border-pink-600 rounded-xl shadow-lg transition-transform transform hover:scale-105 hover:bg-pink-600 focus:outline-none"
-                                                >
-                                                    Add to Cart
-                                                </button>
-                                            )}
-                                        </div>
+
+                                    {/* Action Buttons */}
+                                    <div className="flex flex-col sm:flex-row gap-4">
+                                        {cartItems.some((p) => p.id === product?.id) ? (
+                                            <Button
+                                                startIcon={<RemoveShoppingCart />}
+                                                onClick={() => deleteCart(product)}
+                                                variant="contained"
+                                                color="error"
+                                                className="w-full py-3 rounded-xl"
+                                            >
+                                                Remove from Cart
+                                            </Button>
+                                        ) : (
+                                            <Button
+                                                startIcon={<AddShoppingCart />}
+                                                onClick={() => addCart(product)}
+                                                variant="contained"
+                                                color="success"
+                                                className="w-full py-3 rounded-xl bg-gradient-to-r from-green-500 to-green-700"
+                                            >
+                                                Add to Cart ({quantity})
+                                            </Button>
+                                        )}
+                                        <Button
+                                            variant="outlined"
+                                            color="primary"
+                                            className="w-full py-3 rounded-xl text-white border-white hover:border-blue-400"
+                                            onClick={() => handleBuyNow(product)} // Added onClick handler
+                                        >
+                                            Buy Now
+                                        </Button>
                                     </div>
                                 </div>
                             </div>
                         </div>
+
+                        {/* Additional Info Section */}
+                        <div className="mt-12 bg-gray-800 rounded-2xl shadow-2xl p-8">
+                            <h2 className="text-2xl font-bold text-white mb-6">Additional Information</h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <h3 className="text-lg font-semibold text-gray-300 mb-3">Specifications</h3>
+                                    <ul className="space-y-2 text-gray-400">
+                                        <li><strong>Category:</strong> {product?.category}</li>
+                                        <li><strong>Brand:</strong> {product?.brand || "Generic"}</li>
+                                        <li><strong>Stock:</strong> {product?.quantity > 0 ? "In Stock" : "Out of Stock"}</li>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-semibold text-gray-300 mb-3">Shipping Info</h3>
+                                    <ul className="space-y-2 text-gray-400">
+                                        <li><strong>Delivery:</strong> 1-30 minutes</li>
+                                        <li><strong>Returns:</strong> Replacement policy only</li>
+                                        <li><strong>Support:</strong> 24/7 customer service</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="flex justify-center items-center min-h-screen text-white">
+                        <p>Product not found.</p>
                     </div>
                 )}
+
+                {/* Share Dialog */}
+                <Dialog open={openShareDialog} onClose={() => setOpenShareDialog(false)}>
+                    <DialogTitle className="bg-gray-800 text-white">Share Product</DialogTitle>
+                    <DialogContent className="bg-gray-800">
+                        <TextField
+                            fullWidth
+                            value={shareLink}
+                            InputProps={{
+                                readOnly: true,
+                                className: "text-white bg-gray-700"
+                            }}
+                            className="mt-4"
+                        />
+                    </DialogContent>
+                    <DialogActions className="bg-gray-800">
+                        <Button onClick={() => setOpenShareDialog(false)} className="text-white">
+                            Cancel
+                        </Button>
+                        <Button 
+                            onClick={copyToClipboard}
+                            className="bg-blue-600 text-white hover:bg-blue-700"
+                        >
+                            Copy Link
+                        </Button>
+                    </DialogActions>
+                </Dialog>
             </section>
         </Layout>
     );

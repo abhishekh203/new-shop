@@ -1,132 +1,257 @@
 import React from "react";
+import { motion } from "framer-motion";
 import { Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'; // Importing icons for lists
-import Layout from "../components/layout/Layout"; // Import Layout component
+import { 
+  CheckCircleOutline as CheckIcon,
+  Devices as DevicesIcon,
+  HighQuality as QualityIcon,
+  Lock as LockIcon,
+  Autorenew as RenewIcon,
+  Security as SecurityIcon,
+  Public as NoVpnIcon,
+  LocalMovies as MoviesIcon,
+  Discount as DiscountIcon,
+  Support as SupportIcon,
+  TheaterComedy as OriginalsIcon,
+  Subscriptions as SubscriptionIcon
+} from '@mui/icons-material';
+import { Helmet, HelmetProvider } from 'react-helmet-async';
+import Layout from "../components/layout/Layout";
 import Nepal from "./nepal";
 
 const AltBalajiNepal = () => {
+    const meta = {
+        title: "AltBalaji Nepal - Watch Indian Web Series & Movies Online",
+        description: "Stream AltBalaji original web series and movies in Nepal. Enjoy exclusive Indian content without VPN. Available on all devices with premium quality.",
+        keywords: "AltBalaji Nepal, altbalaji premium nepal, AltBalaji subscription nepal, buy altbalaji premium nepal, how to buy altbalaji in nepal, Watch AltBalaji Nepal, Stream AltBalaji Nepal, Indian web series Nepal, VPN Free AltBalaji, Purchase AltBalaji in Nepal, AltBalaji Nepal subscription, Streaming Indian content in Nepal",
+        canonical: "https://www.digitalshopnepal.com/AltBalajiNepal"
+    };
+
+    const pricingPlans = [
+        { duration: "1 Month", price: "Rs. 199" },
+        { duration: "3 Months", price: "Rs. 549", discount: "Save 8%" },
+        { duration: "6 Months", price: "Rs. 999", discount: "Save 16%" },
+        { duration: "1 Year", price: "Rs. 1,799", discount: "Save 25%" }
+    ];
+
+    const features = [
+        { icon: <OriginalsIcon className="text-purple-500" />, text: "Exclusive Indian originals not available elsewhere" },
+        { icon: <LockIcon className="text-purple-500" />, text: "Private profile with secure access" },
+        { icon: <QualityIcon className="text-purple-500" />, text: "HD Streaming: Enjoy high-quality content" },
+        { icon: <RenewIcon className="text-purple-500" />, text: "Easy renewal without losing your watch history" },
+        { icon: <SecurityIcon className="text-purple-500" />, text: "100% secure accounts with login credentials" },
+        { icon: <NoVpnIcon className="text-purple-500" />, text: "No VPN required - works directly in Nepal" }
+    ];
+
+    const benefits = [
+        { icon: <OriginalsIcon />, text: "Exclusive access to Indian original series" },
+        { icon: <QualityIcon />, text: "HD streaming for best viewing experience" },
+        { icon: <SubscriptionIcon />, text: "Multiple subscription plans to choose from" },
+        { icon: <RenewIcon />, text: "Seamless subscription renewals" },
+        { icon: <NoVpnIcon />, text: "Works in Nepal without any VPN" },
+        { icon: <SupportIcon />, text: "24/7 dedicated customer support" },
+        { icon: <DiscountIcon />, text: "Special discounts on long-term plans" },
+        { icon: <MoviesIcon />, text: "Unlimited access to AltBalaji's entire library" }
+    ];
+
+    const rules = [
+        "Use only the provided profile for streaming",
+        "Do not change the account email or password",
+        "Avoid simultaneous logins from multiple devices",
+        "Contact support for any account-related issues"
+    ];
+
     return (
-        <Layout>
-            <div className="min-h-screen bg-gradient-to-b from-gray-900 via-purple-900 to-black p-8 text-white relative">
-                {/* Content Section */}
-                <div className="relative z-10">
+        <HelmetProvider>
+            <Layout>
+                <Helmet>
+                    <title>{meta.title}</title>
+                    <meta name="description" content={meta.description} />
+                    <meta name="keywords" content={meta.keywords} />
+                    <link rel="canonical" href={meta.canonical} />
+                </Helmet>
 
+                <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.5 }}
+                    className="min-h-screen bg-gradient-to-b from-gray-900 via-purple-900 to-black text-white"
+                >
                     {/* Hero Section */}
-                    <section className="text-center p-10 fade-in">
-                        <h1 className="text-5xl font-bold text-purple-600 mb-6">AltBalaji Nepal</h1>
-                      <p className="text-xl text-gray-300 text-justify w-full leading-relaxed">
-                            Discover a world of original content with AltBalaji Nepal. Enjoy a variety of Indian web series and shows with our affordable subscription plan. Stream your favorites anytime, anywhere, without interruptions.
-                        </p>
-                        <ul className="text-gray-400 list-disc list-inside text-left mt-8 max-w-3xl mx-auto">
-                            <li className="mb-1 flex items-center">
-                                <CheckCircleOutlineIcon className="text-green-500 mr-2" />
-                                Exclusive Originals: Access to a wide range of unique web series.
-                            </li>
-                            <li className="mb-1 flex items-center">
-                                <CheckCircleOutlineIcon className="text-green-500 mr-2" />
-                                HD Streaming: Enjoy high-quality content without buffering.
-                            </li>
-                            <li className="mb-1 flex items-center">
-                                <CheckCircleOutlineIcon className="text-green-500 mr-2" />
-                                No VPN Required: Watch from Nepal without any restrictions.
-                            </li>
-                            <li className="mb-1 flex items-center">
-                                <CheckCircleOutlineIcon className="text-green-500 mr-2" />
-                                Multi-device Access: Stream on your TV, mobile, or laptop.
-                            </li>
-                            <li className="mb-1 flex items-center">
-                                <CheckCircleOutlineIcon className="text-green-500 mr-2" />
-                                Affordable Plans: Competitive pricing for all users.
-                            </li>
-                        </ul>
-                    </section>
-
-                    {/* Accordion Sections */}
-                    <div className="my-8 max-w-4xl mx-auto">
-                        {/* Description Section */}
-                        <Accordion>
-                            <AccordionSummary
-                                expandIcon={<ExpandMoreIcon />}
-                                className="bg-gray-800 text-white hover:bg-gray-700 transition duration-300"
+                    <div className="relative overflow-hidden">
+                        <div className="absolute inset-0 bg-black/60 z-0"></div>
+                        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+                            <motion.div
+                                initial={{ y: -20, opacity: 0 }}
+                                animate={{ y: 0, opacity: 1 }}
+                                transition={{ duration: 0.5 }}
+                                className="text-center"
                             >
-                                <h2 className="text-lg font-semibold">Description</h2>
-                            </AccordionSummary>
-                            <AccordionDetails className="bg-gray-900 shadow-md border-t border-gray-700 transition-all">
-                                <p className="text-gray-300">
-                                    AltBalaji offers a vast library of original shows and series across various genres. Whether you’re into drama, comedy, or thrillers, there's something for everyone.
+                                <h1 className="text-4xl md:text-5xl font-bold text-purple-500 mb-6">
+                                    AltBalaji Nepal Subscription
+                                </h1>
+                                <p className="text-xl text-gray-300 max-w-3xl mx-auto">
+                                    Premium Indian content with HD quality. No VPN required. Private profile with secure access.
                                 </p>
-                                <ul className="text-gray-400 list-disc list-inside mt-3">
-                                    <p className="mt-3 text-white"><strong>Subscription Validity and Pricing:</strong></p>
-                                    <li>Monthly Subscription: Rs. 199</li>
-                                    <li>Quarterly Subscription: Rs. 499</li>
-                                    <li>Yearly Subscription: Rs. 1,799</li>
-                                </ul>
-                            </AccordionDetails>
-                        </Accordion>
-
-                        {/* Subscription Benefits Section */}
-                        <Accordion>
-                            <AccordionSummary
-                                expandIcon={<ExpandMoreIcon />}
-                                className="bg-gray-800 text-white hover:bg-gray-700 transition duration-300"
-                            >
-                                <h2 className="text-lg font-semibold">Subscription Benefits</h2>
-                            </AccordionSummary>
-                            <AccordionDetails className="bg-gray-900 shadow-md border-t border-gray-700 transition-all">
-                                <ul className="text-gray-400 list-disc list-inside">
-                                    <li>Exclusive access to original series and movies.</li>
-                                    <li>High-definition streaming for an immersive experience.</li>
-                                    <li>No restrictions; watch seamlessly from Nepal.</li>
-                                    <li>Multi-device compatibility.</li>
-                                    <li>Affordable pricing with flexible plans.</li>
-                                    <li>Regular updates and new content added frequently.</li>
-                                </ul>
-                            </AccordionDetails>
-                        </Accordion>
-
-                        {/* How to Use Section */}
-                        <Accordion>
-                            <AccordionSummary
-                                expandIcon={<ExpandMoreIcon />}
-                                className="bg-gray-800 text-white hover:bg-gray-700 transition duration-300"
-                            >
-                                <h2 className="text-lg font-semibold">How to Use</h2>
-                            </AccordionSummary>
-                            <AccordionDetails className="bg-gray-900 shadow-md border-t border-gray-700 transition-all">
-                                <p className="text-gray-300">
-                                    To start enjoying AltBalaji, subscribe to your preferred plan, and receive your login details via email. Simply log in through the app or website, and you’re ready to start streaming!
-                                </p>
-                            </AccordionDetails>
-                        </Accordion>
-
-                        {/* Rules Section */}
-                        <Accordion>
-                            <AccordionSummary
-                                expandIcon={<ExpandMoreIcon />}
-                                className="bg-gray-800 text-white hover:bg-gray-700 transition duration-300"
-                            >
-                                <h2 className="text-lg font-semibold">Rules to Follow</h2>
-                            </AccordionSummary>
-                            <AccordionDetails className="bg-gray-900 shadow-md border-t border-gray-700 transition-all">
-                                <ul className="text-gray-400 list-disc list-inside">
-                                    <li>Only use the provided account details to access content.</li>
-                                    <li>Do not share your account credentials with others.</li>
-                                    <li>Log out of the account after use to ensure security.</li>
-                                    <li>Contact support for any account-related issues.</li>
-                                </ul>
-                            </AccordionDetails>
-                        </Accordion>
+                            </motion.div>
+                        </div>
                     </div>
-                    <Nepal />
 
-                    {/* Footer Section */}
-                    <footer className="text-center mt-16 text-gray-500">
-                        <p>&copy; 2024 AltBalaji Nepal. All Rights Reserved.</p>
+                    {/* Main Content */}
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                        {/* Features Section */}
+                        <motion.section 
+                            initial={{ opacity: 0 }}
+                            whileInView={{ opacity: 1 }}
+                            transition={{ duration: 0.5 }}
+                            viewport={{ once: true }}
+                            className="mb-16"
+                        >
+                            <h2 className="text-3xl font-bold mb-8 text-center">Why Choose Our AltBalaji Subscription?</h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {features.map((feature, index) => (
+                                    <motion.div
+                                        key={index}
+                                        whileHover={{ y: -5 }}
+                                        className="bg-gray-800/50 p-6 rounded-lg border border-gray-700"
+                                    >
+                                        <div className="flex items-start space-x-4">
+                                            <div className="flex-shrink-0">
+                                                {feature.icon}
+                                            </div>
+                                            <p className="text-gray-300">{feature.text}</p>
+                                        </div>
+                                    </motion.div>
+                                ))}
+                            </div>
+                        </motion.section>
+
+                        {/* Pricing Section */}
+                        <motion.section
+                            initial={{ opacity: 0 }}
+                            whileInView={{ opacity: 1 }}
+                            transition={{ duration: 0.5, delay: 0.2 }}
+                            viewport={{ once: true }}
+                            className="mb-16"
+                        >
+                            <h2 className="text-3xl font-bold mb-8 text-center">Subscription Plans</h2>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                                {pricingPlans.map((plan, index) => (
+                                    <motion.div
+                                        key={index}
+                                        whileHover={{ scale: 1.03 }}
+                                        className={`bg-gradient-to-br ${index % 2 === 0 ? 'from-gray-800 to-gray-900' : 'from-purple-900/80 to-gray-900'} rounded-xl p-6 shadow-lg border border-gray-700`}
+                                    >
+                                        <h3 className="text-xl font-bold mb-2">{plan.duration}</h3>
+                                        <p className="text-2xl font-bold mb-2">{plan.price}</p>
+                                        {plan.discount && (
+                                            <p className="text-green-400 text-sm mb-4">{plan.discount}</p>
+                                        )}
+                                        <button className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-lg transition duration-300">
+                                            Get Now
+                                        </button>
+                                    </motion.div>
+                                ))}
+                            </div>
+                        </motion.section>
+
+                        {/* Accordion Sections */}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            whileInView={{ opacity: 1 }}
+                            transition={{ duration: 0.5, delay: 0.4 }}
+                            viewport={{ once: true }}
+                            className="max-w-4xl mx-auto space-y-4"
+                        >
+                            <Accordion className="bg-gray-800/50 border border-gray-700 rounded-lg overflow-hidden">
+                                <AccordionSummary
+                                    expandIcon={<ExpandMoreIcon className="text-white" />}
+                                    className="hover:bg-gray-700/50 transition"
+                                >
+                                    <h2 className="text-xl font-semibold">Subscription Benefits</h2>
+                                </AccordionSummary>
+                                <AccordionDetails className="bg-gray-900/50">
+                                    <ul className="space-y-3">
+                                        {benefits.map((benefit, index) => (
+                                            <li key={index} className="flex items-start space-x-3">
+                                                <span className="text-purple-500 mt-1">{benefit.icon}</span>
+                                                <span className="text-gray-300">{benefit.text}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </AccordionDetails>
+                            </Accordion>
+
+                            <Accordion className="bg-gray-800/50 border border-gray-700 rounded-lg overflow-hidden">
+                                <AccordionSummary
+                                    expandIcon={<ExpandMoreIcon className="text-white" />}
+                                    className="hover:bg-gray-700/50 transition"
+                                >
+                                    <h2 className="text-xl font-semibold">How to Use</h2>
+                                </AccordionSummary>
+                                <AccordionDetails className="bg-gray-900/50">
+                                    <p className="text-gray-300 mb-4">
+                                        After subscribing, you'll receive login credentials to access AltBalaji's premium content. Stream instantly on your preferred device.
+                                    </p>
+                                    <ul className="space-y-2 text-gray-300">
+                                        <li className="flex items-start">
+                                            <CheckIcon className="text-green-500 mr-2 mt-1" />
+                                            <span>For mobile and tablet: Download the AltBalaji app and login</span>
+                                        </li>
+                                        <li className="flex items-start">
+                                            <CheckIcon className="text-green-500 mr-2 mt-1" />
+                                            <span>For web: Visit the AltBalaji website and sign in</span>
+                                        </li>
+                                        <li className="flex items-start">
+                                            <CheckIcon className="text-green-500 mr-2 mt-1" />
+                                            <span>For TV: Use casting or contact support for assistance</span>
+                                        </li>
+                                    </ul>
+                                </AccordionDetails>
+                            </Accordion>
+
+                            <Accordion className="bg-gray-800/50 border border-gray-700 rounded-lg overflow-hidden">
+                                <AccordionSummary
+                                    expandIcon={<ExpandMoreIcon className="text-white" />}
+                                    className="hover:bg-gray-700/50 transition"
+                                >
+                                    <h2 className="text-xl font-semibold">Rules to Follow</h2>
+                                </AccordionSummary>
+                                <AccordionDetails className="bg-gray-900/50">
+                                    <ul className="space-y-2">
+                                        {rules.map((rule, index) => (
+                                            <li key={index} className="flex items-start">
+                                                <CheckIcon className="text-purple-500 mr-2 mt-1" />
+                                                <span className="text-gray-300">{rule}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </AccordionDetails>
+                            </Accordion>
+                        </motion.div>
+
+                        {/* Nepal Component */}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            whileInView={{ opacity: 1 }}
+                            transition={{ duration: 0.5, delay: 0.6 }}
+                            viewport={{ once: true }}
+                            className="mt-16"
+                        >
+                            <Nepal />
+                        </motion.div>
+                    </div>
+
+                    {/* Footer */}
+                    <footer className="bg-black/50 py-8 text-center text-gray-400">
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                            <p>&copy; {new Date().getFullYear()} Digital Shop Nepal. All Rights Reserved.</p>
+                        </div>
                     </footer>
-                </div>
-            </div>
-        </Layout>
+                </motion.div>
+            </Layout>
+        </HelmetProvider>
     );
 };
 

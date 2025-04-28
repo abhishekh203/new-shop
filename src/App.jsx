@@ -59,7 +59,6 @@ const App = () => {
           <Route path="/login" element={<Login />} />
           <Route path="/Contactus" element={<ContactUs />} />
           <Route path="/purchase" element={<PurchasePage />} />
-
           <Route path="/category/:categoryname" element={<CategoryPage />} />
           <Route path="/user-dashboard" element={
             <ProtectedRouteForUser>

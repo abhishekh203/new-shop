@@ -1,6 +1,6 @@
 import { useContext, useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useAnimation } from "framer-motion";
 import myContext from "../../context/myContext";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
@@ -19,6 +19,7 @@ import {
   FaSortAmountUpAlt
 } from "react-icons/fa";
 import { BsStars, BsLightningChargeFill, BsGrid3X3Gap } from "react-icons/bs";
+import { FiFilter } from "react-icons/fi";
 
 const HomePageProductCard = () => {
   const navigate = useNavigate();
@@ -38,6 +39,8 @@ const HomePageProductCard = () => {
   const [expandedCategories, setExpandedCategories] = useState({});
   const [sortOrder, setSortOrder] = useState("default");
   const [showSortOptions, setShowSortOptions] = useState(false);
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const controls = useAnimation();
 
   // Define categories
   const categories = [
@@ -50,17 +53,19 @@ const HomePageProductCard = () => {
     { id: "games", name: "Games", icon: <span className="text-yellow-400">G</span> },
     { id: "education", name: "Education", icon: <span className="text-gray-400">E</span> },
     { id: "vpn", name: "VPN", icon: <span className="text-pink-400">V</span> },
-    { id: "ai", name: "Ai", icon: <span className="text-purple-400">A</span> }
+    { id: "ai", name: "AI", icon: <span className="text-purple-400">A</span> }
   ];
 
-  // Sort options - only price low to high and high to low
+  // Sort options
   const sortOptions = [
+    { id: "default", name: "Recommended", icon: <BsGrid3X3Gap /> },
     { id: "price-low", name: "Price: Low to High", icon: <FaSortAmountDown /> },
-    { id: "price-high", name: "Price: High to Low", icon: <FaSortAmountUpAlt /> }
+    { id: "price-high", name: "Price: High to Low", icon: <FaSortAmountUpAlt /> },
+    { id: "newest", name: "Newest First", icon: <BsLightningChargeFill /> }
   ];
 
   // Categorize and sort products
-  const categorizeAndSortProducts = (products, sortType = "default") => {
+  const categorizeAndSortProducts = useCallback((products, sortType = "default") => {
     // First categorize
     const categorized = products.reduce((acc, product) => {
       const category = product.category?.toLowerCase() || "other";
@@ -77,19 +82,21 @@ const HomePageProductCard = () => {
     });
 
     return categorized;
-  };
+  }, []);
 
   // Sort products based on sort type
-  const sortProducts = (products, sortType) => {
+  const sortProducts = useCallback((products, sortType) => {
     switch(sortType) {
       case "price-low":
         return [...products].sort((a, b) => a.price - b.price);
       case "price-high":
         return [...products].sort((a, b) => b.price - a.price);
+      case "newest":
+        return [...products].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
       default:
         return [...products]; // Default order (as they come from API)
     }
-  };
+  }, []);
 
   // Initialize products
   useEffect(() => {
@@ -104,7 +111,7 @@ const HomePageProductCard = () => {
       });
       setExpandedCategories(initialExpanded);
     }
-  }, [getAllProduct, sortOrder]);
+  }, [getAllProduct, sortOrder, categorizeAndSortProducts]);
 
   // Handle responsive layout
   useEffect(() => {
@@ -127,7 +134,8 @@ const HomePageProductCard = () => {
     const timer = setTimeout(() => {
       const filtered = getAllProduct.filter(product =>
         product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.category?.toLowerCase().includes(searchTerm.toLowerCase())
+        (product.category?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (product.description?.toLowerCase().includes(searchTerm.toLowerCase()))
       );
       
       if (searchTerm) {
@@ -138,15 +146,18 @@ const HomePageProductCard = () => {
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [searchTerm, getAllProduct, sortOrder]);
+  }, [searchTerm, getAllProduct, sortOrder, categorizeAndSortProducts]);
 
   // Handle sort change
   const handleSortChange = (sortType) => {
     setSortOrder(sortType);
     setShowSortOptions(false);
+    setShowMobileFilters(false);
+    
     toast.success(`Sorted by ${sortOptions.find(o => o.id === sortType)?.name || 'default'}`, {
       icon: sortType === "price-high" ? <FaSortAmountUpAlt /> : 
-            sortType === "price-low" ? <FaSortAmountDown /> : <BsGrid3X3Gap />,
+            sortType === "price-low" ? <FaSortAmountDown /> : 
+            sortType === "newest" ? <BsLightningChargeFill /> : <BsGrid3X3Gap />,
       style: {
         background: '#0a0a0a',
         color: '#fff',
@@ -184,7 +195,7 @@ const HomePageProductCard = () => {
   };
 
   // Toggle wishlist item with animation
-  const toggleWishlist = (productId) => {
+  const toggleWishlist = async (productId) => {
     setWishlist(prev => {
       const newWishlist = prev.includes(productId) 
         ? prev.filter(id => id !== productId) 
@@ -210,6 +221,14 @@ const HomePageProductCard = () => {
       
       return newWishlist;
     });
+
+    // Heart pulse animation
+    if (!wishlist.includes(productId)) {
+      await controls.start({
+        scale: [1, 1.2, 1],
+        transition: { duration: 0.5 }
+      });
+    }
   };
 
   // Add to cart with animation
@@ -301,7 +320,7 @@ const HomePageProductCard = () => {
 
   const imageHoverVariants = {
     rest: { scale: 1 },
-    hover: { scale: 1.1 }
+    hover: { scale: 1.05 }
   };
 
   const badgeVariants = {
@@ -341,10 +360,68 @@ const HomePageProductCard = () => {
     hover: { backgroundColor: "rgba(31, 41, 55, 0.8)" }
   };
 
+  const mobileFilterVariants = {
+    hidden: { 
+      opacity: 0,
+      y: -20,
+      transition: {
+        duration: 0.3
+      }
+    },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.3,
+        staggerChildren: 0.1,
+        when: "beforeChildren"
+      }
+    }
+  };
+
+  const filterItemVariants = {
+    hidden: { opacity: 0, x: -10 },
+    visible: { opacity: 1, x: 0 }
+  };
+
   // Determine which products to show based on search
   const productsToShow = searchTerm ? filteredProducts : displayProducts;
   const visibleCategories = Object.keys(productsToShow).filter(cat => 
     activeCategory === "all" || cat === activeCategory
+  );
+
+  // Loading skeleton
+  const LoadingSkeleton = () => (
+    <div className="space-y-8">
+      {[1, 2, 3].map((_, index) => (
+        <div key={index} className="bg-gray-900/50 rounded-xl overflow-hidden">
+          <div className="p-4 bg-gray-800/50 flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <div className="bg-gray-700 p-2 rounded-lg w-10 h-10 animate-pulse"></div>
+              <div className="h-6 w-32 bg-gray-700 rounded animate-pulse"></div>
+              <div className="h-5 w-16 bg-gray-700 rounded-full animate-pulse"></div>
+            </div>
+            <div className="h-5 w-5 bg-gray-700 rounded animate-pulse"></div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 p-6">
+            {[1, 2, 3, 4].map((_, idx) => (
+              <div key={idx} className="border border-gray-800 rounded-xl overflow-hidden shadow-xl bg-gray-900">
+                <div className="h-64 bg-gray-800 animate-pulse"></div>
+                <div className="p-5">
+                  <div className="h-4 w-24 bg-gray-700 rounded mb-2 animate-pulse"></div>
+                  <div className="h-5 w-full bg-gray-700 rounded mb-3 animate-pulse"></div>
+                  <div className="h-6 w-20 bg-gray-700 rounded mb-2 animate-pulse"></div>
+                  <div className="flex justify-between items-center">
+                    <div className="h-8 w-24 bg-gray-700 rounded animate-pulse"></div>
+                    <div className="h-10 w-24 bg-gray-700 rounded animate-pulse"></div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
   );
 
   return (
@@ -356,9 +433,20 @@ const HomePageProductCard = () => {
         transition={{ duration: 0.5 }}
         className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4"
       >
-        <h2 className="text-3xl font-bold text-white">
-          Featured Products
-        </h2>
+        <div className="flex items-center gap-4">
+          <h2 className="text-3xl font-bold text-white">
+            Digital Products
+          </h2>
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.3 }}
+            className="hidden md:flex items-center gap-2 bg-gradient-to-r from-orange-600 to-pink-600 px-3 py-1 rounded-full"
+          >
+            <BsStars className="text-yellow-200" />
+            <span className="text-sm font-medium text-white">Premium</span>
+          </motion.div>
+        </div>
         
         <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
           {/* Search Bar */}
@@ -390,110 +478,185 @@ const HomePageProductCard = () => {
             )}
           </motion.div>
 
-          {/* Sort Button and Dropdown */}
-          <div className="sort-container relative">
+          {/* Mobile Filter Button */}
+          {isMobile && (
             <motion.button
-              onClick={toggleSortOptions}
+              onClick={() => setShowMobileFilters(!showMobileFilters)}
               variants={buttonVariants}
               whileHover="hover"
               whileTap="tap"
-              className="flex items-center gap-2 bg-gray-900 hover:bg-gray-800 px-4 py-2 rounded-lg text-gray-200 transition-colors border border-gray-800 w-full md:w-auto"
+              className="flex items-center justify-center gap-2 bg-gray-900 hover:bg-gray-800 px-4 py-2 rounded-lg text-gray-200 transition-colors border border-gray-800"
             >
-              {sortOrder === "price-high" ? (
-                <FaSortAmountUpAlt />
-              ) : sortOrder === "price-low" ? (
-                <FaSortAmountDown />
-              ) : (
-                <BsGrid3X3Gap />
-              )}
-              <span className="hidden sm:inline">
-                {sortOrder === "price-high" ? "Price: High to Low" : 
-                 sortOrder === "price-low" ? "Price: Low to High" : "Sort"}
-              </span>
-              <motion.div
-                animate={{ rotate: showSortOptions ? 180 : 0 }}
-                transition={{ duration: 0.2 }}
-              >
-                <FaChevronDown className="text-xs" />
-              </motion.div>
+              <FiFilter />
+              <span>Filters</span>
             </motion.button>
-            
-            <AnimatePresence>
-              {showSortOptions && (
-                <motion.div 
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
+          )}
+
+          {/* Sort Button and Dropdown - Hidden on mobile */}
+          {!isMobile && (
+            <div className="sort-container relative">
+              <motion.button
+                onClick={toggleSortOptions}
+                variants={buttonVariants}
+                whileHover="hover"
+                whileTap="tap"
+                className="flex items-center gap-2 bg-gray-900 hover:bg-gray-800 px-4 py-2 rounded-lg text-gray-200 transition-colors border border-gray-800 w-full md:w-auto"
+              >
+                {sortOrder === "price-high" ? (
+                  <FaSortAmountUpAlt />
+                ) : sortOrder === "price-low" ? (
+                  <FaSortAmountDown />
+                ) : sortOrder === "newest" ? (
+                  <BsLightningChargeFill />
+                ) : (
+                  <BsGrid3X3Gap />
+                )}
+                <span className="hidden sm:inline">
+                  {sortOrder === "price-high" ? "Price: High to Low" : 
+                   sortOrder === "price-low" ? "Price: Low to High" : 
+                   sortOrder === "newest" ? "Newest" : "Sort"}
+                </span>
+                <motion.div
+                  animate={{ rotate: showSortOptions ? 180 : 0 }}
                   transition={{ duration: 0.2 }}
-                  className="absolute right-0 mt-2 w-48 bg-gray-800 rounded-lg shadow-xl z-20 overflow-hidden"
                 >
+                  <FaChevronDown className="text-xs" />
+                </motion.div>
+              </motion.button>
+              
+              <AnimatePresence>
+                {showSortOptions && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                    className="absolute right-0 mt-2 w-48 bg-gray-800 rounded-lg shadow-xl z-20 overflow-hidden"
+                  >
+                    {sortOptions.map(option => (
+                      <motion.button
+                        key={option.id}
+                        onClick={() => handleSortChange(option.id)}
+                        whileHover={{ backgroundColor: "rgba(55, 65, 81, 0.8)" }}
+                        className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 ${
+                          sortOrder === option.id 
+                            ? "bg-orange-600 text-white" 
+                            : "text-gray-300 hover:bg-gray-700"
+                        }`}
+                      >
+                        {option.icon}
+                        {option.name}
+                      </motion.button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
+        </div>
+      </motion.div>
+
+      {/* Mobile Filters Panel */}
+      <AnimatePresence>
+        {isMobile && showMobileFilters && (
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            exit="hidden"
+            variants={mobileFilterVariants}
+            className="bg-gray-900 rounded-xl p-4 mb-6 shadow-lg border border-gray-800"
+          >
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-white">Filters</h3>
+              <button 
+                onClick={() => setShowMobileFilters(false)}
+                className="text-gray-400 hover:text-white"
+              >
+                <FaTimes />
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <h4 className="text-sm font-medium text-gray-300 mb-2">Categories</h4>
+                <div className="flex flex-wrap gap-2">
+                  {categories.map(category => (
+                    <motion.button
+                      key={category.id}
+                      onClick={() => {
+                        setActiveCategory(category.id);
+                        setShowMobileFilters(false);
+                      }}
+                      variants={filterItemVariants}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                        activeCategory === category.id
+                          ? "bg-orange-600 text-white"
+                          : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                      }`}
+                    >
+                      {category.name}
+                    </motion.button>
+                  ))}
+                </div>
+              </div>
+              
+              <div>
+                <h4 className="text-sm font-medium text-gray-300 mb-2">Sort By</h4>
+                <div className="flex flex-col gap-2">
                   {sortOptions.map(option => (
                     <motion.button
                       key={option.id}
                       onClick={() => handleSortChange(option.id)}
+                      variants={filterItemVariants}
                       whileHover={{ backgroundColor: "rgba(55, 65, 81, 0.8)" }}
-                      className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 ${
+                      className={`w-full text-left px-3 py-2 text-sm rounded-lg flex items-center gap-2 ${
                         sortOrder === option.id 
                           ? "bg-orange-600 text-white" 
-                          : "text-gray-300 hover:bg-gray-700"
+                          : "bg-gray-800 text-gray-300 hover:bg-gray-700"
                       }`}
                     >
                       {option.icon}
                       {option.name}
                     </motion.button>
                   ))}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </div>
-      </motion.div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {/* Category Tabs */}
-      <motion.div 
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className="flex flex-wrap gap-2 mb-6"
-      >
-        {categories.map(category => (
-          <motion.button
-            key={category.id}
-            onClick={() => setActiveCategory(category.id)}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-              activeCategory === category.id
-                ? "bg-orange-600 text-white"
-                : "bg-gray-800 text-gray-300 hover:bg-gray-700"
-            }`}
-          >
-            {category.icon}
-            {category.name}
-          </motion.button>
-        ))}
-      </motion.div>
+      {/* Category Tabs - Desktop */}
+      {!isMobile && (
+        <motion.div 
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="flex flex-wrap gap-2 mb-6"
+        >
+          {categories.map(category => (
+            <motion.button
+              key={category.id}
+              onClick={() => setActiveCategory(category.id)}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                activeCategory === category.id
+                  ? "bg-orange-600 text-white"
+                  : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+              }`}
+            >
+              {category.icon}
+              {category.name}
+            </motion.button>
+          ))}
+        </motion.div>
+      )}
 
       {contextLoading ? (
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="flex justify-center items-center h-96"
-        >
-          <motion.div
-            animate={{ 
-              rotate: 360,
-              scale: [1, 1.2, 1],
-              transition: { 
-                duration: 1.2,
-                repeat: Infinity,
-                ease: "easeInOut"
-              }
-            }}
-            className="rounded-full h-16 w-16 border-t-2 border-b-2 border-orange-500"
-          />
-        </motion.div>
+        <LoadingSkeleton />
       ) : (
         <>
           <motion.div 
@@ -507,6 +670,7 @@ const HomePageProductCard = () => {
               {visibleCategories.map(category => {
                 const categoryProducts = productsToShow[category] || [];
                 const isExpanded = expandedCategories[category] !== false;
+                const categoryData = categories.find(c => c.id === category) || categories[0];
 
                 return (
                   <motion.div 
@@ -525,17 +689,22 @@ const HomePageProductCard = () => {
                       onClick={() => toggleCategory(category)}
                     >
                       <div className="flex items-center gap-3">
-                        <div className="bg-gray-800 p-2 rounded-lg">
-                          {categories.find(c => c.id === category)?.icon || (
-                            <BsGrid3X3Gap className="text-gray-400" />
-                          )}
-                        </div>
+                        <motion.div 
+                          className="bg-gray-800 p-2 rounded-lg"
+                          whileHover={{ rotate: 10 }}
+                          whileTap={{ scale: 0.9 }}
+                        >
+                          {categoryData.icon}
+                        </motion.div>
                         <h3 className="text-lg font-semibold text-white capitalize">
                           {category.replace(/-/g, " ")}
                         </h3>
-                        <span className="text-sm bg-gray-700 text-gray-300 px-2 py-1 rounded-full">
-                          {categoryProducts.length} items
-                        </span>
+                        <motion.span 
+                          className="text-sm bg-gray-700 text-gray-300 px-2 py-1 rounded-full"
+                          whileHover={{ scale: 1.1 }}
+                        >
+                          {categoryProducts.length} {categoryProducts.length === 1 ? "item" : "items"}
+                        </motion.span>
                       </div>
                       <motion.div
                         animate={{ rotate: isExpanded ? 0 : 180 }}
@@ -571,7 +740,7 @@ const HomePageProductCard = () => {
                                 layout
                                 className={`group relative ${isMobile ? "w-[calc(50%-8px)]" : "w-full"}`}
                               >
-                                <div className="h-full border border-gray-800 rounded-xl overflow-hidden shadow-xl bg-gray-900 relative">
+                                <div className="h-full border border-gray-800 rounded-xl overflow-hidden shadow-xl bg-gray-900 relative hover:border-gray-700 transition-colors">
                                   {/* Badges */}
                                   <div className="absolute top-3 left-3 flex flex-col gap-2 z-10">
                                     {discount && (
@@ -609,9 +778,7 @@ const HomePageProductCard = () => {
                                   >
                                     {isInWishlist ? (
                                       <motion.div
-                                        initial={{ scale: 0 }}
-                                        animate={{ scale: [0, 1.2, 1] }}
-                                        transition={{ duration: 0.5 }}
+                                        animate={controls}
                                       >
                                         <FaHeart className="text-red-500 text-lg" />
                                       </motion.div>
@@ -646,7 +813,7 @@ const HomePageProductCard = () => {
                                     >
                                       <motion.div
                                         whileHover={{ scale: 1.2 }}
-                                        className="bg-white bg-opacity-90 rounded-full p-2"
+                                        className="bg-white bg-opacity-90 rounded-full p-3"
                                       >
                                         <FaEye className="text-gray-900 text-lg" />
                                       </motion.div>

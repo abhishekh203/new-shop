@@ -1,6 +1,6 @@
 import React from "react";
 import Layout from "../../components/layout/Layout";
-import SubscriptionPage from "../Subscription/SubscriptionPage"; // Import your SubscriptionPage
+import SubscriptionPage from "../Subscription/SubscriptionPage";
 import HeroSection from "../../components/heroSection/HeroSection";
 import Category from "../../components/category/Category";
 import HomePageProductCard from "../../components/homePageProductCard/HomePageProductCard";
@@ -10,29 +10,21 @@ import OTTSubscriptionInfo from "../../components/Ottsubscriptioninfo/OTTSubscri
 import Testimonial from "../../components/testimonial/Testimonial";
 import FooterOtt from "../../components/footerott/FooterOtt";
 import CombinedChat from "../../components/chat/CombinedChat";
-// import FeaturedGames from "../../components/FeaturedGames";
-
 
 const HomePage = () => {
   return (
     <Layout>
-      <div className="bg-gradient-to-b from-gray-200 via-blue-200 to-blue-500">
+      <div className="bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900">
         <HeroSection />
         {/* <Category /> */}
-        <HomePageProductCard />
-        {/* <FeaturedGames /> */}
-        <Track />
-      
-
-        {/* Render the SubscriptionPage */}
-      
-
+        <HomePageProductCard /> 
+        {/* <Track /> */}
         <OTTSubscriptionInfo />
-         <BrandsStock />
-         <SubscriptionPage />
-        <Testimonial />
+        <BrandsStock />
       
-          <FooterOtt />
+        <Testimonial />
+          <SubscriptionPage />
+        <FooterOtt />
         <CombinedChat />
       </div>
     </Layout>

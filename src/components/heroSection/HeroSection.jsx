@@ -1,283 +1,127 @@
 import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion"; // Keep framer-motion for potential future animations or if used elsewhere
 
+// Define image arrays for different screen sizes
 const largeScreenImages = [
-  "https://cap.img.pmdstatic.net/fit/https.3A.2F.2Fi.2Epmdstatic.2Enet.2Fcap.2F2022.2F11.2F03.2F09cc07e8-23ec-424e-b895-d3ddd84bb652.2Ejpeg/1200x630/cr/wqkgcGljdHVyYW5jZS9HZXR0eUltYWdlcyAvIENBUElUQUw%3D/netflix-spotify-amazon-faire-des-economies-en-partageant-son-abonnement-avec-des-inconnus-une-solution-perenne-1450950.jpg",
-  "../img/head.jpg.jpg",
-  "../img/tools.png.jpg",
-  "../img/111.webp",
-  "../img/12.png",
-  "https://pbs.twimg.com/media/F1zNhWXWwAA_Y6E.png",
-  "../img/13.png",
+    "https://cap.img.pmdstatic.net/fit/https.3A.2F.2Fi.2Epmdstatic.2Enet.2Fcap.2F2022.2F11.2F03.2F09cc07e8-23ec-424e-b895-d3ddd84bb652.2Ejpeg/1200x630/cr/wqkgcGljdHVyYW5jZS9HZXR0eUltYWdlcyAvIENBUElUQUw%3D/netflix-spotify-amazon-faire-des-economies-en-partageant-son-abonnement-avec-des-inconnus-une-solution-perenne-1450950.jpg",
+    // Assuming these local paths are correct relative to the public folder or served correctly
+    "/img/head.jpg.jpg", // Use absolute paths from public folder if not using module imports
+    "/img/tools.png.jpg",
+    "/img/111.webp",
+    "/img/12.png",
+    "https://pbs.twimg.com/media/F1zNhWXWwAA_Y6E.png",
+    "/img/13.png",
 ];
 
 const smallScreenImages = [
-  "https://cap.img.pmdstatic.net/fit/https.3A.2F.2Fi.2Epmdstatic.2Enet.2Fcap.2F2022.2F11.2F03.2F09cc07e8-23ec-424e-b895-d3ddd84bb652.2Ejpeg/1200x630/cr/wqkgcGljdHVyYW5jZS9HZXR0eUltYWdlcyAvIENBUElUQUw%3D/netflix-spotify-amazon-faire-des-economies-en-partageant-son-abonnement-avec-des-inconnus-une-solution-perenne-1450950.jpg",
-  "../img/n.jpg",
-  "../img/np.jpg",
-  "../img/111.webp",
-  "../img/12.png",
-  "https://pbs.twimg.com/media/F1zNhWXWwAA_Y6E.png",
-  "../img/13.png",
+    "https://cap.img.pmdstatic.net/fit/https.3A.2F.2Fi.2Epmdstatic.2Enet.2Fcap.2F2022.2F11.2F03.2F09cc07e8-23ec-424e-b895-d3ddd84bb652.2Ejpeg/1200x630/cr/wqkgcGljdHVyYW5jZS9HZXR0eUltYWdlcyAvIENBUElUQUw%3D/netflix-spotify-amazon-faire-des-economies-en-partageant-son-abonnement-avec-des-inconnus-une-solution-perenne-1450950.jpg",
+    // Assuming these local paths are correct relative to the public folder or served correctly
+    "/img/n.jpg", // Use absolute paths from public folder if not using module imports
+    "/img/np.jpg",
+    "/img/111.webp",
+    "/img/12.png",
+    "https://pbs.twimg.com/media/F1zNhWXWwAA_Y6E.png",
+    "/img/13.png",
 ];
 
 const HeroSection = () => {
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [isSmallDevice, setIsSmallDevice] = useState(window.innerWidth < 640);
-  const [showAd, setShowAd] = useState(!(window.innerWidth < 640));
-  const [adPosition, setAdPosition] = useState("bottom-right");
-  
-  useEffect(() => {
-    const handleResize = () => {
-      const smallDevice = window.innerWidth < 640;
-      setIsSmallDevice(smallDevice);
-      setShowAd(!smallDevice);
-      
-      // Change ad position periodically for large devices
-      if (!smallDevice) {
-        const positions = ["bottom-right", "bottom-left", "top-center"];
-        const timer = setInterval(() => {
-          setAdPosition(positions[Math.floor(Math.random() * positions.length)]);
-        }, 8000);
-        return () => clearInterval(timer);
-      }
-    };
+    const [currentSlide, setCurrentSlide] = useState(0);
+    // State to track screen size for selecting image array
+    const [isSmallDevice, setIsSmallDevice] = useState(window.innerWidth < 640);
 
-    window.addEventListener("resize", handleResize);
-    handleResize(); // Initialize
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
+    // Determine which image array to use based on screen size
+    const images = isSmallDevice ? smallScreenImages : largeScreenImages;
 
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      setCurrentSlide((prevSlide) => (prevSlide + 1) % images.length);
-    }, 5000);
+    // Effect to handle window resize and update the image array choice
+    useEffect(() => {
+        const handleResize = () => {
+            const smallDevice = window.innerWidth < 640;
+            setIsSmallDevice(smallDevice);
+        };
 
-    return () => clearInterval(intervalId);
-  }, [isSmallDevice]);
+        // Add resize listener
+        window.addEventListener("resize", handleResize);
+        handleResize(); // Call initially to set the correct state
 
-  useEffect(() => {
-    if (!isSmallDevice) {
-      const adTimer = setTimeout(() => {
-        setShowAd(false);
-      }, 10000); // Show for 10 seconds on large devices
+        // Cleanup listener on component unmount
+        return () => window.removeEventListener("resize", handleResize);
+    }, []); // Empty dependency array ensures this runs only once on mount and cleanup on unmount
 
-      return () => clearTimeout(adTimer);
-    }
-  }, [isSmallDevice, adPosition]);
+    // Effect to handle the automatic sliding interval
+    useEffect(() => {
+        // Set up the interval to advance the slide
+        const intervalId = setInterval(() => {
+            setCurrentSlide((prevSlide) => (prevSlide + 1) % images.length);
+        }, 5000); // Change slide every 5 seconds
 
-  const images = isSmallDevice ? smallScreenImages : largeScreenImages;
+        // Clear the interval on component unmount or when images array changes (due to resize)
+        return () => clearInterval(intervalId);
+    }, [images.length]); // Rerun effect if the number of images changes
 
-  // Animation variants
-  const adVariants = {
-    hidden: { 
-      opacity: 0,
-      y: adPosition.includes("bottom") ? 20 : -20,
-      x: adPosition.includes("left") ? -20 : 
-         adPosition.includes("right") ? 20 : 0,
-      scale: 0.95
-    },
-    visible: {
-      opacity: 1,
-      y: 0,
-      x: 0,
-      scale: 1,
-      transition: {
-        type: "spring",
-        stiffness: 100,
-        damping: 10
-      }
-    },
-    exit: {
-      opacity: 0,
-      y: adPosition.includes("bottom") ? 20 : -20,
-      x: adPosition.includes("left") ? -20 : 
-         adPosition.includes("right") ? 20 : 0,
-      scale: 0.95,
-      transition: {
-        duration: 0.3
-      }
-    }
-  };
-
-  const getAdPositionClasses = () => {
-    switch(adPosition) {
-      case "bottom-right":
-        return "bottom-4 right-4";
-      case "bottom-left":
-        return "bottom-4 left-4";
-      case "top-center":
-        return "top-20 left-1/2 transform -translate-x-1/2";
-      default:
-        return "bottom-4 right-4";
-    }
-  };
-
-  const getAdStyle = () => {
-    switch(adPosition) {
-      case "top-center":
-        return "min-w-[300px] bg-gradient-to-br from-blue-600 to-purple-600";
-      case "bottom-left":
-        return "bg-gradient-to-br from-green-600 to-teal-600";
-      default:
-        return "bg-gradient-to-br from-purple-600 to-blue-600";
-    }
-  };
-
-  const getAdContent = () => {
-    switch(adPosition) {
-      case "top-center":
-        return (
-          <>
-            <div className="flex flex-col items-center">
-              <div className="bg-yellow-400 rounded-full p-2 mb-2">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-yellow-800" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-                </svg>
-              </div>
-              <h2 className="text-xl font-bold text-white text-center">
-                Premium Music Offer!
-              </h2>
-            </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 mt-2">
-              <p className="text-white text-center font-medium">
-                Get 2 Months Spotify Premium for just ₹299
-              </p>
-              <div className="flex justify-center mt-3">
-                <a 
-                  href="https://wa.me/9779807677391" 
-                  className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded-full shadow-lg flex items-center space-x-2 transition-colors"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <span>Order Now</span>
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 1.414L10.586 9H7a1 1 0 100 2h3.586l-1.293 1.293a1 1 0 101.414 1.414l3-3a1 1 0 000-1.414z" clipRule="evenodd" />
-                  </svg>
-                </a>
-              </div>
-            </div>
-          </>
-        );
-      case "bottom-left":
-        return (
-          <>
-            <div className="flex items-center space-x-3">
-              <div className="bg-white rounded-full p-2">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-                </svg>
-              </div>
-              <div>
-                <h2 className="text-lg font-bold text-white">Special Deal!</h2>
-                <p className="text-sm text-white/90">Spotify Premium ₹299/2mo</p>
-              </div>
-            </div>
-            <a 
-              href="https://wa.me/9779807677391" 
-              className="absolute -right-2 -top-2 bg-white text-green-600 rounded-full w-8 h-8 flex items-center justify-center shadow-md hover:bg-gray-100 transition-colors font-bold"
-              target="_blank"
-              rel="noopener noreferrer"
+    return (
+        <div className="relative w-full overflow-hidden bg-gradient-to-r from-gray-900 via-gray-800 to-blue-900">
+            {/* Image Slider Container */}
+            {/* AnimatePresence can be useful here for smoother slide transitions if desired */}
+            <div
+                className="flex transition-transform duration-700 ease-in-out" // Increased duration for smoother slide
+                style={{ transform: `translateX(-${currentSlide * 100}%)` }}
             >
-              <span>→</span>
-            </a>
-          </>
-        );
-      default: // bottom-right
-        return (
-          <>
-            <div className="flex items-start justify-between">
-              <div>
-                <h2 className="text-lg font-bold text-white">Music Lovers!</h2>
-                <p className="text-sm text-white/90 mt-1">Get Spotify Premium</p>
-                <p className="text-xl font-bold text-yellow-300 mt-1">₹299/2mo</p>
-              </div>
-              <div className="bg-yellow-400 rounded-full p-2 ml-3">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-yellow-800" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-                </svg>
-              </div>
+                {/* Map through the selected image array */}
+                {images.map((image, index) => (
+                    <div key={index} className="w-full flex-shrink-0 relative">
+                        <img
+                            className="w-full h-60 sm:h-72 md:h-80 lg:h-96 object-cover" // Adjusted heights for responsiveness
+                            src={image}
+                            alt={`Slide ${index + 1}`}
+                            loading={index === 0 ? "eager" : "lazy"} // Load first image eagerly, others lazily
+                            // Add error handling for images
+                            onError={(e) => {
+                                e.target.onerror = null; // Prevent infinite loop if fallback fails
+                                e.target.src="/img/placeholder.png"; // Replace with a path to a placeholder image
+                                console.warn(`Failed to load image: ${image}`);
+                            }}
+                        />
+                         {/* Optional: Add a subtle overlay for text contrast if needed */}
+                         {/* <div className="absolute inset-0 bg-black opacity-20"></div> */}
+                    </div>
+                ))}
             </div>
-            <div className="mt-3 flex justify-end">
-              <a 
-                href="https://wa.me/9779807677391" 
-                className="bg-white text-green-600 text-sm font-bold py-1 px-4 rounded-full shadow hover:bg-gray-100 transition-colors"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Get Offer
-              </a>
-            </div>
-          </>
-        );
-    }
-  };
 
-  return (
-    <div className="relative w-full overflow-hidden bg-gradient-to-r from-black to-blue-700">
-      {/* Image Slider */}
-      <div
-        className="flex transition-transform duration-500 ease-in-out"
-        style={{ transform: `translateX(-${currentSlide * 100}%)` }}
-      >
-        {images.map((image, index) => (
-          <div key={index} className="w-full flex-shrink-0">
-            <img 
-              className="w-full h-60 md:h-80 lg:h-96 object-cover" 
-              src={image} 
-              alt={`Slide ${index}`} 
-              loading="lazy"
-            />
-          </div>
-        ))}
-      </div>
-
-      {/* Advertisement Box - Only shown on large devices */}
-      {!isSmallDevice && (
-        <AnimatePresence>
-          {showAd && (
-            <motion.div
-              className={`fixed ${getAdPositionClasses()} w-auto max-w-xs rounded-xl shadow-2xl z-50 border-2 border-white/20 p-4 ${getAdStyle()}`}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              variants={adVariants}
+            {/* Navigation Buttons (Previous/Next) */}
+            <button
+                aria-label="Previous Slide"
+                onClick={() => setCurrentSlide((prev) => (prev - 1 + images.length) % images.length)}
+                className="absolute left-2 sm:left-4 top-1/2 transform -translate-y-1/2 bg-black/40 text-white p-2 rounded-full shadow-lg focus:outline-none focus:ring-2 focus:ring-white/50 hover:bg-black/60 transition-all duration-200 backdrop-blur-sm z-10"
             >
-              {/* Close Button */}
-              <motion.button
-                onClick={() => setShowAd(false)}
-                className="absolute -top-2 -right-2 bg-white rounded-full w-6 h-6 flex items-center justify-center shadow-md hover:bg-gray-100 transition-colors"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-              >
-                <span className="text-gray-800 text-sm font-bold">✕</span>
-              </motion.button>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+            </button>
+            <button
+                 aria-label="Next Slide"
+                onClick={() => setCurrentSlide((prev) => (prev + 1) % images.length)}
+                className="absolute right-2 sm:right-4 top-1/2 transform -translate-y-1/2 bg-black/40 text-white p-2 rounded-full shadow-lg focus:outline-none focus:ring-2 focus:ring-white/50 hover:bg-black/60 transition-all duration-200 backdrop-blur-sm z-10"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+            </button>
 
-              {getAdContent()}
-            </motion.div>
-          )}
-        </AnimatePresence>
-      )}
-
-      {/* Navigation Buttons */}
-      <button
-        onClick={() => setCurrentSlide((prev) => (prev - 1 + images.length) % images.length)}
-        className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/50 text-white p-2 rounded-full shadow-lg focus:outline-none hover:bg-black/70 transition-colors backdrop-blur-sm"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-        </svg>
-      </button>
-      <button
-        onClick={() => setCurrentSlide((prev) => (prev + 1) % images.length)}
-        className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/50 text-white p-2 rounded-full shadow-lg focus:outline-none hover:bg-black/70 transition-colors backdrop-blur-sm"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-        </svg>
-      </button>
-    </div>
-  );
+             {/* Optional: Slide Indicator Dots */}
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2 z-10">
+                {images.map((_, index) => (
+                    <button
+                        key={index}
+                        aria-label={`Go to slide ${index + 1}`}
+                        onClick={() => setCurrentSlide(index)}
+                        className={`w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full transition-colors duration-300 ${
+                            currentSlide === index ? 'bg-white shadow-md' : 'bg-white/50 hover:bg-white/75'
+                        }`}
+                    />
+                ))}
+            </div>
+        </div>
+    );
 };
 
 export default HeroSection;

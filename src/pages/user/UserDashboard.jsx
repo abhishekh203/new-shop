@@ -1,433 +1,855 @@
-import { useContext, useState, useEffect, useMemo } from "react";
-import { Link } from "react-router-dom";
-import Layout from "../../components/layout/Layout";
-import myContext from "../../context/myContext";
-import Loader from "../../components/loader/Loader";
-import { 
-  FiUser, FiMail, FiCalendar, FiShoppingBag, 
-  FiClock, FiDownload, FiChevronDown, FiChevronUp,
-  FiSearch, FiFilter, FiSun, FiMoon, FiCreditCard,
-  FiMapPin, FiPhone, FiPackage, FiRefreshCw
+// UserDashboard.js - Improved Version (Standalone)
+import React, { useContext, useState, useEffect, useMemo } from "react";
+import { Link } from "react-router-dom"; // Assuming BrowserRouter is setup in your main App
+import Layout from "../../components/layout/Layout"; // Your existing Layout path
+import myContext from "../../context/myContext"; // Your existing context path
+import Loader from "../../components/loader/Loader"; // Your existing Loader path
+import {
+    FiUser, FiMail, FiCalendar, FiShoppingBag,
+    FiClock, FiDownload, FiChevronDown, FiChevronUp,
+    FiSearch, FiFilter, FiSun, FiMoon, FiCreditCard,
+    FiMapPin, FiPhone, FiPackage, FiRefreshCw, FiEdit3
 } from "react-icons/fi";
-import { 
-  BsBoxSeam, BsCurrencyRupee, BsGraphUp, 
-  BsShieldCheck, BsQuestionCircle 
+import {
+    BsBoxSeam, BsCurrencyRupee, BsGraphUp,
+    BsShieldCheck, BsQuestionCircle, BsLock, BsPhone
 } from "react-icons/bs";
-import { 
-  FaCheckCircle, FaTimesCircle, FaShippingFast,
-  FaRegStar, FaStar, FaRegHeart, FaHeart
+import {
+    FaCheckCircle, FaTimesCircle, FaShippingFast,
+    FaRegStar, FaStar, FaRegHeart, FaHeart
 } from "react-icons/fa";
 import { RiRefund2Line, RiCustomerService2Line } from "react-icons/ri";
-import { MdOutlineLocalOffer, MdOutlineSecurity } from "react-icons/md";
-import { toast } from "react-hot-toast";
-import Chart from 'react-apexcharts';
+import { MdOutlineLocalOffer, MdOutlineSecurity, MdDevicesOther } from "react-icons/md";
+import { toast } from "react-hot-toast"; // Ensure Toaster is included in your Layout or App root
+// import Chart from 'react-apexcharts'; // Keep commented if not used or causes issues
 import { motion, AnimatePresence } from "framer-motion";
 
+// --- Reusable Components (Place these in the same file or import from separate files) ---
+
+// Stats Card Component
+const StatsCard = ({ title, value, icon, bgColor, textColor, footerText, footerIcon }) => {
+    // ... (Keep the StatsCard component code from the previous response)
+    const IconComponent = icon;
+    const FooterIcon = footerIcon;
+    return (
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm transition-colors duration-300">
+            <div className="flex items-center justify-between">
+                <div>
+                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{title}</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{value}</p>
+                </div>
+                <div className={`p-3 rounded-lg ${bgColor} ${textColor}`}>
+                    <IconComponent className="w-6 h-6" />
+                </div>
+            </div>
+            {footerText && (
+                <div className="mt-4 flex items-center text-sm text-gray-500 dark:text-gray-400">
+                    {FooterIcon && <FooterIcon className="mr-1.5 w-4 h-4" />}
+                    <span>{footerText}</span>
+                </div>
+            )}
+        </div>
+    );
+};
+
+// Product Card Component (for Wishlist / Recently Viewed)
+const ProductCard = ({ item, isFavorite, onToggleFavorite, onAddToCart, darkMode }) => {
+    // ... (Keep the ProductCard component code from the previous response)
+    const rating = 4; // Static rating for example
+    return (
+        <motion.div
+            className="bg-white dark:bg-gray-700 rounded-lg overflow-hidden shadow-sm border border-gray-200 dark:border-gray-600 transition-all duration-300 hover:shadow-md"
+            whileHover={{ y: -5 }}
+            layout // Add layout prop for animation if list changes
+        >
+            <div className="relative">
+                <img
+                    src={item.productImageUrl}
+                    alt={item.title}
+                    className="w-full h-48 object-cover"
+                    onError={(e) => {
+                        e.target.onerror = null; // prevent infinite loop if placeholder fails
+                        e.target.src = "https://via.placeholder.com/300/f0f0f0/cccccc?text=No+Image";
+                    }}
+                />
+                <button
+                    className="absolute top-3 right-3 bg-white dark:bg-gray-800 p-2 rounded-full shadow-md transition-colors duration-200 hover:bg-red-100 dark:hover:bg-red-900/50"
+                    onClick={(e) => { e.stopPropagation(); onToggleFavorite(item.id); }}
+                    aria-label={isFavorite ? "Remove from Wishlist" : "Add to Wishlist"}
+                >
+                    {isFavorite ? (
+                        <FaHeart className="text-red-500 w-4 h-4" />
+                    ) : (
+                        <FaRegHeart className="text-gray-500 dark:text-gray-300 w-4 h-4" />
+                    )}
+                </button>
+                 {item.category && (
+                    <div className="absolute bottom-3 left-3">
+                       <span className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs font-medium px-2.5 py-0.5 rounded capitalize">
+                            {item.category}
+                        </span>
+                    </div>
+                 )}
+            </div>
+            <div className="p-4">
+                <h3 className="font-medium text-gray-900 dark:text-white mb-1 line-clamp-1" title={item.title}>{item.title}</h3>
+                <div className="flex items-center mb-2">
+                    {[...Array(5)].map((_, i) => (
+                        i < rating ? ( // Use dynamic rating if available
+                            <FaStar key={i} className="w-4 h-4 text-yellow-400" />
+                        ) : (
+                            <FaRegStar key={i} className="w-4 h-4 text-yellow-400" />
+                        )
+                    ))}
+                    {/* Add review count if available */}
+                    {/* <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">(24)</span> */}
+                </div>
+                <div className="flex items-center justify-between">
+                    <span className="text-lg font-bold text-gray-900 dark:text-white">₹{Number(item.price).toFixed(2)}</span>
+                    <button
+                        onClick={() => onAddToCart(item)}
+                        className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium transition-colors duration-200"
+                    >
+                        Add to Cart
+                    </button>
+                </div>
+            </div>
+        </motion.div>
+    );
+};
+
+// Security Item Component
+const SecurityItem = ({ icon, title, description, buttonText, onClick, darkMode }) => {
+    // ... (Keep the SecurityItem component code from the previous response)
+     const IconComponent = icon;
+    return (
+        <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-center">
+                   <IconComponent className="w-6 h-6 mr-4 text-blue-500 flex-shrink-0" />
+                   <div>
+                       <h3 className="font-medium text-gray-900 dark:text-white mb-1">{title}</h3>
+                       <p className="text-gray-500 dark:text-gray-400 text-sm">
+                           {description}
+                       </p>
+                   </div>
+                </div>
+                <button
+                    onClick={onClick}
+                    className="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-white rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition text-sm w-full sm:w-auto flex-shrink-0"
+                >
+                    {buttonText}
+                </button>
+            </div>
+        </div>
+    );
+};
+
+// Order Card Component
+const OrderCard = ({
+    order,
+    expandedOrder,
+    onToggleExpand,
+    onGenerateInvoice,
+    onRequestRefund,
+    onTrackShipping,
+    onToggleFavorite,
+    favorites,
+    darkMode,
+    calculateTotalAmount,
+    handleAddToCart
+}) => {
+    // ... (Keep the OrderCard component code from the previous response)
+    const isExpanded = expandedOrder === order.id;
+    const totalAmount = useMemo(() => calculateTotalAmount(order), [order, calculateTotalAmount]);
+
+    const getStatusClasses = (status) => {
+        switch (status) {
+            case STATUS_DELIVERED: return 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-200';
+            case STATUS_PENDING: return 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-200';
+            case STATUS_CANCELLED: return 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-200';
+            case STATUS_REFUNDED: return 'bg-purple-100 dark:bg-purple-900/50 text-purple-800 dark:text-purple-200';
+            default: return 'bg-gray-100 dark:bg-gray-600 text-gray-800 dark:text-gray-200';
+        }
+    };
+
+     const getStatusIcon = (status) => {
+        switch (status) {
+            case STATUS_DELIVERED: return <FaCheckCircle className="mr-2" />;
+            case STATUS_PENDING: return <FiClock className="mr-2" />;
+            case STATUS_CANCELLED: return <FaTimesCircle className="mr-2" />;
+            case STATUS_REFUNDED: return <RiRefund2Line className="mr-2" />;
+            default: return <BsBoxSeam className="mr-2" />;
+        }
+    };
+
+    return (
+        <motion.div
+            layout // Animate layout changes
+            key={order.id}
+            className="bg-gray-50 dark:bg-gray-700 rounded-xl overflow-hidden shadow-sm transition-all duration-300 border border-gray-200 dark:border-gray-600"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            whileHover={{ y: -3, boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' }}
+        >
+            {/* Order Summary Header */}
+            <div
+                className="p-4 sm:p-6 cursor-pointer flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
+                onClick={() => onToggleExpand(order.id)}
+                role="button"
+                aria-expanded={isExpanded}
+                aria-controls={`order-details-${order.id}`}
+            >
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-center text-gray-900 dark:text-white mb-1 font-medium">
+                        <FiShoppingBag className="mr-2 text-blue-500 flex-shrink-0" />
+                        <span className="truncate" title={`Order #${order.id}`}>Order #{order.id.substring(0, 8)}...</span>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-gray-500 dark:text-gray-400 text-sm">
+                        <div className="flex items-center">
+                            <FiClock className="mr-1.5 flex-shrink-0" />
+                            <span>{new Date(order.date).toLocaleString()}</span>
+                        </div>
+                        <div className="flex items-center">
+                            <FiCreditCard className="mr-1.5 flex-shrink-0" />
+                            <span className="capitalize">{order.paymentMethod || 'N/A'}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 mt-2 sm:mt-0 w-full sm:w-auto">
+                    <div className="flex items-center justify-between sm:justify-start">
+                         <span className="sm:hidden text-sm text-gray-500 dark:text-gray-400">Total:</span>
+                        <div className="flex items-center">
+                            <BsCurrencyRupee className="mr-1 text-green-600 dark:text-green-400 text-lg" />
+                            <span className="font-bold text-lg text-gray-900 dark:text-white">
+                                {totalAmount.toFixed(2)}
+                            </span>
+                        </div>
+                    </div>
+                     <div className={`flex items-center px-3 py-1 rounded-full text-sm font-medium whitespace-nowrap justify-center ${getStatusClasses(order.status)}`}>
+                        {getStatusIcon(order.status)}
+                        <span className="capitalize">{order.status}</span>
+                    </div>
+                    <button
+                        className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition flex items-center justify-center text-sm p-2 rounded-full sm:bg-gray-100 sm:dark:bg-gray-600"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onToggleExpand(order.id);
+                        }}
+                        aria-label={isExpanded ? "Collapse order details" : "Expand order details"}
+                    >
+                        {isExpanded ? (
+                            <FiChevronUp className="w-5 h-5" />
+                        ) : (
+                            <FiChevronDown className="w-5 h-5" />
+                        )}
+                    </button>
+                </div>
+            </div>
+
+            {/* Order Details (Collapsible Content) */}
+            <AnimatePresence>
+                {isExpanded && (
+                    <motion.div
+                        id={`order-details-${order.id}`}
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.3, ease: "easeInOut" }}
+                        className="border-t border-gray-200 dark:border-gray-600 overflow-hidden"
+                    >
+                        <div className="p-4 sm:p-6 bg-white dark:bg-gray-800">
+                           {/* ... (rest of the expanded content: shipping, summary, items, actions) ... */}
+                           {/* Shipping Info & Order Summary */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                {/* Shipping Info */}
+                                <div>
+                                    <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
+                                        <FiMapPin className="mr-2 text-blue-500" />
+                                        Shipping Information
+                                    </h3>
+                                    <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-4 text-sm space-y-2">
+                                        <p className="text-gray-700 dark:text-gray-300">
+                                            <strong>Address:</strong> {order.shippingAddress || 'Not specified'}
+                                        </p>
+                                        <p className="text-gray-700 dark:text-gray-300">
+                                            <strong>Phone:</strong> {order.phoneNumber || 'Not specified'}
+                                        </p>
+                                    </div>
+                                </div>
+                                {/* Order Summary */}
+                                <div>
+                                    <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
+                                        <FiPackage className="mr-2 text-blue-500" />
+                                        Order Summary
+                                    </h3>
+                                    <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-4 text-sm space-y-2">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-gray-700 dark:text-gray-300">Subtotal:</span>
+                                            <span className="text-gray-900 dark:text-white font-medium">
+                                                ₹{totalAmount.toFixed(2)}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-gray-700 dark:text-gray-300">Shipping:</span>
+                                            <span className="text-gray-900 dark:text-white font-medium">₹0.00</span>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-gray-700 dark:text-gray-300">Tax:</span>
+                                            <span className="text-gray-900 dark:text-white font-medium">₹0.00</span>
+                                        </div>
+                                        <div className="flex justify-between items-center pt-3 mt-3 border-t border-gray-200 dark:border-gray-600">
+                                            <span className="text-base font-semibold text-gray-900 dark:text-white">Total:</span>
+                                            <span className="text-lg font-bold text-gray-900 dark:text-white">
+                                                ₹{totalAmount.toFixed(2)}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Order Items */}
+                            <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Order Items ({order.cartItems.length})</h3>
+                            <div className="space-y-4 mb-6">
+                                {order.cartItems.map((item, index) => (
+                                    <div key={item.id || index} className="flex flex-col sm:flex-row items-start sm:items-center bg-gray-100 dark:bg-gray-700 rounded-lg p-3 sm:p-4 gap-4 shadow-sm">
+                                        <div className="flex-shrink-0 relative">
+                                            <img
+                                                className="w-16 h-16 sm:w-20 sm:h-20 object-contain rounded-md border border-gray-200 dark:border-gray-500 bg-white dark:bg-gray-800"
+                                                src={item.productImageUrl}
+                                                alt={item.title}
+                                                onError={(e) => {
+                                                    e.target.onerror = null;
+                                                    e.target.src = "https://via.placeholder.com/100/f0f0f0/cccccc?text=No+Image";
+                                                }}
+                                            />
+                                            <button
+                                                className="absolute -top-2 -right-2 bg-white dark:bg-gray-800 p-1 rounded-full shadow-md transition-colors duration-200 hover:bg-red-100 dark:hover:bg-red-900/50"
+                                                onClick={(e) => { e.stopPropagation(); onToggleFavorite(item.id); }}
+                                                aria-label={favorites.includes(item.id) ? "Remove from Wishlist" : "Add to Wishlist"}
+                                            >
+                                                {favorites.includes(item.id) ? (
+                                                    <FaHeart className="text-red-500 w-4 h-4" />
+                                                ) : (
+                                                    <FaRegHeart className="text-gray-400 w-4 h-4" />
+                                                )}
+                                            </button>
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <h4 className="font-medium text-gray-900 dark:text-white text-sm sm:text-base line-clamp-2">{item.title}</h4>
+                                            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 capitalize">{item.category}</p>
+                                             <button
+                                                onClick={() => handleAddToCart(item)} // Add Buy Again functionality
+                                                className="mt-2 text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                                            >
+                                                Buy Again
+                                            </button>
+                                        </div>
+                                        <div className="text-left sm:text-right mt-2 sm:mt-0 w-full sm:w-auto">
+                                            <p className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white">
+                                                ₹{(Number(item.price) * Number(item.quantity)).toFixed(2)}
+                                            </p>
+                                            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">₹{Number(item.price).toFixed(2)} × {item.quantity}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-600">
+                                {(order.status === STATUS_PENDING || order.status === STATUS_DELIVERED) && ( // Example: Allow tracking if pending or delivered
+                                    <button
+                                        className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition flex items-center justify-center text-sm"
+                                        onClick={() => onTrackShipping(order.id)}
+                                    >
+                                        <FaShippingFast className="mr-2" />
+                                        Track Shipping
+                                    </button>
+                                )}
+                                {order.status === STATUS_DELIVERED && (
+                                    <button
+                                        className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition flex items-center justify-center text-sm"
+                                        onClick={() => onRequestRefund(order.id)}
+                                    >
+                                        <RiRefund2Line className="mr-2" />
+                                        Request Refund
+                                    </button>
+                                )}
+                                 <button
+                                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition flex items-center justify-center text-sm"
+                                    onClick={() => onGenerateInvoice(order)}
+                                >
+                                    <FiDownload className="mr-2" />
+                                    Download Invoice
+                                </button>
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </motion.div>
+    );
+};
+
+
+// --- Main Dashboard Component ---
+
+// Constants
+const WHATSAPP_SUPPORT_NUMBER = "+9779807677391"; // Example number
+const TAB_ORDERS = "orders";
+const TAB_WISHLIST = "wishlist";
+const TAB_RECENT = "recent";
+const TAB_SECURITY = "security";
+
+const STATUS_DELIVERED = 'delivered';
+const STATUS_PENDING = 'pending';
+const STATUS_CANCELLED = 'cancelled';
+const STATUS_REFUNDED = 'refunded';
+
 const UserDashboard = () => {
-    const user = JSON.parse(localStorage.getItem('users'));
+    // Get user from localStorage (ensure it's set during login in your app)
+    const user = useMemo(() => {
+        const storedUser = localStorage.getItem('users');
+        try {
+            return storedUser ? JSON.parse(storedUser) : null;
+        } catch (error) {
+            console.error("Failed to parse user from localStorage", error);
+            return null; // Handle parsing error
+        }
+    }, []); // Re-calculate only if localStorage changes (rarely needed unless updated elsewhere)
+
     const context = useContext(myContext);
-    const { loading, getAllOrder } = context;
+    const { loading = false, getAllOrder = [] } = context || {}; // Default values if context is not yet available
+
     const [expandedOrder, setExpandedOrder] = useState(null);
     const [searchTerm, setSearchTerm] = useState("");
     const [filterStatus, setFilterStatus] = useState("all");
     const [sortBy, setSortBy] = useState("newest");
-    const [activeTab, setActiveTab] = useState("orders");
-    const [favorites, setFavorites] = useState([]);
-    
-    // Dark mode state management
+    const [activeTab, setActiveTab] = useState(TAB_ORDERS);
+
+    // Favorites state: Needs persistence (e.g., API call on change, load from API/localStorage on mount)
+    const [favorites, setFavorites] = useState([]); // Initialize empty, load from persistent storage in useEffect
+
+    // Placeholder state for actual Wishlist and Recently Viewed items
+    // In a real app, fetch/load this data in useEffect
+    const [wishlistItems, setWishlistItems] = useState([]);
+    const [recentlyViewedItems, setRecentlyViewedItems] = useState([]);
+
+    // Load favorites, wishlist, recent items from storage/API on component mount
+    useEffect(() => {
+        // Example: Load favorites from localStorage
+        const savedFavorites = localStorage.getItem(`favorites_${user?.uid}`);
+        if (savedFavorites) {
+            try {
+                setFavorites(JSON.parse(savedFavorites));
+            } catch (e) { console.error("Failed to parse favorites"); }
+        }
+        // TODO: Load wishlistItems and recentlyViewedItems from your API or storage
+        // setWishlistItems(api.fetchWishlist(user?.uid));
+        // setRecentlyViewedItems(api.fetchRecent(user?.uid));
+    }, [user?.uid]); // Re-run if user changes
+
+
+     // Dark mode state management
     const [darkMode, setDarkMode] = useState(() => {
-        const savedMode = localStorage.getItem('darkMode');
-        if (savedMode !== null) return JSON.parse(savedMode);
-        return window.matchMedia('(prefers-color-scheme: dark)').matches;
+        try {
+            const savedMode = localStorage.getItem('darkMode');
+            if (savedMode !== null) return JSON.parse(savedMode);
+            return window.matchMedia?.('(prefers-color-scheme: dark)')?.matches ?? false;
+        } catch (error) {
+            console.error("Error reading dark mode preference:", error);
+            return false;
+        }
     });
 
-    // Apply dark mode class to document element
+    // Apply dark mode class
     useEffect(() => {
+        const root = document.documentElement;
         if (darkMode) {
-            document.documentElement.classList.add('dark');
+            root.classList.add('dark');
             localStorage.setItem('darkMode', 'true');
         } else {
-            document.documentElement.classList.remove('dark');
+            root.classList.remove('dark');
             localStorage.setItem('darkMode', 'false');
         }
     }, [darkMode]);
 
-    const toggleDarkMode = () => {
-        setDarkMode(!darkMode);
-    };
+    const toggleDarkMode = () => setDarkMode(prev => !prev);
 
-    // Calculate order total
-    const calculateTotalAmount = (order) => {
-        return order.cartItems.reduce((total, item) => {
-            return total + (Number(item.price) * Number(item.quantity));
-        }, 0);
-    };
+    // Memoized function for calculating total amount
+    const calculateTotalAmount = useMemo(() => {
+        return (order) => {
+            if (!order?.cartItems) return 0;
+            return order.cartItems.reduce((total, item) => {
+                const price = Number(item?.price) || 0;
+                const quantity = Number(item?.quantity) || 0;
+                return total + (price * quantity);
+            }, 0);
+        };
+    }, []);
 
-    // Filter and sort orders
+    // Memoized filtered and sorted orders
     const userOrders = useMemo(() => {
+        if (!Array.isArray(getAllOrder) || !user?.uid) return [];
         return getAllOrder
-            .filter((obj) => obj.userid === user?.uid)
-            .filter((order) => {
-                const matchesSearch = order.id.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                    order.cartItems.some((item) => 
-                        item.title.toLowerCase().includes(searchTerm.toLowerCase())
+            .filter(obj => obj?.userid === user.uid)
+            .filter(order => {
+                if (!order?.id || !Array.isArray(order.cartItems)) return false;
+                const searchLower = searchTerm.toLowerCase();
+                const matchesSearch = order.id.toLowerCase().includes(searchLower) ||
+                    order.cartItems.some(item =>
+                        item?.title?.toLowerCase().includes(searchLower)
                     );
-                const matchesStatus = filterStatus === "all" || order.status === filterStatus;
+                const matchesStatus = filterStatus === "all" || order.status?.toLowerCase() === filterStatus.toLowerCase();
                 return matchesSearch && matchesStatus;
             })
             .sort((a, b) => {
-                if (sortBy === "newest") return new Date(b.date) - new Date(a.date);
-                if (sortBy === "oldest") return new Date(a.date) - new Date(b.date);
-                if (sortBy === "highest") return calculateTotalAmount(b) - calculateTotalAmount(a);
-                if (sortBy === "lowest") return calculateTotalAmount(a) - calculateTotalAmount(b);
+                const dateA = a?.date ? new Date(a.date).getTime() : 0;
+                const dateB = b?.date ? new Date(b.date).getTime() : 0;
+                if (sortBy === "newest") return dateB - dateA;
+                if (sortBy === "oldest") return dateA - dateB;
+                const totalA = calculateTotalAmount(a);
+                const totalB = calculateTotalAmount(b);
+                if (sortBy === "highest") return totalB - totalA;
+                if (sortBy === "lowest") return totalA - totalB;
                 return 0;
             });
-    }, [getAllOrder, user?.uid, searchTerm, filterStatus, sortBy]);
+    }, [getAllOrder, user?.uid, searchTerm, filterStatus, sortBy, calculateTotalAmount]);
 
-    // Order statistics for chart
-    const statusStats = useMemo(() => ({
-        delivered: userOrders.filter(o => o.status === 'delivered').length,
-        pending: userOrders.filter(o => o.status === 'pending').length,
-        cancelled: userOrders.filter(o => o.status === 'cancelled').length,
-        refunded: userOrders.filter(o => o.status === 'refunded').length
-    }), [userOrders]);
+    // --- Derived State & Memos ---
+    const totalSpent = useMemo(() => userOrders.reduce((total, order) => total + calculateTotalAmount(order), 0), [userOrders, calculateTotalAmount]);
+    const statusStats = useMemo(() => {
+        const stats = { delivered: 0, pending: 0, cancelled: 0, refunded: 0 };
+        userOrders.forEach(o => { if (o?.status && stats.hasOwnProperty(o.status)) stats[o.status]++; });
+        return stats;
+    }, [userOrders]);
+    const lastOrderDate = useMemo(() => {
+        if (!userOrders.length || !userOrders[0]?.date) return 'N/A';
+        try { return new Date(userOrders[0].date).toLocaleDateString(); } catch { return 'Invalid Date'; }
+    }, [userOrders]);
 
-    // Chart configuration
-    const chartOptions = useMemo(() => ({
-        series: [{
-            name: 'Orders',
-            data: Object.values(statusStats)
-        }],
-        options: {
-            chart: {
-                type: 'donut',
-                height: 350,
-                toolbar: { show: false },
-                foreColor: darkMode ? '#e5e7eb' : '#374151'
-            },
-            plotOptions: {
-                pie: {
-                    donut: {
-                        size: '65%',
-                        labels: {
-                            show: true,
-                            total: {
-                                show: true,
-                                label: 'Total Orders',
-                                color: darkMode ? '#e5e7eb' : '#374151',
-                                formatter: (w) => w.globals.seriesTotals.reduce((a, b) => a + b, 0)
-                            }
-                        }
-                    }
-                }
-            },
-            dataLabels: { enabled: false },
-            colors: ['#10B981', '#F59E0B', '#EF4444', '#8B5CF6'],
-            labels: Object.keys(statusStats).map(s => s.charAt(0).toUpperCase() + s.slice(1)),
-            tooltip: { 
-                theme: darkMode ? 'dark' : 'light',
-                y: {
-                    formatter: (value) => `${value} orders`
-                }
-            },
-            legend: {
-                position: 'bottom',
-                labels: {
-                    colors: darkMode ? '#e5e7eb' : '#374151'
-                }
-            },
-            responsive: [{
-                breakpoint: 480,
-                options: {
-                    chart: {
-                        width: 300
-                    },
-                    legend: {
-                        position: 'bottom'
-                    }
-                }
-            }]
+     // --- Event Handlers ---
+    const toggleOrderExpand = (orderId) => setExpandedOrder(prev => (prev === orderId ? null : orderId));
+
+    // Invoice Generation (Same logic as before, using the constant)
+     const generateInvoice = (order) => {
+        // ... (Keep the generateInvoice function code from the previous response, ensure it uses WHATSAPP_SUPPORT_NUMBER)
+        if (!order || !user) {
+            toast.error("Cannot generate invoice: Missing order or user data.");
+            return;
         }
-    }), [statusStats, darkMode]);
-
-    // Toggle order details
-    const toggleOrderExpand = (orderId) => {
-        setExpandedOrder(expandedOrder === orderId ? null : orderId);
-    };
-
-    // Generate invoice
-    const generateInvoice = (order) => {
+        const toastId = toast.loading("Generating invoice...");
         try {
-            toast.loading("Generating invoice...");
-            
+            const orderIdShort = order.id ? order.id.substring(0, 8) : 'N/A';
+            const orderTotal = calculateTotalAmount(order).toFixed(2);
+            const itemsHTML = order.cartItems?.map(item => `
+                <tr>
+                    <td>${item.title || 'N/A'}</td>
+                    <td class="capitalize">${item.category || 'N/A'}</td>
+                    <td>₹${Number(item.price).toFixed(2) || '0.00'}</td>
+                    <td class="text-center">${item.quantity || 0}</td>
+                    <td class="text-right">₹${(Number(item.price || 0) * Number(item.quantity || 0)).toFixed(2)}</td>
+                </tr>
+            `).join('') || '<tr><td colspan="5" class="text-center">No items found</td></tr>';
+
+             // Use template literals and default values for safety
             const invoiceHTML = `
-                <html>
-                <head>
-                    <title>Invoice #${order.id.substring(0, 8)}</title>
-                    <style>
-                        body { font-family: 'Inter', Arial, sans-serif; margin: 0; padding: 20px; color: #111827; }
-                        .container { max-width: 800px; margin: 0 auto; }
-                        .invoice-header { display: flex; justify-content: space-between; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #e5e7eb; }
-                        .logo { font-size: 24px; font-weight: bold; color: #3b82f6; }
-                        .invoice-title { font-size: 28px; font-weight: bold; color: #111827; margin-bottom: 5px; }
-                        .invoice-meta { text-align: right; }
-                        .invoice-details { margin-bottom: 40px; }
-                        .customer-info, .shipping-info { margin-bottom: 25px; }
-                        .section-title { font-size: 18px; font-weight: 600; color: #111827; margin-bottom: 15px; padding-bottom: 5px; border-bottom: 1px solid #e5e7eb; }
-                        table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
-                        th { background-color: #f3f4f6; text-align: left; padding: 12px 8px; font-weight: 600; }
-                        td { padding: 12px 8px; border-bottom: 1px solid #e5e7eb; }
-                        .total-row { font-weight: bold; }
-                        .footer { margin-top: 50px; padding-top: 20px; border-top: 1px solid #e5e7eb; font-size: 12px; color: #6b7280; text-align: center; }
-                        .whatsapp-support { 
-                            margin: 20px 0; 
-                            padding: 15px;
-                            background-color: #f8f9fa;
-                            border-radius: 8px;
-                            text-align: center;
-                        }
-                        .whatsapp-link {
-                            display: inline-block;
-                            color: #25D366;
-                            font-weight: bold;
-                            text-decoration: none;
-                            margin-top: 10px;
-                            padding: 8px 15px;
-                            border: 1px solid #25D366;
-                            border-radius: 6px;
-                            transition: all 0.3s;
-                        }
-                        .whatsapp-link:hover {
-                            background-color: #25D366;
-                            color: white;
-                        }
-                        .badge {
-                            display: inline-block;
-                            padding: 4px 8px;
-                            border-radius: 12px;
-                            font-size: 12px;
-                            font-weight: 600;
-                        }
-                        .status-delivered { background-color: #D1FAE5; color: #065F46; }
-                        .status-pending { background-color: #FEF3C7; color: #92400E; }
-                        .status-cancelled { background-color: #FEE2E2; color: #991B1B; }
-                        .text-right { text-align: right; }
-                        .text-center { text-align: center; }
-                        .summary-box { background-color: #f9fafb; padding: 20px; border-radius: 8px; margin-top: 20px; }
-                        .summary-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
-                        .summary-total { font-size: 18px; font-weight: 600; padding-top: 10px; margin-top: 10px; border-top: 1px solid #e5e7eb; }
-                    </style>
-                </head>
-                <body>
-                    <div class="container">
-                        <div class="invoice-header">
-                            <div>
-                                <div class="logo">Digital Shop Nepal</div>
-                                <p>Kathmandu, Nepal</p>
-                            </div>
-                            <div class="invoice-meta">
-                                <h1 class="invoice-title">INVOICE</h1>
-                                <p><strong>Order #:</strong> ${order.id.substring(0, 8)}</p>
-                                <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
-                                <p><strong>Status:</strong> <span class="badge status-${order.status}">${order.status.charAt(0).toUpperCase() + order.status.slice(1)}</span></p>
-                            </div>
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Invoice #${orderIdShort}</title>
+                <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+                <style>
+                    body { font-family: 'Inter', Arial, sans-serif; margin: 0; padding: 20px; font-size: 14px; line-height: 1.6; color: #111827; background-color: #f9fafb; }
+                    .container { max-width: 800px; margin: 20px auto; background-color: #ffffff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+                    .invoice-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #e5e7eb; }
+                    .logo-section .logo { font-size: 24px; font-weight: bold; color: #3b82f6; margin-bottom: 5px; }
+                    .logo-section p { font-size: 12px; color: #6b7280; margin: 0; }
+                    .invoice-meta { text-align: right; }
+                    .invoice-title { font-size: 28px; font-weight: bold; color: #111827; margin-bottom: 8px; }
+                    .invoice-meta p { margin: 3px 0; font-size: 13px; color: #4b5563; }
+                    .invoice-meta p strong { color: #1f2937; }
+                    .details-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px; margin-bottom: 40px; }
+                    .customer-info, .shipping-info { margin-bottom: 0; } /* Removed bottom margin as grid handles gap */
+                    .section-title { font-size: 16px; font-weight: 600; color: #111827; margin-bottom: 15px; padding-bottom: 5px; border-bottom: 1px solid #e5e7eb; }
+                    .info-block p { margin: 4px 0; font-size: 14px; color: #374151; }
+                    .info-block p strong { font-weight: 500; color: #111827; }
+                    table { width: 100%; border-collapse: collapse; margin-bottom: 30px; font-size: 13px; }
+                    th { background-color: #f3f4f6; text-align: left; padding: 10px 8px; font-weight: 600; border-bottom: 2px solid #e5e7eb; }
+                    td { padding: 10px 8px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+                    tbody tr:last-child td { border-bottom: none; }
+                    .summary-box { background-color: #f9fafb; padding: 20px; border-radius: 8px; margin-top: 20px; }
+                    .summary-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
+                    .summary-row span:first-child { color: #4b5563; }
+                    .summary-row span:last-child { font-weight: 500; color: #1f2937; }
+                    .summary-total { font-size: 16px; font-weight: 600; padding-top: 10px; margin-top: 10px; border-top: 1px solid #e5e7eb; }
+                    .summary-total span:last-child { font-size: 18px; }
+                    .footer { margin-top: 50px; padding-top: 20px; border-top: 1px solid #e5e7eb; font-size: 12px; color: #6b7280; text-align: center; }
+                    .whatsapp-support { margin: 20px 0; padding: 15px; background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; text-align: center; }
+                    .whatsapp-support p { margin: 8px 0; font-size: 13px; }
+                    .whatsapp-link { display: inline-block; color: #16a34a; font-weight: bold; text-decoration: none; margin-top: 10px; padding: 8px 15px; border: 1px solid #16a34a; border-radius: 6px; transition: all 0.3s; }
+                    .whatsapp-link:hover { background-color: #16a34a; color: white; }
+                    .badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; line-height: 1; text-transform: capitalize; }
+                    .status-delivered { background-color: #D1FAE5; color: #065F46; }
+                    .status-pending { background-color: #FEF3C7; color: #92400E; }
+                    .status-cancelled { background-color: #FEE2E2; color: #991B1B; }
+                    .status-refunded { background-color: #EDE9FE; color: #5B21B6; }
+                    .text-right { text-align: right; }
+                    .text-center { text-align: center; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="invoice-header">
+                        <div class="logo-section">
+                            <div class="logo">Digital Shop Nepal</div>
+                            <p>Kathmandu, Nepal</p>
+                            <p>+977 1 5550000</p> {/* Example Contact */}
                         </div>
-                        
-                        <div class="invoice-details">
-                            <div style="display: flex; gap: 30px; margin-bottom: 30px;">
-                                <div class="customer-info" style="flex: 1;">
-                                    <h3 class="section-title">Customer Details</h3>
-                                    <p><strong>Name:</strong> ${user?.name}</p>
-                                    <p><strong>Email:</strong> ${user?.email}</p>
-                                </div>
-                                
-                                <div class="shipping-info" style="flex: 1;">
-                                    <h3 class="section-title">Shipping Details</h3>
-                                    <p><strong>Address:</strong> ${order.shippingAddress || 'Not specified'}</p>
-                                    <p><strong>Phone:</strong> ${order.phoneNumber || 'Not specified'}</p>
-                                    <p><strong>Payment:</strong> ${order.paymentMethod || 'Not specified'}</p>
-                                </div>
-                            </div>
-                            
-                            <h3 class="section-title">Order Items</h3>
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Item</th>
-                                        <th>Category</th>
-                                        <th>Price</th>
-                                        <th>Qty</th>
-                                        <th class="text-right">Total</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${order.cartItems.map(item => `
-                                        <tr>
-                                            <td>${item.title}</td>
-                                            <td>${item.category}</td>
-                                            <td>₹${item.price}</td>
-                                            <td>${item.quantity}</td>
-                                            <td class="text-right">₹${(item.price * item.quantity).toFixed(2)}</td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
-                            
-                            <div class="summary-box">
-                                <div class="summary-row">
-                                    <span>Subtotal:</span>
-                                    <span>₹${calculateTotalAmount(order).toFixed(2)}</span>
-                                </div>
-                                <div class="summary-row">
-                                    <span>Shipping:</span>
-                                    <span>₹0.00</span>
-                                </div>
-                                <div class="summary-row">
-                                    <span>Tax (0%):</span>
-                                    <span>₹0.00</span>
-                                </div>
-                                <div class="summary-row summary-total">
-                                    <span>Total:</span>
-                                    <span>₹${calculateTotalAmount(order).toFixed(2)}</span>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="footer">
-                            <div class="whatsapp-support">
-                                <p>Thank you for your purchase! We appreciate your business ❤️</p>
-                                <p>If you have any questions about your order or don't receive updates within 30 minutes, our support team is happy to help:</p>
-                                <a href="https://wa.me/9779807677391" class="whatsapp-link">
-                                    WhatsApp Support: +977 980-7677391
-                                </a>
-                            </div>
-                            <p>© ${new Date().getFullYear()} Digital Shop Nepal. All rights reserved.</p>
-                            <p style="margin-top: 10px;">This is a computer-generated invoice. No signature required.</p>
+                        <div class="invoice-meta">
+                            <h1 class="invoice-title">INVOICE</h1>
+                            <p><strong>Order #:</strong> ${orderIdShort}</p>
+                            <p><strong>Date:</strong> ${new Date(order.date || Date.now()).toLocaleDateString()}</p>
+                            <p><strong>Status:</strong> <span class="badge status-${order.status || 'unknown'}">${order.status || 'N/A'}</span></p>
                         </div>
                     </div>
-                </body>
-                </html>
+
+                    <div class="details-grid">
+                        <div class="customer-info info-block">
+                            <h3 class="section-title">Customer Details</h3>
+                            <p><strong>Name:</strong> ${user?.name || 'N/A'}</p>
+                            <p><strong>Email:</strong> ${user?.email || 'N/A'}</p>
+                            {/* Add Customer ID or other relevant info if available */}
+                        </div>
+
+                        <div class="shipping-info info-block">
+                            <h3 class="section-title">Shipping Details</h3>
+                            <p><strong>Address:</strong> ${order.shippingAddress || 'Not specified'}</p>
+                            <p><strong>Phone:</strong> ${order.phoneNumber || 'Not specified'}</p>
+                            <p><strong>Payment:</strong> <span class="capitalize">${order.paymentMethod || 'Not specified'}</span></p>
+                        </div>
+                    </div>
+
+                    <h3 class="section-title">Order Items</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Category</th>
+                                <th>Unit Price</th>
+                                <th class="text-center">Qty</th>
+                                <th class="text-right">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${itemsHTML}
+                        </tbody>
+                    </table>
+
+                    <div style="display: flex; justify-content: flex-end;">
+                       <div class="summary-box" style="width: 100%; max-width: 350px;">
+                            <div class="summary-row">
+                                <span>Subtotal:</span>
+                                <span>₹${orderTotal}</span>
+                            </div>
+                            <div class="summary-row">
+                                <span>Shipping:</span>
+                                <span>₹0.00</span>
+                            </div>
+                            <div class="summary-row">
+                                <span>Tax (0%):</span>
+                                <span>₹0.00</span>
+                            </div>
+                            <div class="summary-row summary-total">
+                                <span>Total:</span>
+                                <span>₹${orderTotal}</span>
+                            </div>
+                        </div>
+                     </div>
+
+                    <div class="footer">
+                        <div class="whatsapp-support">
+                            <p>Thank you for your purchase! We appreciate your business ❤️</p>
+                            <p>If you have any questions about your order or don't receive updates within 30 minutes, our support team is happy to help:</p>
+                            <a href="https://wa.me/${WHATSAPP_SUPPORT_NUMBER.replace('+', '')}" target="_blank" rel="noopener noreferrer" class="whatsapp-link">
+                                WhatsApp Support: ${WHATSAPP_SUPPORT_NUMBER}
+                            </a>
+                        </div>
+                        <p>© ${new Date().getFullYear()} Digital Shop Nepal. All rights reserved.</p>
+                        <p style="margin-top: 10px;">This is a computer-generated invoice. No signature required.</p>
+                    </div>
+                </div>
+            </body>
+            </html>
             `;
-            
-            // Create a Blob with the invoice HTML
-            const blob = new Blob([invoiceHTML], { type: 'text/html' });
+
+            const blob = new Blob([invoiceHTML], { type: 'text/html;charset=utf-8' });
             const url = URL.createObjectURL(blob);
-            
-            // Create a temporary anchor element to trigger download
+
             const a = document.createElement('a');
             a.href = url;
-            a.download = `invoice_${order.id.substring(0, 8)}.html`;
+            a.download = `invoice_${orderIdShort}.html`;
             document.body.appendChild(a);
             a.click();
-            
-            // Clean up
+
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
-            
-            toast.dismiss();
-            toast.success("Invoice downloaded!");
+
+            toast.success("Invoice downloaded!", { id: toastId });
         } catch (error) {
-            toast.dismiss();
-            toast.error("Failed to generate invoice");
+            toast.error("Failed to generate invoice", { id: toastId });
             console.error("Invoice generation error:", error);
         }
     };
 
+    // Refund Request
     const requestRefund = (orderId) => {
-        toast.success(`Refund requested for order #${orderId.substring(0, 8)}`);
+        toast.success(`Refund requested for order #${orderId.substring(0, 8)}. We'll contact you soon.`);
+        // TODO: Implement API call for refund request
     };
 
+    // Track Shipping
     const trackShipping = (orderId) => {
-        toast(`Tracking order #${orderId.substring(0, 8)}`, { 
-            icon: '🚚',
-            duration: 4000,
-            style: {
-                background: darkMode ? '#1F2937' : '#FFFFFF',
-                color: darkMode ? '#F3F4F6' : '#1F2937',
-            }
+        toast(`Tracking order #${orderId.substring(0, 8)}... (Feature Placeholder)`, {
+            icon: '🚚', duration: 3000,
+            style: { background: darkMode ? '#374151' : '#F3F4F6', color: darkMode ? '#F9FAFB' : '#1F2937' }
         });
+        // TODO: Implement actual tracking logic (e.g., open tracking URL)
     };
 
+    // Toggle Favorite
     const toggleFavorite = (productId) => {
-        setFavorites(prev => 
-            prev.includes(productId) 
-                ? prev.filter(id => id !== productId) 
-                : [...prev, productId]
-        );
+        const isCurrentlyFavorite = favorites.includes(productId);
+        const newFavorites = isCurrentlyFavorite
+            ? favorites.filter(id => id !== productId)
+            : [...favorites, productId];
+
+        setFavorites(newFavorites);
+        // Persist favorites
+        try {
+            localStorage.setItem(`favorites_${user?.uid}`, JSON.stringify(newFavorites));
+        } catch (e) { console.error("Failed to save favorites"); }
+
+        toast.success(isCurrentlyFavorite ? 'Removed from Wishlist' : 'Added to Wishlist', { duration: 1500 });
+        // TODO: Add API call to sync favorites with backend if needed
     };
 
-    const recentProducts = useMemo(() => {
-        const allProducts = userOrders.flatMap(order => order.cartItems);
-        return [...new Map(allProducts.map(item => [item.id, item])).values()]
-            .slice(0, 4);
-    }, [userOrders]);
+    // Add to Cart placeholder
+    const handleAddToCart = (item) => {
+        toast.success(`${item.title} added to cart! (Placeholder)`, { duration: 2000 });
+        // TODO: Implement actual 'add to cart' logic (likely using context dispatch)
+    };
 
+    // Security action placeholders
+    const handleChangePassword = () => toast.info("Navigate to Change Password page (Not Implemented)");
+    const handleSetup2FA = () => toast.info("Navigate to 2FA Setup page (Not Implemented)");
+    const handleManageDevices = () => toast.info("Navigate to Manage Devices page (Not Implemented)");
+    const handleContactSupport = () => toast.info("Navigate to Support page (Not Implemented)");
+
+     // Render Fallback if user data is not loaded
+    if (!user) {
+        return (
+            <Layout>
+                <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">
+                    {loading ? <Loader /> : (
+                        <div className="text-center p-8 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+                            <h2 className="text-xl font-semibold text-red-600 dark:text-red-400 mb-4">Access Denied</h2>
+                            <p className="text-gray-600 dark:text-gray-300 mb-6">Please log in to view your dashboard.</p>
+                             <Link to="/login" className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                                Go to Login
+                             </Link>
+                        </div>
+                    )}
+                </div>
+            </Layout>
+        );
+     }
+
+    // --- Main Render ---
     return (
         <Layout>
-            <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8 px-4 sm:px-6 lg:px-8 transition-colors duration-300">
-                {/* Dark Mode Toggle Button (Top Right) */}
+            {/* ... (Keep the main JSX structure from the previous response) ... */}
+             <div className={`min-h-screen bg-gray-100 dark:bg-gray-900 py-8 px-4 sm:px-6 lg:px-8 transition-colors duration-300 font-sans`}>
+                {/* Dark Mode Toggle Button */}
                 <div className="fixed top-4 right-4 z-50">
                     <motion.button
                         onClick={toggleDarkMode}
-                        className="p-3 rounded-full bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center"
+                        className="p-3 rounded-full bg-white dark:bg-gray-700 shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center border border-gray-200 dark:border-gray-600"
                         aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
-                        whileHover={{ scale: 1.05 }}
+                        whileHover={{ scale: 1.05, rotate: darkMode ? -15 : 15 }}
                         whileTap={{ scale: 0.95 }}
                     >
-                        {darkMode ? (
-                            <FiSun className="w-5 h-5 text-yellow-400" />
-                        ) : (
-                            <FiMoon className="w-5 h-5 text-gray-700" />
-                        )}
+                        <AnimatePresence mode="wait" initial={false}>
+                            <motion.div
+                                key={darkMode ? 'sun' : 'moon'}
+                                initial={{ opacity: 0, rotate: darkMode ? 90 : -90 }}
+                                animate={{ opacity: 1, rotate: 0 }}
+                                exit={{ opacity: 0, rotate: darkMode ? -90 : 90 }}
+                                transition={{ duration: 0.2 }}
+                            >
+                                {darkMode ? (
+                                    <FiSun className="w-5 h-5 text-yellow-400" />
+                                ) : (
+                                    <FiMoon className="w-5 h-5 text-gray-700" />
+                                )}
+                             </motion.div>
+                        </AnimatePresence>
                     </motion.button>
                 </div>
 
                 <div className="max-w-7xl mx-auto">
                     {/* User Profile Header */}
-                    <div className="flex flex-col md:flex-row gap-6 mb-8">
-                        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-6 w-full transition-colors duration-300">
-                            <div className="flex flex-col sm:flex-row items-center gap-6">
-                                <div className="relative">
-                                    <img 
-                                        src={user?.photoURL || "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"} 
-                                        alt="User" 
-                                        className="w-20 h-20 rounded-full border-4 border-blue-500 object-cover shadow-md"
-                                    />
-                                    <div className="absolute -bottom-2 -right-2 bg-blue-600 rounded-full p-2 shadow-md">
-                                        <FiUser className="text-white text-lg" />
+                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-6 mb-8 transition-colors duration-300">
+                        <div className="flex flex-col sm:flex-row items-center gap-6">
+                            <div className="relative flex-shrink-0">
+                                <img
+                                    src={user?.photoURL || "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"}
+                                    alt="User Profile"
+                                    className="w-20 h-20 rounded-full border-4 border-blue-500 object-cover shadow-md bg-gray-200 dark:bg-gray-600" // Added bg color
+                                    onError={(e) => {
+                                        e.target.onerror = null;
+                                        e.target.src = "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
+                                    }}
+                                />
+                                <div className="absolute -bottom-2 -right-2 bg-blue-600 rounded-full p-1.5 shadow-md border-2 border-white dark:border-gray-800">
+                                    <FiUser className="text-white text-base" />
+                                </div>
+                            </div>
+                            <div className="text-center sm:text-left flex-1">
+                                <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{user?.name || 'User Name'}</h1>
+                                <div className="space-y-1.5 text-gray-600 dark:text-gray-300 text-sm">
+                                    <div className="flex items-center justify-center sm:justify-start">
+                                        <FiMail className="mr-2 text-blue-500 flex-shrink-0" />
+                                        <span className="truncate" title={user?.email}>{user?.email || 'No Email'}</span>
+                                    </div>
+                                    <div className="flex items-center justify-center sm:justify-start">
+                                        <FiCalendar className="mr-2 text-blue-500 flex-shrink-0" />
+                                        <span>Member since: {user?.date ? new Date(user.date).toLocaleDateString() : 'N/A'}</span>
+                                    </div>
+                                    <div className="flex items-center justify-center sm:justify-start">
+                                        <FiShoppingBag className="mr-2 text-blue-500 flex-shrink-0" />
+                                        <span className="capitalize">{user?.role || 'User'}</span>
                                     </div>
                                 </div>
-                                <div className="text-center sm:text-left flex-1">
-                                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{user?.name}</h1>
-                                    <div className="space-y-1 text-gray-600 dark:text-gray-300">
-                                        <div className="flex items-center justify-center sm:justify-start">
-                                            <FiMail className="mr-2 text-blue-500" />
-                                            <span>{user?.email}</span>
-                                        </div>
-                                        <div className="flex items-center justify-center sm:justify-start">
-                                            <FiCalendar className="mr-2 text-blue-500" />
-                                            <span>Member since: {new Date(user?.date).toLocaleDateString()}</span>
-                                        </div>
-                                        <div className="flex items-center justify-center sm:justify-start">
-                                            <FiShoppingBag className="mr-2 text-blue-500" />
-                                            <span className="capitalize">{user?.role}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="flex flex-col sm:flex-row gap-3">
-                                    <Link 
-                                        to="/account/edit" 
-                                        className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition flex items-center justify-center"
-                                    >
-                                        Edit Profile
-                                    </Link>
-                                    <Link 
-                                        to="/account/security" 
-                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center justify-center"
-                                    >
-                                        Security
-                                    </Link>
-                                </div>
+                            </div>
+                            <div className="flex flex-col sm:flex-row gap-3 mt-4 sm:mt-0">
+                                {/* Make sure these Links point to valid routes in your app */}
+                                <Link
+                                    to="/account/edit" // Example Path
+                                    className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition text-sm flex items-center justify-center"
+                                >
+                                     <FiEdit3 className="mr-2 w-4 h-4"/> Edit Profile
+                                </Link>
+                                <button
+                                    onClick={() => setActiveTab(TAB_SECURITY)}
+                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm flex items-center justify-center"
+                                >
+                                    <MdOutlineSecurity className="mr-2 w-4 h-4"/> Security
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -435,45 +857,36 @@ const UserDashboard = () => {
                     {/* Dashboard Tabs */}
                     <div className="mb-8">
                         <div className="border-b border-gray-200 dark:border-gray-700">
-                            <nav className="-mb-px flex space-x-8 overflow-x-auto">
-                                <button
-                                    onClick={() => setActiveTab("orders")}
-                                    className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center ${activeTab === "orders" ? "border-blue-500 text-blue-600 dark:text-blue-400" : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"}`}
-                                >
-                                    <BsBoxSeam className="mr-2" />
-                                    My Orders
-                                    {userOrders.length > 0 && (
-                                        <span className="ml-2 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                                            {userOrders.length}
-                                        </span>
-                                    )}
-                                </button>
-                                <button
-                                    onClick={() => setActiveTab("wishlist")}
-                                    className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center ${activeTab === "wishlist" ? "border-blue-500 text-blue-600 dark:text-blue-400" : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"}`}
-                                >
-                                    <FaRegHeart className="mr-2" />
-                                    Wishlist
-                                    {favorites.length > 0 && (
-                                        <span className="ml-2 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                                            {favorites.length}
-                                        </span>
-                                    )}
-                                </button>
-                                <button
-                                    onClick={() => setActiveTab("recent")}
-                                    className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center ${activeTab === "recent" ? "border-blue-500 text-blue-600 dark:text-blue-400" : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"}`}
-                                >
-                                    <FiRefreshCw className="mr-2" />
-                                    Recently Viewed
-                                </button>
-                                <button
-                                    onClick={() => setActiveTab("security")}
-                                    className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center ${activeTab === "security" ? "border-blue-500 text-blue-600 dark:text-blue-400" : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"}`}
-                                >
-                                    <MdOutlineSecurity className="mr-2" />
-                                    Security
-                                </button>
+                            <nav className="-mb-px flex space-x-6 sm:space-x-8 overflow-x-auto scrollbar-hide">
+                                {[
+                                    { name: TAB_ORDERS, label: "My Orders", icon: BsBoxSeam, count: userOrders.length },
+                                    { name: TAB_WISHLIST, label: "Wishlist", icon: FaRegHeart, count: favorites.length }, // Use favorites count
+                                    { name: TAB_RECENT, label: "Recently Viewed", icon: FiRefreshCw, count: recentlyViewedItems.length },
+                                    { name: TAB_SECURITY, label: "Security", icon: MdOutlineSecurity, count: null }
+                                ].map(tab => {
+                                    const Icon = tab.icon;
+                                    const isActive = activeTab === tab.name;
+                                    return (
+                                        <button
+                                            key={tab.name}
+                                            onClick={() => setActiveTab(tab.name)}
+                                            className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center transition-colors duration-200 ${isActive
+                                                    ? "border-blue-500 text-blue-600 dark:text-blue-400"
+                                                    : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-700"
+                                                }`}
+                                            role="tab"
+                                            aria-selected={isActive}
+                                        >
+                                            <Icon className={`mr-2 w-4 h-4 ${isActive ? 'text-blue-500' : ''}`} />
+                                            {tab.label}
+                                            {tab.count !== null && tab.count > 0 && (
+                                                <span className={`ml-2 text-xs font-medium px-2 py-0.5 rounded-full ${isActive ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200' : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200'}`}>
+                                                    {tab.count}
+                                                </span>
+                                            )}
+                                        </button>
+                                    );
+                                })}
                             </nav>
                         </div>
                     </div>
@@ -485,96 +898,37 @@ const UserDashboard = () => {
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -10 }}
-                            transition={{ duration: 0.2 }}
+                            transition={{ duration: 0.25 }}
                         >
-                            {activeTab === "orders" && (
+                            {/* Orders Tab */}
+                            {activeTab === TAB_ORDERS && (
                                 <div>
                                     {/* Stats Cards */}
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                                        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm transition-colors duration-300">
-                                            <div className="flex items-center justify-between">
-                                                <div>
-                                                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Orders</p>
-                                                    <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{userOrders.length}</p>
-                                                </div>
-                                                <div className="p-3 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
-                                                    <BsBoxSeam className="w-6 h-6" />
-                                                </div>
-                                            </div>
-                                            <div className="mt-4 flex items-center text-sm text-gray-500 dark:text-gray-400">
-                                                <FiCalendar className="mr-1.5" />
-                                                <span>Last order: {userOrders[0] ? new Date(userOrders[0].date).toLocaleDateString() : 'N/A'}</span>
-                                            </div>
-                                        </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                                        <StatsCard title="Total Orders" value={userOrders.length} icon={BsBoxSeam} bgColor="bg-blue-100 dark:bg-blue-900/30" textColor="text-blue-600 dark:text-blue-400" footerText={`Last order: ${lastOrderDate}`} footerIcon={FiCalendar} />
+                                        <StatsCard title="Total Spent" value={`₹${totalSpent.toFixed(2)}`} icon={BsCurrencyRupee} bgColor="bg-green-100 dark:bg-green-900/30" textColor="text-green-600 dark:text-green-400" footerText={`Avg: ₹${(totalSpent / (userOrders.length || 1)).toFixed(2)}`} footerIcon={FiCreditCard} />
+                                        <StatsCard title="Delivered" value={statusStats.delivered} icon={FaCheckCircle} bgColor="bg-green-100 dark:bg-green-900/30" textColor="text-green-600 dark:text-green-400" footerText={`${userOrders.length ? Math.round((statusStats.delivered / userOrders.length) * 100) : 0}% success rate`} />
+                                        <StatsCard title="Pending" value={statusStats.pending} icon={FiClock} bgColor="bg-yellow-100 dark:bg-yellow-900/30" textColor="text-yellow-600 dark:text-yellow-400" footerText={`${statusStats.pending} active order${statusStats.pending !== 1 ? 's' : ''}`} />
+                                     </div>
 
-                                        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm transition-colors duration-300">
-                                            <div className="flex items-center justify-between">
-                                                <div>
-                                                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Spent</p>
-                                                    <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                                                        ₹{userOrders.reduce((total, order) => total + calculateTotalAmount(order), 0).toFixed(2)}
-                                                    </p>
-                                                </div>
-                                                <div className="p-3 rounded-lg bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400">
-                                                    <BsCurrencyRupee className="w-6 h-6" />
-                                                </div>
-                                            </div>
-                                            <div className="mt-4 flex items-center text-sm text-gray-500 dark:text-gray-400">
-                                                <FiCreditCard className="mr-1.5" />
-                                                <span>Average: ₹{(userOrders.reduce((total, order) => total + calculateTotalAmount(order), 0) / (userOrders.length || 1)).toFixed(2)}</span>
-                                            </div>
-                                        </div>
-
-                                        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm transition-colors duration-300">
-                                            <div className="flex items-center justify-between">
-                                                <div>
-                                                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Delivered</p>
-                                                    <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{statusStats.delivered}</p>
-                                                </div>
-                                                <div className="p-3 rounded-lg bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400">
-                                                    <FaCheckCircle className="w-6 h-6" />
-                                                </div>
-                                            </div>
-                                            <div className="mt-4 flex items-center text-sm text-gray-500 dark:text-gray-400">
-                                                <span className="text-green-500 dark:text-green-400">{userOrders.length ? Math.round((statusStats.delivered / userOrders.length) * 100) : 0}% success rate</span>
-                                            </div>
-                                        </div>
-
-                                        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm transition-colors duration-300">
-                                            <div className="flex items-center justify-between">
-                                                <div>
-                                                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Pending</p>
-                                                    <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{statusStats.pending}</p>
-                                                </div>
-                                                <div className="p-3 rounded-lg bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400">
-                                                    <FiClock className="w-6 h-6" />
-                                                </div>
-                                            </div>
-                                            <div className="mt-4 flex items-center text-sm text-gray-500 dark:text-gray-400">
-                                                <span className="text-amber-500 dark:text-amber-400">
-                                                    {statusStats.pending} active {statusStats.pending === 1 ? 'order' : 'orders'}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Orders Section */}
-                                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 transition-colors duration-300">
+                                     {/* Orders List Section */}
+                                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 sm:p-6 transition-colors duration-300">
                                         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
                                             <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center">
                                                 <BsBoxSeam className="mr-3 text-blue-500" />
                                                 Order History
                                             </h2>
 
+                                            {/* Filters */}
                                             <div className="flex flex-col sm:flex-row gap-3">
-                                                <div className="relative flex-1 min-w-[200px]">
+                                                <div className="relative flex-1 min-w-[180px]">
                                                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                        <FiSearch className="text-gray-400" />
+                                                        <FiSearch className="text-gray-400 w-4 h-4" />
                                                     </div>
                                                     <input
                                                         type="text"
                                                         placeholder="Search orders..."
-                                                        className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                        className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                                                         value={searchTerm}
                                                         onChange={(e) => setSearchTerm(e.target.value)}
                                                     />
@@ -582,20 +936,23 @@ const UserDashboard = () => {
 
                                                 <div className="flex gap-2">
                                                     <select
-                                                        className="border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                        className="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm appearance-none"
                                                         value={filterStatus}
                                                         onChange={(e) => setFilterStatus(e.target.value)}
+                                                        style={{ backgroundPosition: 'right 0.5rem center', backgroundSize: '1.2em', backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")` }}
                                                     >
                                                         <option value="all">All Status</option>
-                                                        <option value="delivered">Delivered</option>
-                                                        <option value="pending">Pending</option>
-                                                        <option value="cancelled">Cancelled</option>
+                                                        <option value={STATUS_DELIVERED}>Delivered</option>
+                                                        <option value={STATUS_PENDING}>Pending</option>
+                                                        <option value={STATUS_CANCELLED}>Cancelled</option>
+                                                        <option value={STATUS_REFUNDED}>Refunded</option>
                                                     </select>
 
                                                     <select
-                                                        className="border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                        className="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm appearance-none"
                                                         value={sortBy}
                                                         onChange={(e) => setSortBy(e.target.value)}
+                                                         style={{ backgroundPosition: 'right 0.5rem center', backgroundSize: '1.2em', backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")` }}
                                                     >
                                                         <option value="newest">Newest First</option>
                                                         <option value="oldest">Oldest First</option>
@@ -606,499 +963,233 @@ const UserDashboard = () => {
                                             </div>
                                         </div>
 
-                                        {loading && (
-                                            <div className="flex justify-center my-12">
-                                                <Loader />
-                                            </div>
-                                        )}
+                                        {loading && <Loader />}
 
-                                        {userOrders.length === 0 && !loading && (
-                                            <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-8 text-center shadow-sm transition-colors duration-300">
-                                                <div className="mx-auto w-24 h-24 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center mb-6">
-                                                    <BsBoxSeam className="w-12 h-12 text-gray-400 dark:text-gray-300" />
+                                        {!loading && userOrders.length === 0 && (
+                                            <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-8 text-center shadow-inner transition-colors duration-300 my-6 border border-gray-200 dark:border-gray-600">
+                                                <div className="mx-auto w-16 h-16 sm:w-20 sm:h-20 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center mb-6">
+                                                    <BsBoxSeam className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400 dark:text-gray-300" />
                                                 </div>
-                                                <h3 className="text-xl text-gray-700 dark:text-gray-300 mb-2">No orders yet</h3>
-                                                <p className="text-gray-500 dark:text-gray-400 mb-6">You haven't placed any orders yet. Start shopping to see your orders here.</p>
-                                                <Link 
-                                                    to="/" 
-                                                    className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                                                <h3 className="text-lg sm:text-xl font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                    {searchTerm || filterStatus !== "all" ? "No orders match your filters" : "You haven't placed any orders yet"}
+                                                </h3>
+                                                <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400 mb-6">
+                                                    {searchTerm || filterStatus !== "all" ? "Try adjusting your search or filter." : "Start shopping to see your order history here."}
+                                                </p>
+                                                <Link
+                                                    to="/" // Link to homepage or products page
+                                                    className="inline-flex items-center px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium shadow-sm"
                                                 >
                                                     Start Shopping
                                                 </Link>
                                             </div>
                                         )}
 
-                                        <div className="space-y-4">
-                                            {userOrders.map((order) => (
-                                                <motion.div 
-                                                    key={order.id} 
-                                                    className="bg-gray-50 dark:bg-gray-700 rounded-xl overflow-hidden shadow-sm transition-all duration-300 border border-gray-200 dark:border-gray-600"
-                                                    whileHover={{ y: -2 }}
-                                                >
-                                                    {/* Order Summary */}
-                                                    <div 
-                                                        className="p-6 cursor-pointer flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
-                                                        onClick={() => toggleOrderExpand(order.id)}
-                                                    >
-                                                        <div className="flex-1 min-w-0">
-                                                            <div className="flex items-center text-gray-900 dark:text-white mb-1">
-                                                                <FiShoppingBag className="mr-2 text-blue-500" />
-                                                                <span className="font-medium truncate">Order #{order.id.substring(0, 8)}</span>
-                                                            </div>
-                                                            <div className="flex flex-wrap items-center gap-4 text-gray-500 dark:text-gray-400 text-sm">
-                                                                <div className="flex items-center">
-                                                                    <FiClock className="mr-1.5" />
-                                                                    <span>{new Date(order.date).toLocaleString()}</span>
-                                                                </div>
-                                                                <div className="flex items-center">
-                                                                    <FiCreditCard className="mr-1.5" />
-                                                                    <span className="capitalize">{order.paymentMethod || 'Not specified'}</span>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        
-                                                        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                                                            <div className="flex items-center">
-                                                                <BsCurrencyRupee className="mr-2 text-green-500" />
-                                                                <span className="font-bold text-gray-900 dark:text-white">
-                                                                    ₹{calculateTotalAmount(order).toFixed(2)}
-                                                                </span>
-                                                            </div>
-                                                            <div className={`flex items-center px-3 py-1 rounded-full text-sm ${
-                                                                order.status === 'delivered' 
-                                                                    ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' 
-                                                                    : order.status === 'pending'
-                                                                    ? 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200'
-                                                                    : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'
-                                                            }`}>
-                                                                {order.status === 'delivered' ? (
-                                                                    <FaCheckCircle className="mr-2" />
-                                                                ) : (
-                                                                    <FaTimesCircle className="mr-2" />
-                                                                )}
-                                                                <span className="capitalize">{order.status}</span>
-                                                            </div>
-                                                            <button 
-                                                                className="text-blue-500 hover:text-blue-700 dark:hover:text-blue-400 transition flex items-center text-sm"
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    toggleOrderExpand(order.id);
-                                                                }}
-                                                            >
-                                                                {expandedOrder === order.id ? (
-                                                                    <FiChevronUp className="ml-1" />
-                                                                ) : (
-                                                                    <FiChevronDown className="ml-1" />
-                                                                )}
-                                                            </button>
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Order Details (Collapsible) */}
-                                                    <AnimatePresence>
-                                                        {expandedOrder === order.id && (
-                                                            <motion.div 
-                                                                initial={{ opacity: 0, height: 0 }}
-                                                                animate={{ opacity: 1, height: 'auto' }}
-                                                                exit={{ opacity: 0, height: 0 }}
-                                                                transition={{ duration: 0.2 }}
-                                                                className="border-t border-gray-200 dark:border-gray-600 overflow-hidden"
-                                                            >
-                                                                <div className="p-6">
-                                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-                                                                        <div>
-                                                                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                                                                                <FiMapPin className="mr-2 text-blue-500" />
-                                                                                Shipping Information
-                                                                            </h3>
-                                                                            <div className="bg-gray-100 dark:bg-gray-600/30 rounded-lg p-4">
-                                                                                <p className="text-gray-700 dark:text-gray-300 mb-2">
-                                                                                    <strong>Address:</strong> {order.shippingAddress || 'Not specified'}
-                                                                                </p>
-                                                                                <p className="text-gray-700 dark:text-gray-300 mb-2">
-                                                                                    <strong>Phone:</strong> {order.phoneNumber || 'Not specified'}
-                                                                                </p>
-                                                                                <p className="text-gray-700 dark:text-gray-300">
-                                                                                    <strong>Payment Method:</strong> {order.paymentMethod || 'Not specified'}
-                                                                                </p>
-                                                                            </div>
-                                                                        </div>
-                                                                        <div>
-                                                                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                                                                                <FiPackage className="mr-2 text-blue-500" />
-                                                                                Order Summary
-                                                                            </h3>
-                                                                            <div className="bg-gray-100 dark:bg-gray-600/30 rounded-lg p-4">
-                                                                                <div className="flex justify-between items-center mb-2">
-                                                                                    <span className="text-gray-700 dark:text-gray-300">Subtotal:</span>
-                                                                                    <span className="text-gray-900 dark:text-white">
-                                                                                        ₹{calculateTotalAmount(order).toFixed(2)}
-                                                                                    </span>
-                                                                                </div>
-                                                                                <div className="flex justify-between items-center mb-2">
-                                                                                    <span className="text-gray-700 dark:text-gray-300">Shipping:</span>
-                                                                                    <span className="text-gray-900 dark:text-white">₹0.00</span>
-                                                                                </div>
-                                                                                <div className="flex justify-between items-center mb-2">
-                                                                                    <span className="text-gray-700 dark:text-gray-300">Tax:</span>
-                                                                                    <span className="text-gray-900 dark:text-white">₹0.00</span>
-                                                                                </div>
-                                                                                <div className="flex justify-between items-center pt-4 mt-4 border-t border-gray-200 dark:border-gray-600">
-                                                                                    <span className="text-lg font-semibold text-gray-900 dark:text-white">Total:</span>
-                                                                                    <span className="text-xl font-bold text-gray-900 dark:text-white">
-                                                                                        ₹{calculateTotalAmount(order).toFixed(2)}
-                                                                                    </span>
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-
-                                                                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Order Items</h3>
-                                                                    <div className="space-y-4 mb-8">
-                                                                        {order.cartItems.map((item, index) => (
-                                                                            <div key={index} className="flex flex-col md:flex-row items-start md:items-center bg-white dark:bg-gray-600 rounded-lg p-4 gap-4 shadow-sm">
-                                                                                <div className="flex-shrink-0 relative">
-                                                                                    <img
-                                                                                        className="w-20 h-20 object-contain rounded-lg border border-gray-200 dark:border-gray-500"
-                                                                                        src={item.productImageUrl}
-                                                                                        alt={item.title}
-                                                                                        onError={(e) => {
-                                                                                            e.target.src = "https://via.placeholder.com/100?text=No+Image";
-                                                                                        }}
-                                                                                    />
-                                                                                    <button 
-                                                                                        className="absolute -top-2 -right-2 bg-white dark:bg-gray-700 p-1 rounded-full shadow-md"
-                                                                                        onClick={(e) => {
-                                                                                            e.stopPropagation();
-                                                                                            toggleFavorite(item.id);
-                                                                                        }}
-                                                                                    >
-                                                                                        {favorites.includes(item.id) ? (
-                                                                                            <FaHeart className="text-red-500 w-4 h-4" />
-                                                                                        ) : (
-                                                                                            <FaRegHeart className="text-gray-400 w-4 h-4" />
-                                                                                        )}
-                                                                                    </button>
-                                                                                </div>
-                                                                                <div className="flex-1 min-w-0">
-                                                                                    <h4 className="font-medium text-gray-900 dark:text-white">{item.title}</h4>
-                                                                                    <p className="text-sm text-gray-500 dark:text-gray-400 capitalize">{item.category}</p>
-                                                                                    <div className="flex items-center mt-2">
-                                                                                        {[...Array(5)].map((_, i) => (
-                                                                                            i < 4 ? (
-                                                                                                <FaStar key={i} className="w-4 h-4 text-yellow-400" />
-                                                                                            ) : (
-                                                                                                <FaRegStar key={i} className="w-4 h-4 text-yellow-400" />
-                                                                                            )
-                                                                                        ))}
-                                                                                        <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">(24)</span>
-                                                                                    </div>
-                                                                                </div>
-                                                                                <div className="md:text-right">
-                                                                                    <p className="text-lg font-bold text-gray-900 dark:text-white">
-                                                                                        ₹{(item.price * item.quantity).toFixed(2)}
-                                                                                    </p>
-                                                                                    <p className="text-sm text-gray-500 dark:text-gray-400">₹{item.price} × {item.quantity}</p>
-                                                                                </div>
-                                                                            </div>
-                                                                        ))}
-                                                                    </div>
-
-                                                                    <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-600">
-                                                                        {order.status === 'pending' && (
-                                                                            <button 
-                                                                                className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition flex items-center justify-center"
-                                                                                onClick={() => trackShipping(order.id)}
-                                                                            >
-                                                                                <FaShippingFast className="mr-2" />
-                                                                                Track Shipping
-                                                                            </button>
-                                                                        )}
-                                                                        {order.status === 'delivered' && (
-                                                                            <button 
-                                                                                className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition flex items-center justify-center"
-                                                                                onClick={() => requestRefund(order.id)}
-                                                                            >
-                                                                                <RiRefund2Line className="mr-2" />
-                                                                                Request Refund
-                                                                            </button>
-                                                                        )}
-                                                                        <button 
-                                                                            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition flex items-center justify-center"
-                                                                            onClick={() => generateInvoice(order)}
-                                                                        >
-                                                                            <FiDownload className="mr-2" />
-                                                                            Download Invoice
-                                                                        </button>
-                                                                    </div>
-                                                                </div>
-                                                            </motion.div>
-                                                        )}
-                                                    </AnimatePresence>
-                                                </motion.div>
-                                            ))}
-                                        </div>
+                                        {!loading && userOrders.length > 0 && (
+                                            <div className="space-y-4">
+                                                <AnimatePresence initial={false}>
+                                                    {userOrders.map((order) => (
+                                                        <OrderCard
+                                                            key={order.id}
+                                                            order={order}
+                                                            expandedOrder={expandedOrder}
+                                                            onToggleExpand={toggleOrderExpand}
+                                                            onGenerateInvoice={generateInvoice}
+                                                            onRequestRefund={requestRefund}
+                                                            onTrackShipping={trackShipping}
+                                                            onToggleFavorite={toggleFavorite}
+                                                            favorites={favorites}
+                                                            darkMode={darkMode}
+                                                            calculateTotalAmount={calculateTotalAmount}
+                                                            handleAddToCart={handleAddToCart}
+                                                        />
+                                                    ))}
+                                                </AnimatePresence>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             )}
 
-                            {activeTab === "wishlist" && (
-                                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 transition-colors duration-300">
-                                    <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
+                            {/* Wishlist Tab */}
+                             {activeTab === TAB_WISHLIST && (
+                                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 sm:p-6 transition-colors duration-300">
+                                    {/* ... (Wishlist Tab JSX - same as before) ... */}
+                                     <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
                                         <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center">
-                                            <FaRegHeart className="mr-3 text-red-500" />
+                                            <FaHeart className="mr-3 text-red-500" />
                                             Your Wishlist
                                         </h2>
-                                        <p className="text-gray-500 dark:text-gray-400">
-                                            {favorites.length} {favorites.length === 1 ? 'item' : 'items'} saved
+                                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                                            {favorites.length} item(s) saved
                                         </p>
                                     </div>
+
+                                    {/* You might want a loading state specific to wishlist items */}
+                                    {/* {wishlistLoading && <Loader />} */}
 
                                     {favorites.length === 0 ? (
-                                        <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-8 text-center shadow-sm transition-colors duration-300">
-                                            <div className="mx-auto w-24 h-24 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center mb-6">
-                                                <FaRegHeart className="w-12 h-12 text-gray-400 dark:text-gray-300" />
+                                        <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-8 text-center shadow-inner transition-colors duration-300 my-6 border border-gray-200 dark:border-gray-600">
+                                            <div className="mx-auto w-16 h-16 sm:w-20 sm:h-20 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center mb-6">
+                                                <FaRegHeart className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400 dark:text-gray-300" />
                                             </div>
-                                            <h3 className="text-xl text-gray-700 dark:text-gray-300 mb-2">Your wishlist is empty</h3>
-                                            <p className="text-gray-500 dark:text-gray-400 mb-6">Save items you love by clicking the heart icon.</p>
-                                            <Link 
-                                                to="/" 
-                                                className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                                            <h3 className="text-lg sm:text-xl font-medium text-gray-700 dark:text-gray-300 mb-2">Your wishlist is empty</h3>
+                                            <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400 mb-6">Save items you love by clicking the heart icon.</p>
+                                            <Link
+                                                to="/"
+                                                className="inline-flex items-center px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium shadow-sm"
                                             >
                                                 Browse Products
                                             </Link>
                                         </div>
                                     ) : (
                                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                            {recentProducts.filter(item => favorites.includes(item.id)).map((item) => (
-                                                <motion.div 
+                                            <AnimatePresence>
+                                            {/* Map over actual wishlist items if loaded, otherwise show placeholder */}
+                                            {/* For now, using placeholder items filtered by favorites state */}
+                                            {[
+                                                { id: 'prod1', title: 'Premium Wireless Mouse', category: 'Electronics', price: '45.99', quantity: 1, productImageUrl: 'https://via.placeholder.com/100/eeeeee/808080?text=Mouse' },
+                                                { id: 'prod4', title: 'Stainless Steel Water Bottle', category: 'Home Goods', price: '19.95', quantity: 1, productImageUrl: 'https://via.placeholder.com/100/eeeeee/808080?text=Bottle' },
+                                                 { id: 'prod5', title: 'Coffee Maker Deluxe', category: 'Home Appliances', price: '120.00', quantity: 1, productImageUrl: 'https://via.placeholder.com/100/eeeeee/808080?text=Coffee' } // Example item not in favorites
+                                            ]
+                                            .filter(item => favorites.includes(item.id)) // Filter based on favorites state
+                                            .map((item) => (
+                                                <ProductCard
                                                     key={item.id}
-                                                    className="bg-white dark:bg-gray-700 rounded-lg overflow-hidden shadow-sm border border-gray-200 dark:border-gray-600 transition-all duration-300 hover:shadow-md"
-                                                    whileHover={{ y: -5 }}
-                                                >
-                                                    <div className="relative">
-                                                        <img
-                                                            src={item.productImageUrl}
-                                                            alt={item.title}
-                                                            className="w-full h-48 object-cover"
-                                                            onError={(e) => {
-                                                                e.target.src = "https://via.placeholder.com/300?text=No+Image";
-                                                            }}
-                                                        />
-                                                        <button 
-                                                            className="absolute top-3 right-3 bg-white dark:bg-gray-800 p-2 rounded-full shadow-md"
-                                                            onClick={() => toggleFavorite(item.id)}
-                                                        >
-                                                            <FaHeart className="text-red-500 w-4 h-4" />
-                                                        </button>
-                                                        <div className="absolute bottom-3 left-3">
-                                                            <span className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs font-medium px-2.5 py-0.5 rounded">
-                                                                {item.category}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                    <div className="p-4">
-                                                        <h3 className="font-medium text-gray-900 dark:text-white mb-1 line-clamp-1">{item.title}</h3>
-                                                        <div className="flex items-center mb-2">
-                                                            {[...Array(5)].map((_, i) => (
-                                                                i < 4 ? (
-                                                                    <FaStar key={i} className="w-4 h-4 text-yellow-400" />
-                                                                ) : (
-                                                                    <FaRegStar key={i} className="w-4 h-4 text-yellow-400" />
-                                                                )
-                                                            ))}
-                                                            <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">(24)</span>
-                                                        </div>
-                                                        <div className="flex items-center justify-between">
-                                                            <span className="text-lg font-bold text-gray-900 dark:text-white">₹{item.price}</span>
-                                                            <button className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">
-                                                                Add to Cart
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                </motion.div>
+                                                    item={item}
+                                                    isFavorite={true} // It's in the wishlist, so always true here
+                                                    onToggleFavorite={toggleFavorite} // Still allow removal
+                                                    onAddToCart={handleAddToCart}
+                                                    darkMode={darkMode}
+                                                />
                                             ))}
+                                            </AnimatePresence>
                                         </div>
                                     )}
                                 </div>
                             )}
 
-                            {activeTab === "recent" && (
-                                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 transition-colors duration-300">
-                                    <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
+                            {/* Recently Viewed Tab */}
+                             {activeTab === TAB_RECENT && (
+                                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 sm:p-6 transition-colors duration-300">
+                                     {/* ... (Recently Viewed Tab JSX - same as before) ... */}
+                                     <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
                                         <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center">
                                             <FiRefreshCw className="mr-3 text-blue-500" />
-                                            Recently Viewed
+                                            Recently Viewed Items
                                         </h2>
-                                        <p className="text-gray-500 dark:text-gray-400">
-                                            {recentProducts.length} {recentProducts.length === 1 ? 'item' : 'items'}
+                                         <p className="text-sm text-gray-500 dark:text-gray-400">
+                                            {recentlyViewedItems.length} item(s)
                                         </p>
                                     </div>
 
-                                    {recentProducts.length === 0 ? (
-                                        <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-8 text-center shadow-sm transition-colors duration-300">
-                                            <div className="mx-auto w-24 h-24 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center mb-6">
-                                                <BsQuestionCircle className="w-12 h-12 text-gray-400 dark:text-gray-300" />
+                                    {/* {recentLoading && <Loader />} */}
+
+                                    {recentlyViewedItems.length === 0 ? (
+                                        <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-8 text-center shadow-inner transition-colors duration-300 my-6 border border-gray-200 dark:border-gray-600">
+                                            <div className="mx-auto w-16 h-16 sm:w-20 sm:h-20 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center mb-6">
+                                                <BsQuestionCircle className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400 dark:text-gray-300" />
                                             </div>
-                                            <h3 className="text-xl text-gray-700 dark:text-gray-300 mb-2">No recently viewed items</h3>
-                                            <p className="text-gray-500 dark:text-gray-400 mb-6">Browse products to see them here.</p>
-                                            <Link 
-                                                to="/" 
-                                                className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                                            <h3 className="text-lg sm:text-xl font-medium text-gray-700 dark:text-gray-300 mb-2">No recently viewed items</h3>
+                                            <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400 mb-6">Your recently viewed products will appear here as you browse.</p>
+                                            <Link
+                                                to="/"
+                                                className="inline-flex items-center px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium shadow-sm"
                                             >
                                                 Browse Products
                                             </Link>
                                         </div>
                                     ) : (
                                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                            {recentProducts.map((item) => (
-                                                <motion.div 
-                                                    key={item.id}
-                                                    className="bg-white dark:bg-gray-700 rounded-lg overflow-hidden shadow-sm border border-gray-200 dark:border-gray-600 transition-all duration-300 hover:shadow-md"
-                                                    whileHover={{ y: -5 }}
-                                                >
-                                                    <div className="relative">
-                                                        <img
-                                                            src={item.productImageUrl}
-                                                            alt={item.title}
-                                                            className="w-full h-48 object-cover"
-                                                            onError={(e) => {
-                                                                e.target.src = "https://via.placeholder.com/300?text=No+Image";
-                                                            }}
-                                                        />
-                                                        <button 
-                                                            className="absolute top-3 right-3 bg-white dark:bg-gray-800 p-2 rounded-full shadow-md"
-                                                            onClick={() => toggleFavorite(item.id)}
-                                                        >
-                                                            {favorites.includes(item.id) ? (
-                                                                <FaHeart className="text-red-500 w-4 h-4" />
-                                                            ) : (
-                                                                <FaRegHeart className="text-gray-400 w-4 h-4" />
-                                                            )}
-                                                        </button>
-                                                        <div className="absolute bottom-3 left-3">
-                                                            <span className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs font-medium px-2.5 py-0.5 rounded">
-                                                                {item.category}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                    <div className="p-4">
-                                                        <h3 className="font-medium text-gray-900 dark:text-white mb-1 line-clamp-1">{item.title}</h3>
-                                                        <div className="flex items-center mb-2">
-                                                            {[...Array(5)].map((_, i) => (
-                                                                i < 4 ? (
-                                                                    <FaStar key={i} className="w-4 h-4 text-yellow-400" />
-                                                                ) : (
-                                                                    <FaRegStar key={i} className="w-4 h-4 text-yellow-400" />
-                                                                )
-                                                            ))}
-                                                            <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">(24)</span>
-                                                        </div>
-                                                        <div className="flex items-center justify-between">
-                                                            <span className="text-lg font-bold text-gray-900 dark:text-white">₹{item.price}</span>
-                                                            <button className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">
-                                                                Add to Cart
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                </motion.div>
-                                            ))}
+                                             <AnimatePresence>
+                                                {recentlyViewedItems.map((item) => (
+                                                    <ProductCard
+                                                        key={item.id}
+                                                        item={item}
+                                                        isFavorite={favorites.includes(item.id)}
+                                                        onToggleFavorite={toggleFavorite}
+                                                        onAddToCart={handleAddToCart}
+                                                        darkMode={darkMode}
+                                                    />
+                                                ))}
+                                            </AnimatePresence>
                                         </div>
                                     )}
                                 </div>
                             )}
 
-                            {activeTab === "security" && (
-                                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 transition-colors duration-300">
-                                    <div className="flex flex-col md:flex-row gap-8">
-                                        <div className="md:w-2/3">
+
+                            {/* Security Tab */}
+                             {activeTab === TAB_SECURITY && (
+                                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 sm:p-6 transition-colors duration-300">
+                                     {/* ... (Security Tab JSX - same as before) ... */}
+                                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                                        {/* Left Side: Security Settings */}
+                                        <div className="lg:col-span-2">
                                             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center">
                                                 <MdOutlineSecurity className="mr-3 text-blue-500" />
                                                 Account Security
                                             </h2>
-
                                             <div className="space-y-6">
-                                                <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-6">
-                                                    <div className="flex items-start justify-between">
-                                                        <div>
-                                                            <h3 className="font-medium text-gray-900 dark:text-white mb-1">Password</h3>
-                                                            <p className="text-gray-500 dark:text-gray-400 text-sm">
-                                                                Last changed: 3 months ago
-                                                            </p>
-                                                        </div>
-                                                        <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm">
-                                                            Change Password
-                                                        </button>
-                                                    </div>
-                                                </div>
-
-                                                <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-6">
-                                                    <div className="flex items-start justify-between">
-                                                        <div>
-                                                            <h3 className="font-medium text-gray-900 dark:text-white mb-1">Two-Factor Authentication</h3>
-                                                            <p className="text-gray-500 dark:text-gray-400 text-sm">
-                                                                Add an extra layer of security to your account
-                                                            </p>
-                                                        </div>
-                                                        <button className="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-white rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition text-sm">
-                                                            Set Up 2FA
-                                                        </button>
-                                                    </div>
-                                                </div>
-
-                                                <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-6">
-                                                    <div className="flex items-start justify-between">
-                                                        <div>
-                                                            <h3 className="font-medium text-gray-900 dark:text-white mb-1">Connected Devices</h3>
-                                                            <p className="text-gray-500 dark:text-gray-400 text-sm">
-                                                                3 devices currently signed in
-                                                            </p>
-                                                        </div>
-                                                        <button className="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-white rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition text-sm">
-                                                            Manage Devices
-                                                        </button>
-                                                    </div>
-                                                </div>
+                                                <SecurityItem
+                                                    icon={BsLock}
+                                                    title="Password"
+                                                    description="Manage your account password."
+                                                    buttonText="Change Password"
+                                                    onClick={handleChangePassword}
+                                                    darkMode={darkMode}
+                                                />
+                                                <SecurityItem
+                                                    icon={BsPhone}
+                                                    title="Two-Factor Authentication (2FA)"
+                                                    description="Add an extra layer of security to your account."
+                                                    buttonText="Set Up 2FA"
+                                                    onClick={handleSetup2FA}
+                                                    darkMode={darkMode}
+                                                />
+                                                <SecurityItem
+                                                    icon={MdDevicesOther}
+                                                    title="Connected Devices & Sessions"
+                                                    description="Review devices logged into your account."
+                                                    buttonText="Manage Devices"
+                                                    onClick={handleManageDevices}
+                                                    darkMode={darkMode}
+                                                />
                                             </div>
                                         </div>
 
-                                        <div className="md:w-1/3">
-                                            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-6 border border-blue-200 dark:border-blue-800">
-                                                <h3 className="font-medium text-blue-800 dark:text-blue-200 mb-3 flex items-center">
-                                                    <BsShieldCheck className="mr-2" />
+                                        {/* Right Side: Security Tips & Support */}
+                                        <div className="lg:col-span-1">
+                                            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-6 border border-blue-200 dark:border-blue-700 sticky top-8"> {/* Sticky positioning */}
+                                                <h3 className="font-semibold text-blue-800 dark:text-blue-200 mb-4 flex items-center text-lg">
+                                                    <BsShieldCheck className="mr-2 w-5 h-5" />
                                                     Security Tips
                                                 </h3>
                                                 <ul className="space-y-3 text-sm text-blue-700 dark:text-blue-300">
-                                                    <li className="flex items-start">
-                                                        <span className="mr-2">•</span>
-                                                        <span>Use a strong, unique password</span>
-                                                    </li>
-                                                    <li className="flex items-start">
-                                                        <span className="mr-2">•</span>
-                                                        <span>Enable two-factor authentication</span>
-                                                    </li>
-                                                    <li className="flex items-start">
-                                                        <span className="mr-2">•</span>
-                                                        <span>Don't share your login details</span>
-                                                    </li>
-                                                    <li className="flex items-start">
-                                                        <span className="mr-2">•</span>
-                                                        <span>Log out from shared devices</span>
-                                                    </li>
-                                                    <li className="flex items-start">
-                                                        <span className="mr-2">•</span>
-                                                        <span>Be wary of phishing attempts</span>
-                                                    </li>
+                                                     {[
+                                                        "Use a strong, unique password for this account.",
+                                                        "Enable two-factor authentication (2FA) if available.",
+                                                        "Never share your login credentials with anyone.",
+                                                        "Regularly review your connected devices and log out unused sessions.",
+                                                        "Be cautious of phishing emails or messages asking for your details."
+                                                     ].map((tip, index) => (
+                                                        <li key={index} className="flex items-start">
+                                                            <span className="mr-2 mt-1 text-blue-500 dark:text-blue-400 text-xs">●</span>
+                                                            <span>{tip}</span>
+                                                        </li>
+                                                     ))}
                                                 </ul>
                                             </div>
-
-                                            <div className="mt-6 bg-gray-50 dark:bg-gray-700 rounded-xl p-6">
-                                                <h3 className="font-medium text-gray-900 dark:text-white mb-3">Need Help?</h3>
+                                             <div className="mt-6 bg-gray-50 dark:bg-gray-700 rounded-xl p-6 border border-gray-200 dark:border-gray-600">
+                                                <h3 className="font-medium text-gray-900 dark:text-white mb-3 text-lg">Need Help?</h3>
                                                 <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">
-                                                    Contact our support team if you have any security concerns.
+                                                    If you have security concerns or notice suspicious activity, please contact our support team immediately.
                                                 </p>
-                                                <button className="w-full px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-white rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition text-sm flex items-center justify-center">
-                                                    <RiCustomerService2Line className="mr-2" />
+                                                <button
+                                                    onClick={handleContactSupport}
+                                                    className="w-full px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-white rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition text-sm flex items-center justify-center font-medium"
+                                                >
+                                                    <RiCustomerService2Line className="mr-2 w-5 h-5" />
                                                     Contact Support
                                                 </button>
                                             </div>
@@ -1106,6 +1197,7 @@ const UserDashboard = () => {
                                     </div>
                                 </div>
                             )}
+
                         </motion.div>
                     </AnimatePresence>
                 </div>
@@ -1114,4 +1206,4 @@ const UserDashboard = () => {
     );
 };
 
-export default UserDashboard;
+export default UserDashboard; // Export the component for use in your app

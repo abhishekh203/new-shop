@@ -1,274 +1,227 @@
-import React, { useState, useRef } from "react";
-import Slider from "react-slick";
-import { FaQuoteLeft, FaStar, FaRegStar, FaChevronLeft, FaChevronRight } from "react-icons/fa";
-import { IoMdTime } from "react-icons/io";
-import { RiVerifiedBadgeFill } from "react-icons/ri";
+import React from "react";
 import { motion } from "framer-motion";
 
+// Reusable component for a single scrolling column
+const ScrollingImageColumn = ({ images, durationMultiplier, columnId, initialY = "0%" }) => {
+  // Animation configuration for this specific column
+  const scrollAnimation = {
+    animate: {
+      y: [initialY, initialY === "0%" ? "-50%" : "0%"], // Moves the content up by half its height
+    },
+    transition: {
+      y: {
+        duration: images.length * durationMultiplier,
+        ease: "linear",
+        repeat: Infinity,
+        repeatType: "loop",
+      },
+    },
+  };
+
+  return (
+    <div
+      key={`column-container-${columnId}`}
+      className="h-[550px] sm:h-[600px] md:h-[700px] overflow-hidden relative w-full rounded-xl border border-gray-700/30 shadow-2xl bg-gray-900/30 backdrop-blur-sm"
+    >
+      {/* Gradient overlay for smooth top fade */}
+      <div className="absolute top-0 left-0 w-full h-16 md:h-24 bg-gradient-to-b from-gray-900/80 via-gray-900/50 to-transparent z-10 pointer-events-none" />
+      <motion.div
+        className="flex flex-col" // Stacks images vertically
+        animate={scrollAnimation.animate}
+        transition={scrollAnimation.transition}
+      >
+        {/* Render images twice for a seamless loop */}
+        {[...images, ...images].map((imageUrl, index) => (
+          <motion.div
+            key={`col-${columnId}-img-${index}`}
+            className="w-full p-2 md:p-3" // Padding around each image container
+            whileHover={{ scale: 1.03, zIndex: 10 }}
+            transition={{ type: "spring", stiffness: 300, duration: 0.2 }}
+          >
+            <img
+              src={imageUrl}
+              alt={`Testimonial review ${index % images.length + 1
+                } in column ${columnId}`}
+              className="w-full h-auto object-cover rounded-lg shadow-lg border border-gray-600/40"
+              loading="lazy" // Lazy load images
+              onError={(e) => {
+                e.target.onerror = null; // Prevents infinite loop if placeholder also fails
+                e.target.src = `https://placehold.co/400x500/2D3748/A0AEC0?text=Image+Not+Found&font=montserrat`; // Darker placeholder
+              }}
+            />
+          </motion.div>
+        ))}
+      </motion.div>
+      {/* Gradient overlay for smooth bottom fade */}
+      <div className="absolute bottom-0 left-0 w-full h-16 md:h-24 bg-gradient-to-t from-gray-900/80 via-gray-900/50 to-transparent z-10 pointer-events-none" />
+    </div>
+  );
+};
+
 const Testimonial = () => {
-    const [activeSlide, setActiveSlide] = useState(0);
-    const sliderRef = useRef(null);
-    
-    const settings = {
-        dots: true,
-        infinite: true,
-        speed: 500,
-        slidesToShow: 1,
-        slidesToScroll: 1,
-        autoplay: true,
-        autoplaySpeed: 8000,
-        arrows: false,
-        pauseOnHover: true,
-        beforeChange: (current, next) => setActiveSlide(next),
-        appendDots: dots => (
-            <div className="mt-6 md:mt-10">
-                <ul className="flex justify-center gap-2">{dots}</ul>
-            </div>
-        ),
-        customPaging: i => (
-            <div className={`w-2 h-2 md:w-3 md:h-3 rounded-full transition-all ${i === activeSlide ? 'bg-orange-500 md:w-6' : 'bg-gray-600'}`}></div>
-        )
-    };
+  const allTestimonialImages = [
+    "/img/w_image/r1.jpg", "/img/p_proof/p1.jpg", "/img/w_image/r2.jpg",
+    "/img/w_image/r3.jpg", "/img/p_proof/p2.jpg", "/img/w_image/r4.jpg",
+    "/img/w_image/r5.jpg", "/img/p_proof/p3.jpg", "/img/w_image/r6.jpg",
+    "/img/w_image/r7.jpg", "/img/p_proof/p4.jpg", "/img/w_image/r8.jpg",
+    "/img/w_image/r1.jpg", 
+    "/img/p_proof/p1.jpg",
+    "/img/w_image/r2.jpg",
+  ];
 
-    const testimonials = [
-        // ... (keep your existing testimonials array)
-        {
-            name: "Kamal Sharma",
-            role: "Premium Member",
-            content: "The instant delivery and premium quality accounts exceeded my expectations. I've purchased multiple times and never been disappointed. Their service is consistently reliable and the accounts work perfectly every time.",
-            rating: 5,
-            verified: true,
-            purchaseTime: "2 minutes delivery",
-            avatar: "https://randomuser.me/api/portraits/men/32.jpg"
-        },
-        {
-            name: "Sita Basnet",
-            role: "First-time Buyer",
-            content: "As a first-time buyer, I was skeptical, but the seamless process and immediate access to my account won me over completely. The step-by-step guide made setup effortless, and I was up and running in minutes.",
-            rating: 4,
-            verified: false,
-            purchaseTime: "5 minutes delivery",
-            avatar: "https://randomuser.me/api/portraits/women/44.jpg"
-        },
-        {
-            name: "Prakash Thapa",
-            role: "Business User",
-            content: "The value for money is unmatched. I've compared multiple providers and none offer this combination of speed, reliability and price. We've saved thousands on our software budget without compromising quality.",
-            rating: 5,
-            verified: true,
-            purchaseTime: "Instant delivery",
-            avatar: "https://randomuser.me/api/portraits/men/67.jpg"
-        },
-        {
-            name: "Bishal Rai",
-            role: "Frequent Buyer",
-            content: "Customer support is responsive 24/7. They resolved my query within minutes, even at 2AM! That's service excellence. I've made over 20 purchases and each experience has been flawless.",
-            rating: 5,
-            verified: true,
-            purchaseTime: "3 minutes delivery",
-            avatar: "https://randomuser.me/api/portraits/men/75.jpg"
-        },
-        {
-            name: "Aayush Khatri",
-            role: "Enterprise Client",
-            content: "For bulk purchases, their corporate solutions are perfect. We've integrated their API for automatic provisioning across our team. The dashboard makes managing hundreds of licenses simple and efficient.",
-            rating: 5,
-            verified: true,
-            purchaseTime: "Bulk delivery in 15 mins",
-            avatar: "https://randomuser.me/api/portraits/men/81.jpg"
-        },
-        {
-            name: "Shreya Maharjan",
-            role: "Student User",
-            content: "As a student, their affordable pricing makes premium services accessible. The educational discount was a pleasant surprise! I can now use professional tools that were previously out of my budget.",
-            rating: 4,
-            verified: false,
-            purchaseTime: "7 minutes delivery",
-            avatar: "https://randomuser.me/api/portraits/women/63.jpg"
-        },
-        {
-            name: "Rajesh Gurung",
-            role: "Developer",
-            content: "The API integration was seamless with excellent documentation. Our automated systems now handle all purchases and the webhooks keep everything in sync. Technical support is knowledgeable and helpful.",
-            rating: 5,
-            verified: true,
-            purchaseTime: "API response in 30s",
-            avatar: "https://randomuser.me/api/portraits/men/45.jpg"
-        },
-        {
-            name: "Anita Limbu",
-            role: "Digital Marketer",
-            content: "I manage multiple client accounts and need reliable service. This provider never lets me down. The multi-login feature saves me hours of work each week. Highly recommended for agencies!",
-            rating: 5,
-            verified: true,
-            purchaseTime: "4 minutes delivery",
-            avatar: "https://randomuser.me/api/portraits/women/72.jpg"
-        }
-    ];
+  const column1Images = allTestimonialImages.filter((_, i) => i % 3 === 0);
+  const column2Images = allTestimonialImages.filter((_, i) => i % 3 === 1);
+  const column3Images = allTestimonialImages.filter((_, i) => i % 3 === 2);
 
-    // Custom arrow components with touch-friendly sizing
-    const NextArrow = () => (
-        <button 
-            onClick={() => sliderRef.current.slickNext()}
-            className="absolute right-2 md:right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 md:w-12 md:h-12 rounded-full bg-gray-800 bg-opacity-70 hover:bg-orange-500 flex items-center justify-center text-white transition-all shadow-lg hover:shadow-orange-500/30"
-            aria-label="Next testimonial"
+  const headerVariants = {
+    hidden: { opacity: 0, y: 30 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.7, ease: "easeOut" },
+    },
+  };
+
+  const subHeaderVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.7, ease: "easeOut", delay: 0.2 },
+    },
+  };
+
+  const statItemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: (i) => ({
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.5, delay: i * 0.15, ease: "easeOut" },
+    }),
+    hover: {
+        y: -5,
+        boxShadow: "0px 10px 20px rgba(234, 88, 12, 0.3)", 
+        borderColor: "rgba(234, 88, 12, 0.7)", 
+        transition: { duration: 0.2, ease: "easeOut"}
+    }
+  };
+
+  return (
+    <section className="relative bg-gradient-to-br from-gray-950 via-black to-blue-950 py-16 md:py-24 overflow-hidden font-sans">
+      {/* Enhanced Animated background elements */}
+      <div className="absolute inset-0 opacity-20 overflow-hidden pointer-events-none">
+        <motion.div
+          className="absolute top-[-10%] left-[-5%] w-72 h-72 md:w-96 md:h-96 bg-purple-600 rounded-full filter blur-3xl opacity-50"
+          animate={{
+            x: [0, 50, 0, -50, 0],
+            y: [0, -30, 0, 30, 0],
+            scale: [1, 1.1, 1, 0.9, 1],
+          }}
+          transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <motion.div
+          className="absolute bottom-[-15%] right-[-10%] w-80 h-80 md:w-[500px] md:h-[500px] bg-orange-500 rounded-full filter blur-3xl opacity-40"
+          animate={{
+            x: [0, -40, 0, 40, 0],
+            y: [0, 20, 0, -20, 0],
+            rotate: [0, 10, 0, -10, 0],
+          }}
+          transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+        />
+         <motion.div
+          className="absolute top-[30%] right-[40%] w-40 h-40 md:w-60 md:h-60 bg-teal-500 rounded-full filter blur-2xl opacity-30"
+          animate={{
+            x: [0, 20, 0, -20, 0],
+            y: [0, -15, 0, 15, 0],
+          }}
+          transition={{ duration: 20, repeat: Infinity, ease: "circInOut" }}
+        />
+      </div>
+
+      <div className="container px-4 sm:px-6 mx-auto relative z-10">
+        <div className="text-center mb-12 md:mb-16"> {/* Reduced bottom margin slightly */}
+          <motion.h2
+            className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-white mb-4 md:mb-5 tracking-tight"
+            variants={headerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.5 }}
+          >
+            Loved by <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-red-500 to-pink-500">Everyone</span>
+          </motion.h2>
+         
+        </div>
+
+        {/* --- HANGING TEXT ELEMENT --- */}
+        <div className="relative flex flex-col items-center mb-10 md:mb-16 z-20">
+          {/* The "string" */}
+          <motion.div 
+            className="h-12 sm:h-16 w-0.5 bg-gray-500/70"
+            initial={{ scaleY: 0, originY: 0 }}
+            animate={{ scaleY: 1 }}
+            transition={{ duration: 0.6, delay: 0.6, ease: "easeOut" }}
+          />
+          {/* The text block */}
+          <motion.div
+            className="bg-gradient-to-br from-orange-500 via-amber-500 to-yellow-500 text-white py-3 px-6 sm:py-4 sm:px-8 rounded-lg shadow-2xl transform origin-top" // Changed origin to top for better swing
+            initial={{ opacity: 0, y: -20, scale: 0.7, rotate: -10 }} // Adjusted initial y and rotate
+            animate={{ 
+              opacity: 1, 
+              y: 0, 
+              scale: 1, 
+              rotate: [-5, 5, -5], // Initial rotation, swing right, swing left
+              x: [0, 10, -10, 0] // Added x for left-right swing
+            }}
+            transition={{
+              default: { type: "spring", stiffness: 100, damping: 10, delay: 0.9 }, // Spring for main entrance
+              rotate: { duration: 3, ease: "easeInOut", repeat: Infinity, repeatType: "mirror", delay: 1.5 }, // Slower, smoother rotation swing
+              x: { duration: 4, ease: "easeInOut", repeat: Infinity, repeatType: "mirror", delay: 1.5 } // Added x transition
+            }}
+            whileHover={{ scale: 1.05, rotate: 0, boxShadow: "0px 10px 30px rgba(245, 158, 11, 0.5)"}}
+          >
+            <span className="font-semibold text-md sm:text-lg md:text-xl tracking-tight">What users say about us</span>
+          </motion.div>
+        </div>
+        {/* --- END OF HANGING TEXT ELEMENT --- */}
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-5 lg:gap-6 max-w-7xl mx-auto">
+          <ScrollingImageColumn images={column1Images} durationMultiplier={6} columnId="1" />
+          <div className="mt-0 sm:mt-8 md:-mt-16"> 
+            <ScrollingImageColumn images={column2Images} durationMultiplier={7.5} columnId="2" initialY="-25%" />
+          </div>
+          <div className="mt-0 sm:mt-0 md:mt-8"> 
+             <ScrollingImageColumn images={column3Images} durationMultiplier={6.5} columnId="3" />
+          </div>
+        </div>
+
+        <motion.div
+          className="mt-16 md:mt-24 grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 text-center"
+          initial="hidden" 
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ staggerChildren: 0.1 }} 
         >
-            <FaChevronRight className="text-sm md:text-xl" />
-        </button>
-    );
-
-    const PrevArrow = () => (
-        <button 
-            onClick={() => sliderRef.current.slickPrev()}
-            className="absolute left-2 md:left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 md:w-12 md:h-12 rounded-full bg-gray-800 bg-opacity-70 hover:bg-orange-500 flex items-center justify-center text-white transition-all shadow-lg hover:shadow-orange-500/30"
-            aria-label="Previous testimonial"
-        >
-            <FaChevronLeft className="text-sm md:text-xl" />
-        </button>
-    );
-
-    return (
-        <section className="relative bg-gradient-to-br from-gray-900 via-black to-blue-900 py-12 md:py-20 overflow-hidden">
-            {/* Simplified animated background for mobile */}
-            <div className="absolute top-0 left-0 w-full h-full opacity-10 overflow-hidden">
-                <motion.div 
-                    className="absolute top-20 left-10 md:left-20 w-20 h-20 md:w-40 md:h-40 bg-blue-500 rounded-full filter blur-xl md:blur-3xl"
-                    animate={{
-                        scale: [1, 1.2, 1],
-                        opacity: [0.8, 0.5, 0.8]
-                    }}
-                    transition={{
-                        duration: 15,
-                        repeat: Infinity,
-                        ease: "easeInOut"
-                    }}
-                ></motion.div>
-                <motion.div 
-                    className="absolute bottom-10 right-10 md:right-20 w-20 h-20 md:w-60 md:h-60 bg-orange-500 rounded-full filter blur-xl md:blur-3xl"
-                    animate={{
-                        scale: [1, 1.1, 1],
-                        opacity: [0.7, 0.4, 0.7]
-                    }}
-                    transition={{
-                        duration: 20,
-                        repeat: Infinity,
-                        ease: "easeInOut"
-                    }}
-                ></motion.div>
-            </div>
-
-            <div className="container px-4 sm:px-6 mx-auto relative z-10">
-                {/* Section Header */}
-                <div className="text-center mb-10 md:mb-16">
-                    <motion.h2 
-                        className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3 md:mb-4"
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8 }}
-                        viewport={{ once: true }}
-                    >
-                        Trusted by <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-orange-600">Thousands</span>
-                    </motion.h2>
-                    <motion.p 
-                        className="text-base sm:text-lg md:text-xl text-gray-300 max-w-2xl mx-auto px-2"
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8, delay: 0.2 }}
-                        viewport={{ once: true }}
-                    >
-                        Join our community of satisfied customers
-                    </motion.p>
-                </div>
-
-                {/* Testimonials Slider */}
-                <div className="max-w-3xl mx-auto relative px-2">
-                    <Slider ref={sliderRef} {...settings}>
-                        {testimonials.map((testimonial, index) => (
-                            <div key={index} className="px-1 sm:px-2 outline-none">
-                                <motion.div 
-                                    className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl md:rounded-2xl p-5 sm:p-6 md:p-8 border border-gray-700 shadow-lg hover:shadow-orange-500/10"
-                                    initial={{ opacity: 0, scale: 0.95 }}
-                                    whileInView={{ opacity: 1, scale: 1 }}
-                                    transition={{ duration: 0.5 }}
-                                >
-                                    <div className="flex flex-col sm:flex-row items-start">
-                                        <div className="flex-shrink-0 mb-4 sm:mb-0 sm:mr-4 md:mr-6">
-                                            <img 
-                                                src={testimonial.avatar} 
-                                                alt={testimonial.name}
-                                                className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full object-cover border-2 border-orange-500"
-                                            />
-                                        </div>
-                                        <div className="flex-1">
-                                            <FaQuoteLeft className="text-2xl md:text-3xl text-orange-500 opacity-20 mb-3 -mt-1" />
-                                            
-                                            <p className="text-sm sm:text-base md:text-lg text-gray-100 font-light leading-relaxed mb-4 md:mb-6">
-                                                {testimonial.content}
-                                            </p>
-                                            
-                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                                                <div>
-                                                    <h3 className="text-base sm:text-lg md:text-xl font-semibold text-white flex items-center">
-                                                        {testimonial.name}
-                                                        {testimonial.verified && (
-                                                            <RiVerifiedBadgeFill className="ml-1 md:ml-2 text-blue-400 text-sm md:text-base" />
-                                                        )}
-                                                    </h3>
-                                                    <p className="text-xs sm:text-sm text-gray-400">{testimonial.role}</p>
-                                                </div>
-                                                
-                                                <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4">
-                                                    <div className="flex items-center space-x-0.5 sm:space-x-1">
-                                                        {[...Array(5)].map((_, i) => (
-                                                            i < testimonial.rating ? 
-                                                            <FaStar key={i} className="text-sm sm:text-base md:text-lg text-orange-400" /> : 
-                                                            <FaRegStar key={i} className="text-sm sm:text-base md:text-lg text-gray-600" />
-                                                        ))}
-                                                    </div>
-                                                    
-                                                    <div className="flex items-center text-xs sm:text-sm text-gray-400">
-                                                        <IoMdTime className="mr-1" />
-                                                        <span>{testimonial.purchaseTime}</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </motion.div>
-                            </div>
-                        ))}
-                    </Slider>
-
-                    {/* Custom Arrows - Always visible but smaller on mobile */}
-                    <div className="hidden sm:block">
-                        <NextArrow />
-                        <PrevArrow />
-                    </div>
-                </div>
-
-                {/* Stats - Stack on mobile */}
-                <motion.div 
-                    className="mt-10 md:mt-16 grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6 text-center"
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8, delay: 0.4 }}
-                    viewport={{ once: true }}
-                >
-                    {[
-                        { value: "10K+", label: "Happy Customers" },
-                        { value: "99.8%", label: "Success Rate" },
-                        { value: "24/7", label: "Support Available" },
-                        { value: "2min", label: "Avg Delivery" }
-                    ].map((stat, index) => (
-                        <div key={index} className="bg-gray-800 bg-opacity-50 rounded-lg md:rounded-xl p-3 sm:p-4 md:p-6 border border-gray-700 hover:border-orange-500 transition-all hover:-translate-y-1">
-                            <div className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-orange-400 mb-1 sm:mb-2">{stat.value}</div>
-                            <div className="text-xs sm:text-sm md:text-base text-gray-300">{stat.label}</div>
-                        </div>
-                    ))}
-                </motion.div>
-            </div>
-        </section>
-    );
+          {[
+            { value: "10K+", label: "Happy Customers" },
+            { value: "99.8%", label: "Success Rate" },
+            { value: "24/7", label: "Support Available" },
+            { value: "2min", label: "Avg Delivery" },
+          ].map((stat, index) => (
+            <motion.div
+              key={index}
+              className="bg-gray-800/60 backdrop-blur-md rounded-xl p-4 sm:p-5 md:p-6 border border-gray-700/50 transition-all duration-300 cursor-pointer"
+              variants={statItemVariants}
+              custom={index} 
+              whileHover="hover" 
+            >
+              <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-orange-400 mb-1.5 sm:mb-2.5">{stat.value}</div>
+              <div className="text-xs sm:text-sm md:text-base text-gray-300">{stat.label}</div>
+            </motion.div>
+          ))}
+        </motion.div>
+      </div>
+    </section>
+  );
 };
 
 export default Testimonial;

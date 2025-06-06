@@ -5,53 +5,31 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { Send as SendIcon, WhatsApp, Telegram, Email, Chat, ExpandMore } from "@mui/icons-material";
 import emailjs from "@emailjs/browser";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import Particles from "react-tsparticles";
+import { loadFull } from "tsparticles";
 
-// Animation variants
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-      when: "beforeChildren"
-    }
-  }
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      type: "spring",
-      stiffness: 100,
-      damping: 10
-    }
-  }
-};
-
-const cardVariants = {
-  hidden: { opacity: 0, scale: 0.9 },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    transition: {
-      type: "spring",
-      stiffness: 80
-    }
-  },
-  hover: {
-    scale: 1.02,
-    transition: { duration: 0.2 }
-  }
+// Improved glass card effect styles
+const glassStyle = {
+  background: 'rgba(255, 255, 255, 0.08)',
+  backdropFilter: 'blur(12px)',
+  border: '1px solid rgba(255, 255, 255, 0.1)',
+  boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
+  transition: 'all 0.3s ease',
+  overflow: 'hidden',
+  position: 'relative'
 };
 
 const ContactUs = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({ name: "", email: "", message: "" });
   const [isLoading, setIsLoading] = useState(false);
+  const [activeAccordion, setActiveAccordion] = useState(null);
+  const [hoveredCard, setHoveredCard] = useState(null);
+
+  const particlesInit = async (main) => {
+    await loadFull(main);
+  };
 
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -148,277 +126,479 @@ const ContactUs = () => {
     }
   ];
 
+
+  const contactMethods = [
+    { 
+      title: "WhatsApp Support", 
+      description: "Instant messaging support", 
+      icon: <WhatsApp className="text-3xl" />, 
+      btnText: "Message Us", 
+      href: "https://wa.me/9779807677391", 
+      color: "from-emerald-500 to-teal-600",
+      hoverColor: "hover:from-emerald-600 hover:to-teal-700",
+      bgColor: "rgba(16, 185, 129, 0.1)",
+      borderColor: "rgba(16, 185, 129, 0.3)"
+    },
+    { 
+      title: "Telegram Support", 
+      description: "Join our community", 
+      icon: <Telegram className="text-3xl" />, 
+      btnText: "Join Group", 
+      href: "https://t.me/netflixnepalseller", 
+      color: "from-blue-500 to-indigo-600",
+      hoverColor: "hover:from-blue-600 hover:to-indigo-700",
+      bgColor: "rgba(59, 130, 246, 0.1)",
+      borderColor: "rgba(59, 130, 246, 0.3)"
+    },
+    { 
+      title: "Email Support", 
+      description: "For detailed inquiries", 
+      icon: <Email className="text-3xl" />, 
+      btnText: "Send Email", 
+      href: "mailto:digitalshopnepalstore@gmail.com", 
+      color: "from-rose-500 to-pink-600",
+      hoverColor: "hover:from-rose-600 hover:to-pink-700",
+      bgColor: "rgba(244, 63, 94, 0.1)",
+      borderColor: "rgba(244, 63, 94, 0.3)"
+    }
+  ];
+
   return (
-    <motion.div 
-      initial="hidden"
-      animate="visible"
-      variants={containerVariants}
-      className="bg-gradient-to-br from-gray-900 to-black p-6 md:p-10 lg:p-14 rounded-1xl shadow-2xl max-w-7xl mx-auto"
-    >
-      {/* Header Section */}
-      <motion.div 
-        variants={itemVariants}
-        className="text-center mb-12"
-      >
-        <motion.h2 
-          whileHover={{ scale: 1.02 }}
-          className="text-4xl md:text-5xl font-bold text-white mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-green-400"
-        >
-          Contact Us
-        </motion.h2>
-        <motion.p 
-          className="text-lg text-gray-300 max-w-2xl mx-auto"
-        >
-          Questions, concerns, or comments? We're here to help. Reach out through any channel below.
-        </motion.p>
-      </motion.div>
+    <div className="relative min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 overflow-hidden">
+      {/* Animated Background Particles */}
+      <div className="absolute inset-0 z-0 opacity-20">
+        <Particles
+          id="tsparticles"
+          init={particlesInit}
+          options={{
+            fpsLimit: 60,
+            interactivity: {
+              events: {
+                onHover: {
+                  enable: true,
+                  mode: "repulse",
+                },
+              },
+              modes: {
+                repulse: {
+                  distance: 100,
+                  duration: 0.4,
+                },
+              },
+            },
+            particles: {
+              color: {
+                value: "#ffffff",
+              },
+              links: {
+                color: "#ffffff",
+                distance: 150,
+                enable: true,
+                opacity: 0.3,
+                width: 1,
+              },
+              collisions: {
+                enable: true,
+              },
+              move: {
+                direction: "none",
+                enable: true,
+                outModes: {
+                  default: "bounce",
+                },
+                random: false,
+                speed: 1,
+                straight: false,
+              },
+              number: {
+                density: {
+                  enable: true,
+                  area: 800,
+                },
+                value: 60,
+              },
+              opacity: {
+                value: 0.3,
+              },
+              shape: {
+                type: "circle",
+              },
+              size: {
+                value: { min: 1, max: 3 },
+              },
+            },
+            detectRetina: true,
+          }}
+        />
+      </div>
 
-      <div className="flex flex-col lg:flex-row gap-10 mb-16">
-        {/* Left Column - Contact Options */}
+      <div className="relative z-10">
+        {/* Header Section */}
         <motion.div 
-          variants={containerVariants}
-          className="lg:w-1/2 space-y-8"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          className="pt-20 pb-12 px-6 text-center"
         >
-          {/* Quick Action Buttons */}
-          <motion.div 
-            variants={containerVariants}
-            className="grid grid-cols-1 sm:grid-cols-2 gap-4"
+          <motion.div
+            initial={{ scale: 0.9 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="inline-block mb-6"
           >
-            {[
-              { text: "WhatsApp Message", href: "https://wa.me/9779807677391", icon: <WhatsApp />, bg: "bg-green-600 hover:bg-green-700" },
-              { text: "WhatsApp Group", href: "https://chat.whatsapp.com/IXl6YmkAZgEJkveJgbatAP", icon: <Chat />, bg: "bg-green-500 hover:bg-green-600" },
-              { text: "Telegram Group", href: "https://t.me/netflixnepalseller", icon: <Telegram />, bg: "bg-blue-500 hover:bg-blue-600" },
-              { text: "Viber Support", href: "https://invite.viber.com/?g2=AQBrGVKdTtA4tVRdx%2BTJrt0PQl5UeP6GdiUj98pJWDxymojm1eCCv%2B8NWXUkD%2F3z", icon: <Chat />, bg: "bg-purple-600 hover:bg-purple-700" },
-            ].map((item, index) => (
-              <motion.a
-                key={index}
-                variants={itemVariants}
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.98 }}
-                href={item.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-white font-medium transition-all ${item.bg} shadow-md hover:shadow-lg`}
-              >
-                {item.icon}
-                {item.text}
-              </motion.a>
-            ))}
+            <div className="relative">
+              <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-blue-500 rounded-lg blur opacity-75"></div>
+              <h1 className="relative text-4xl md:text-5xl lg:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-300">
+                Contact Us
+              </h1>
+            </div>
           </motion.div>
-
-          {/* Support Cards */}
-          <motion.div 
-            variants={containerVariants}
-            className="grid grid-cols-1 md:grid-cols-3 gap-6"
+          
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+            className="text-xl text-gray-300 max-w-3xl mx-auto"
           >
-            {[
-              { 
-                title: "Payment Support", 
-                description: "After payment assistance", 
-                icon: <WhatsApp className="text-3xl" />, 
-                btnText: "WhatsApp", 
-                href: "https://wa.me/9779807677391", 
-                bg: "bg-gradient-to-br from-green-500 to-green-600" 
-              },
-              { 
-                title: "Technical Help", 
-                description: "Setup and troubleshooting", 
-                icon: <Telegram className="text-3xl" />, 
-                btnText: "Telegram", 
-                href: "https://t.me/digitalshopnepalstore", 
-                bg: "bg-gradient-to-br from-blue-500 to-blue-600" 
-              },
-              { 
-                title: "Email Us", 
-                description: "General inquiries", 
-                icon: <Email className="text-3xl" />, 
-                btnText: "Send Email", 
-                href: "mailto:digitalshopnepalstore@gmail.com", 
-                bg: "bg-gradient-to-br from-red-500 to-red-600" 
-              },
-            ].map((card, index) => (
+            We're here to help with any questions about our services. Reach out through any channel below.
+          </motion.p>
+        </motion.div>
+
+        {/* Main Content */}
+        <div className="container mx-auto px-6 pb-20">
+          <div className="flex flex-col lg:flex-row gap-10">
+            {/* Left Column - Contact Options */}
+            <div className="lg:w-1/2 space-y-8">
+              {/* Improved Quick Contact Cards */}
               <motion.div 
-                key={index}
-                variants={cardVariants}
-                whileHover="hover"
-                className="bg-gray-800 p-5 rounded-xl shadow-lg border border-gray-700 hover:border-gray-600 transition-all"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.6 }}
+                className="grid grid-cols-1 gap-6"
               >
-                <div className="flex flex-col items-center text-center">
-                  <motion.div 
-                    whileHover={{ rotate: 5, scale: 1.1 }}
-                    className={`w-14 h-14 flex items-center justify-center rounded-full ${card.bg} mb-4`}
-                  >
-                    {card.icon}
-                  </motion.div>
-                  <h3 className="text-lg font-bold text-white mb-1">{card.title}</h3>
-                  <p className="text-gray-300 text-sm mb-4">{card.description}</p>
-                  <motion.a 
-                    whileHover={{ scale: 1.03 }}
+                {contactMethods.map((method, index) => (
+                  <motion.div
+                    key={index}
+                    whileHover={{ y: -5 }}
                     whileTap={{ scale: 0.98 }}
-                    href={card.href} 
-                    className={`w-full py-2 px-4 rounded-lg text-white font-medium text-center ${card.bg} hover:opacity-90 transition-opacity`}
+                    onHoverStart={() => setHoveredCard(index)}
+                    onHoverEnd={() => setHoveredCard(null)}
+                    className={`relative rounded-2xl overflow-hidden transition-all duration-300 ${glassStyle}`}
+                    style={{
+                      borderColor: method.borderColor,
+                      background: method.bgColor
+                    }}
                   >
-                    {card.btnText}
+                    <div className="absolute inset-0 bg-gradient-to-br opacity-0 hover:opacity-20 transition-opacity duration-300"
+                      style={{
+                        background: `linear-gradient(45deg, ${method.color.replace('from-', '').replace('to-', '').replace(' ', ', ')})`
+                      }}
+                    />
+                    
+                    <div className="p-6 flex items-center relative z-10">
+                      <div className={`flex-shrink-0 w-16 h-16 rounded-xl flex items-center justify-center bg-gradient-to-br ${method.color} shadow-lg`}>
+                        {method.icon}
+                      </div>
+                      <div className="ml-6 flex-1">
+                        <h3 className="text-xl font-bold text-white">{method.title}</h3>
+                        <p className="text-gray-300 mt-1">{method.description}</p>
+                      </div>
+                      <motion.a
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        href={method.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`ml-4 px-6 py-3 rounded-lg font-medium text-white bg-gradient-to-br ${method.color} ${method.hoverColor} transition-all shadow-md`}
+                      >
+                        {method.btnText}
+                      </motion.a>
+                    </div>
+                  </motion.div>
+                ))}
+              </motion.div>
+
+              {/* Social Links */}
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.8 }}
+                className={`p-6 rounded-2xl ${glassStyle}`}
+              >
+                <h3 className="text-xl font-bold text-white mb-4">Join Our Communities</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <motion.a
+                    whileHover={{ y: -3 }}
+                    href="https://wa.me/9779807677391"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-medium transition-all"
+                  >
+                    <WhatsApp />
+                    WhatsApp
+                  </motion.a>
+                  <motion.a
+                    whileHover={{ y: -3 }}
+                    href="https://t.me/netflixnepalseller"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium transition-all"
+                  >
+                    <Telegram />
+                    Telegram
+                  </motion.a>
+                  <motion.a
+                    whileHover={{ y: -3 }}
+                    href="https://chat.whatsapp.com/IXl6YmkAZgEJkveJgbatAP"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-green-500 hover:bg-green-600 text-white font-medium transition-all"
+                  >
+                    <Chat />
+                    WhatsApp Group
+                  </motion.a>
+                  <motion.a
+                    whileHover={{ y: -3 }}
+                    href="mailto:digitalshopnepalstore@gmail.com"
+                    className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-medium transition-all"
+                  >
+                    <Email />
+                    Email
                   </motion.a>
                 </div>
               </motion.div>
-            ))}
-          </motion.div>
-        </motion.div>
+            </div>
 
-        {/* Right Column - Contact Form */}
-        <motion.div 
-          variants={itemVariants}
-          className="lg:w-1/2"
-        >
-          <motion.div 
-            whileHover={{ y: -5 }}
-            className="bg-white p-8 rounded-2xl shadow-xl border border-gray-200"
+            {/* Right Column - Contact Form */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+              className="lg:w-1/2"
+            >
+              <div className={`p-8 rounded-2xl ${glassStyle}`}>
+                <div className="mb-8">
+                  <h3 className="text-2xl font-bold text-white mb-2">Send Us a Message</h3>
+                  <p className="text-gray-300">
+                    Fill out the form below and we'll get back to you as soon as possible.
+                  </p>
+                </div>
+                
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.6 }}
+                  >
+                    <TextField
+                      fullWidth
+                      label="Your Name"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      variant="outlined"
+                      required
+                      InputProps={{
+                        sx: {
+                          color: 'white',
+                          borderRadius: '12px',
+                          backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                          '& .MuiOutlinedInput-notchedOutline': {
+                            borderColor: 'rgba(255, 255, 255, 0.1)',
+                          },
+                          '&:hover .MuiOutlinedInput-notchedOutline': {
+                            borderColor: 'rgba(255, 255, 255, 0.3)',
+                          },
+                        },
+                      }}
+                      InputLabelProps={{
+                        sx: {
+                          color: 'rgba(255, 255, 255, 0.7)',
+                        },
+                      }}
+                    />
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.7 }}
+                  >
+                    <TextField
+                      fullWidth
+                      label="Email Address"
+                      name="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      variant="outlined"
+                      required
+                      InputProps={{
+                        sx: {
+                          color: 'white',
+                          borderRadius: '12px',
+                          backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                          '& .MuiOutlinedInput-notchedOutline': {
+                            borderColor: 'rgba(255, 255, 255, 0.1)',
+                          },
+                          '&:hover .MuiOutlinedInput-notchedOutline': {
+                            borderColor: 'rgba(255, 255, 255, 0.3)',
+                          },
+                        },
+                      }}
+                      InputLabelProps={{
+                        sx: {
+                          color: 'rgba(255, 255, 255, 0.7)',
+                        },
+                      }}
+                    />
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.8 }}
+                  >
+                    <TextField
+                      fullWidth
+                      label="Your Message"
+                      name="message"
+                      value={formData.message}
+                      onChange={handleInputChange}
+                      variant="outlined"
+                      multiline
+                      rows={4}
+                      required
+                      InputProps={{
+                        sx: {
+                          color: 'white',
+                          borderRadius: '12px',
+                          backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                          '& .MuiOutlinedInput-notchedOutline': {
+                            borderColor: 'rgba(255, 255, 255, 0.1)',
+                          },
+                          '&:hover .MuiOutlinedInput-notchedOutline': {
+                            borderColor: 'rgba(255, 255, 255, 0.3)',
+                          },
+                        },
+                      }}
+                      InputLabelProps={{
+                        sx: {
+                          color: 'rgba(255, 255, 255, 0.7)',
+                        },
+                      }}
+                    />
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.9 }}
+                  >
+                    <Button
+                      variant="contained"
+                      type="submit"
+                      size="large"
+                      fullWidth
+                      startIcon={isLoading ? <CircularProgress size={24} color="inherit" /> : <SendIcon />}
+                      disabled={isLoading}
+                      sx={{
+                        background: 'linear-gradient(135deg, #7B61FF 0%, #9B4DFF 100%)',
+                        borderRadius: '12px',
+                        padding: '14px',
+                        fontSize: '16px',
+                        fontWeight: '600',
+                        textTransform: 'none',
+                        boxShadow: '0 4px 6px rgba(123, 97, 255, 0.3)',
+                        '&:hover': {
+                          background: 'linear-gradient(135deg, #6B51EE 0%, #8B3DEE 100%)',
+                          boxShadow: '0 6px 8px rgba(123, 97, 255, 0.4)',
+                        },
+                      }}
+                    >
+                      {isLoading ? "Sending..." : "Send Message"}
+                    </Button>
+                  </motion.div>
+                </form>
+              </div>
+            </motion.div>
+          </div>
+
+          
+            {/* FAQ content remains the same */}
+            <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 1 }}
+            className={`mt-20 rounded-2xl p-8 ${glassStyle}`}
           >
-            <div className="mb-6">
-              <h3 className="text-2xl font-bold text-gray-800 mb-2">Get Your Account Details</h3>
-              <p className="text-gray-600">
-                Fill this form to receive your ID & password after purchase.
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+                Frequently Asked Questions
+              </h2>
+              <p className="text-lg text-gray-300 max-w-2xl mx-auto">
+                Find answers to common questions about our services
               </p>
             </div>
-            
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {[
-                { label: "Your Name", name: "name", type: "text" },
-                { label: "Email Address", name: "email", type: "email" },
-                { 
-                  label: "Purchased Items", 
-                  name: "message", 
-                  type: "text",
-                  multiline: true, 
-                  rows: 4,
-                  helperText: "Please specify the item(s) you've purchased" 
-                },
-              ].map((field, index) => (
+
+            <div className="space-y-4">
+              {faqs.map((faq, index) => (
                 <motion.div
                   key={index}
-                  variants={itemVariants}
-                  custom={index}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: 1.2 + index * 0.1 }}
                 >
-                  <TextField
-                    fullWidth
-                    label={field.label}
-                    name={field.name}
-                    type={field.type}
-                    value={formData[field.name]}
-                    onChange={handleInputChange}
-                    variant="outlined"
-                    required
-                    multiline={field.multiline}
-                    rows={field.rows}
-                    helperText={field.helperText}
+                  <Accordion 
+                    expanded={activeAccordion === index}
+                    onChange={() => setActiveAccordion(activeAccordion === index ? null : index)}
+                    className="bg-gray-800 rounded-xl overflow-hidden transition-all"
                     sx={{
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: '12px',
-                      },
+                      '&:before': { display: 'none' },
+                      background: 'rgba(39, 39, 42, 0.5)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
                     }}
-                  />
+                  >
+                    <AccordionSummary
+                      expandIcon={
+                        <motion.div
+                          animate={{ rotate: activeAccordion === index ? 180 : 0 }}
+                        >
+                          <ExpandMore className="text-white" />
+                        </motion.div>
+                      }
+                      aria-controls={`panel${index}-content`}
+                      id={`panel${index}-header`}
+                      className="hover:bg-gray-700 transition-all min-h-[72px]"
+                    >
+                      <Typography className="font-bold text-white text-lg">
+                        {faq.question}
+                      </Typography>
+                    </AccordionSummary>
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <AccordionDetails className="bg-gray-700 p-6">
+                        {typeof faq.answer === 'string' ? (
+                          <Typography className="text-gray-200">
+                            {faq.answer}
+                          </Typography>
+                        ) : (
+                          <div className="text-gray-200">
+                            {faq.answer}
+                          </div>
+                        )}
+                      </AccordionDetails>
+                    </motion.div>
+                  </Accordion>
                 </motion.div>
               ))}
-
-              <motion.div
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.99 }}
-              >
-                <Button
-                  variant="contained"
-                  type="submit"
-                  size="large"
-                  startIcon={isLoading ? <CircularProgress size={24} color="inherit" /> : <SendIcon />}
-                  disabled={isLoading}
-                  sx={{
-                    background: 'linear-gradient(135deg, #1976d2 0%, #2196f3 100%)',
-                    width: '100%',
-                    borderRadius: '12px',
-                    padding: '12px',
-                    fontSize: '16px',
-                    fontWeight: '600',
-                    textTransform: 'none',
-                    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-                    '&:hover': {
-                      boxShadow: '0 6px 8px rgba(0, 0, 0, 0.15)',
-                    },
-                  }}
-                >
-                  {isLoading ? "Sending..." : "Send Request"}
-                </Button>
-              </motion.div>
-            </form>
+            </div>
           </motion.div>
-        </motion.div>
+        </div>
       </div>
-
-      {/* FAQ Section */}
-      <motion.div 
-        variants={itemVariants}
-        className="mt-16 bg-gray-800 rounded-2xl p-8 shadow-xl"
-      >
-        <motion.div 
-          variants={itemVariants}
-          className="text-center mb-12"
-        >
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-            Frequently Asked Questions
-          </h2>
-          <p className="text-lg text-gray-300 max-w-2xl mx-auto">
-            Common queries answered
-          </p>
-        </motion.div>
-
-        <motion.div 
-          variants={containerVariants}
-          className="space-y-4"
-        >
-          {faqs.map((faq, index) => (
-            <motion.div
-              key={index}
-              variants={itemVariants}
-            >
-              <Accordion 
-                className="bg-gray-700 rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow"
-                sx={{
-                  '&:before': {
-                    display: 'none',
-                  },
-                }}
-              >
-                <AccordionSummary
-                  expandIcon={<motion.div whileHover={{ rotate: 180 }}><ExpandMore className="text-white" /></motion.div>}
-                  aria-controls={`panel${index}-content`}
-                  id={`panel${index}-header`}
-                  className="hover:bg-gray-600 transition-all min-h-[72px] shadow-sm"
-                  sx={{
-                    '& .MuiAccordionSummary-content': {
-                      margin: '12px 0',
-                      alignItems: 'center',
-                    },
-                  }}
-                >
-                  <Typography className="font-bold text-black text-lg">
-                    {faq.question}
-                  </Typography>
-                </AccordionSummary>
-                <AccordionDetails className="bg-gray-600 p-6 border-t border-gray-500">
-                  {typeof faq.answer === 'string' ? (
-                    <Typography className="text-gray-200">
-                      {faq.answer}
-                    </Typography>
-                  ) : (
-                    <div className="text-gray-200">
-                      {faq.answer}
-                    </div>
-                  )}
-                </AccordionDetails>
-              </Accordion>
-            </motion.div>
-          ))}
-        </motion.div>
-      </motion.div>
 
       <ToastContainer 
         position="bottom-right"
@@ -430,10 +610,16 @@ const ContactUs = () => {
         pauseOnFocusLoss
         draggable
         pauseOnHover
-        theme="colored"
+        theme="dark"
+        toastStyle={{
+          background: '#1F2937',
+          color: '#F3F4F6',
+          borderRadius: '12px',
+          border: '1px solid rgba(255, 255, 255, 0.1)'
+        }}
       />
-    </motion.div>
+    </div>
   );
 };
 
-export default ContactUs; 
+export default ContactUs;

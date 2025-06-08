@@ -42,6 +42,7 @@ import AntivirusNepal from "./pages/AntivirusNepal"; // Import AntivirusNepal
 import GrammarlyNepal from "./pages/GrammarlyNepal"; // Import GrammarlyNepal
 import TinderNepal from "./pages/TinderNepal"; // Import TinderNepal
 import HowToBuyNetflixNepal from "./pages/How-to-buy-netflix-in-nepal"; // Import the new page
+import ReviewsPage from "./pages/reviews/ReviewsPage"; // Import ReviewsPage
 
 const App = () => {
   return (
@@ -58,6 +59,7 @@ const App = () => {
           <Route path="/signup" element={<Signup />} />
           <Route path="/login" element={<Login />} />
           <Route path="/Contactus" element={<ContactUs />} />
+          <Route path="/reviews" element={<ReviewsPage />} />
           <Route path="/purchase" element={<PurchasePage />} />
           <Route path="/category/:categoryname" element={<CategoryPage />} />
           <Route path="/user-dashboard" element={

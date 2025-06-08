@@ -400,48 +400,126 @@ const PurchasePage = () => {
   return (
     <ThemeProvider theme={darkTheme}>
       <ToastContainer theme="dark" position="top-center" autoClose={3000} />
-      {/* Page Container with Black/Grey Gradient Background */}
-      <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black flex items-center justify-center p-4 sm:p-6 font-sans text-gray-200">
-        {/* Main Card - Wider for two columns */}
+      {/* Ultra Modern Page Container with Animated Background */}
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900/20 to-gray-900 flex items-center justify-center p-4 sm:p-6 font-sans text-gray-200 relative overflow-hidden">
+        {/* Animated Background Blobs */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-blob"></div>
+          <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
+          <div className="absolute bottom-1/4 left-1/3 w-96 h-96 bg-pink-500/10 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
+        </div>
+        {/* Ultra Modern Main Card */}
         <motion.div
-          className="w-full max-w-4xl bg-gray-950/60 backdrop-blur-xl rounded-2xl overflow-hidden shadow-2xl border border-gray-700/50"
+          className="w-full max-w-4xl bg-gradient-to-br from-gray-900/80 via-gray-800/60 to-gray-900/80 backdrop-blur-2xl rounded-3xl overflow-hidden shadow-2xl border border-gray-600/30 relative"
           variants={pageVariants}
           initial="initial"
           animate="animate"
           exit="exit"
         >
-          {/* Header with Dynamic Background */}
+          {/* Card Glow Effect */}
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-cyan-500/5 rounded-3xl"></div>
+          {/* Ultra Modern Header with Gradient Background */}
           <div
-            className={`p-5 border-b border-gray-800/50 relative transition-colors duration-300 ${currentMethod.bgColor}`} // Dynamic BG color
+            className={`p-6 border-b border-gray-700/30 relative transition-all duration-500 bg-gradient-to-r ${currentMethod.bgColor} from-gray-800/80 to-gray-900/80 backdrop-blur-xl`}
           >
-             <div className="flex items-center justify-between">
-               {/* Back Button */}
-               <motion.button onClick={() => navigate(-1)} className="p-2 rounded-full bg-black/25 hover:bg-black/40 transition-colors text-white" aria-label="Go back" whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}> <ArrowLeft size={20} /> </motion.button>
-               {/* Title */}
-               <h1 className="text-xl font-bold text-white"> Complete Payment </h1>
-               {/* Help Button */}
-               <motion.button onClick={() => setShowHelp(!showHelp)} className="p-2 rounded-full bg-black/25 hover:bg-black/40 transition-colors text-white" aria-label="Help" whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}> <HelpCircle size={20} /> </motion.button>
+            {/* Header Glow Effect */}
+            <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-transparent to-cyan-500/10"></div>
+
+             <div className="flex items-center justify-between relative z-10">
+               {/* Enhanced Back Button */}
+               <motion.button
+                 onClick={() => navigate(-1)}
+                 className="p-3 rounded-xl bg-white/10 hover:bg-white/20 transition-all duration-300 text-white backdrop-blur-sm border border-white/20 hover:border-white/30"
+                 aria-label="Go back"
+                 whileHover={{ scale: 1.05, y: -2 }}
+                 whileTap={{ scale: 0.95 }}
+               >
+                 <ArrowLeft size={20} />
+               </motion.button>
+
+               {/* Modern Gradient Title */}
+               <motion.h1
+                 className="text-2xl font-bold bg-gradient-to-r from-white via-gray-100 to-white bg-clip-text text-transparent"
+                 initial={{ opacity: 0, y: -20 }}
+                 animate={{ opacity: 1, y: 0 }}
+                 transition={{ delay: 0.2 }}
+               >
+                 Complete Payment
+               </motion.h1>
+
+               {/* Enhanced Help Button */}
+               <motion.button
+                 onClick={() => setShowHelp(!showHelp)}
+                 className="p-3 rounded-xl bg-white/10 hover:bg-white/20 transition-all duration-300 text-white backdrop-blur-sm border border-white/20 hover:border-white/30"
+                 aria-label="Help"
+                 whileHover={{ scale: 1.05, y: -2 }}
+                 whileTap={{ scale: 0.95 }}
+               >
+                 <HelpCircle size={20} />
+               </motion.button>
              </div>
-             {/* Help Tooltip */}
+             {/* Modern Help Tooltip */}
              <AnimatePresence>
                 {showHelp && (
                     <motion.div
-                        className="absolute right-4 top-[calc(100%+8px)] bg-white text-gray-900 p-4 rounded-lg shadow-lg z-20 w-64"
-                        initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
-                        transition={{ type: "spring", damping: 15, stiffness: 200 }}
+                        className="absolute right-4 top-[calc(100%+12px)] bg-gradient-to-br from-gray-900/95 to-gray-800/95 backdrop-blur-xl text-gray-100 p-5 rounded-2xl shadow-2xl z-20 w-72 border border-gray-600/30"
+                        initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                        transition={{ type: "spring", damping: 20, stiffness: 300 }}
                     >
-                        <button onClick={() => setShowHelp(false)} className="absolute top-1 right-1 p-1 text-gray-500 hover:text-gray-800"> <X size={16}/> </button>
-                        <p className="text-sm font-semibold mb-2">Payment Steps:</p>
-                        <ul className="text-xs space-y-1 list-decimal list-inside">
-                            <li>Select payment method.</li>
-                            <li>Scan QR or copy number to pay <strong className="font-semibold">₹{formattedAmount}</strong>.</li>
-                            <li>Check "Payment Completed".</li>
-                            {!isMobile && <li>Upload screenshot.</li>}
-                            <li>Click "Confirm via WhatsApp".</li>
-                            <li>Send message (and screenshot if mobile).</li>
+                        {/* Close Button */}
+                        <motion.button
+                          onClick={() => setShowHelp(false)}
+                          className="absolute top-2 right-2 p-2 text-gray-400 hover:text-white hover:bg-gray-700/50 rounded-lg transition-all duration-200"
+                          whileHover={{ scale: 1.1, rotate: 90 }}
+                          whileTap={{ scale: 0.9 }}
+                        >
+                          <X size={16}/>
+                        </motion.button>
+
+                        {/* Header */}
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-cyan-500 rounded-lg flex items-center justify-center">
+                            <HelpCircle size={16} className="text-white" />
+                          </div>
+                          <p className="text-sm font-semibold text-white">Payment Steps:</p>
+                        </div>
+
+                        {/* Steps List */}
+                        <ul className="text-xs space-y-2 list-none">
+                            <li className="flex items-start gap-2">
+                              <span className="w-5 h-5 bg-purple-500/20 text-purple-400 rounded-full flex items-center justify-center text-xs font-bold mt-0.5">1</span>
+                              <span>Select payment method.</span>
+                            </li>
+                            <li className="flex items-start gap-2">
+                              <span className="w-5 h-5 bg-purple-500/20 text-purple-400 rounded-full flex items-center justify-center text-xs font-bold mt-0.5">2</span>
+                              <span>Scan QR or copy number to pay <strong className="font-semibold text-emerald-400">₹{formattedAmount}</strong>.</span>
+                            </li>
+                            <li className="flex items-start gap-2">
+                              <span className="w-5 h-5 bg-purple-500/20 text-purple-400 rounded-full flex items-center justify-center text-xs font-bold mt-0.5">3</span>
+                              <span>Check "Payment Completed".</span>
+                            </li>
+                            {!isMobile && (
+                              <li className="flex items-start gap-2">
+                                <span className="w-5 h-5 bg-purple-500/20 text-purple-400 rounded-full flex items-center justify-center text-xs font-bold mt-0.5">4</span>
+                                <span>Upload screenshot.</span>
+                              </li>
+                            )}
+                            <li className="flex items-start gap-2">
+                              <span className="w-5 h-5 bg-purple-500/20 text-purple-400 rounded-full flex items-center justify-center text-xs font-bold mt-0.5">{!isMobile ? '5' : '4'}</span>
+                              <span>Click "Confirm via WhatsApp".</span>
+                            </li>
+                            <li className="flex items-start gap-2">
+                              <span className="w-5 h-5 bg-purple-500/20 text-purple-400 rounded-full flex items-center justify-center text-xs font-bold mt-0.5">{!isMobile ? '6' : '5'}</span>
+                              <span>Send message (and screenshot if mobile).</span>
+                            </li>
                         </ul>
-                        <div className="mt-2 pt-2 border-t border-gray-200 text-xs text-blue-600 flex items-center gap-1">
-                            <Smartphone size={14}/> Mobile users send screenshot in WhatsApp.
+
+                        {/* Mobile Notice */}
+                        <div className="mt-3 pt-3 border-t border-gray-700/50 text-xs text-cyan-400 flex items-center gap-2">
+                            <Smartphone size={14}/>
+                            <span>Mobile users send screenshot in WhatsApp.</span>
                         </div>
                     </motion.div>
                 )}
@@ -458,40 +536,98 @@ const PurchasePage = () => {
                 initial="initial"
                 animate="animate"
             >
-                {/* Order Summary Card */}
-                <motion.div variants={itemVariants} className="bg-gray-800/70 rounded-xl p-4 border border-gray-700/70">
-                   <h2 className="text-base font-semibold text-blue-300 mb-3 flex justify-between items-center">
-                      <span>Order Summary</span>
-                      {/* Display Order ID if available */}
-                      {orderId && <span className="text-xs font-mono text-gray-400">ID: {orderId}</span>}
-                   </h2>
-                   <div className="space-y-1.5 text-sm">
-                      {/* Subtotal */}
-                      <div className="flex justify-between text-gray-300"> <span>Subtotal:</span> <span className="font-medium">₹{formattedSubtotal}</span> </div>
-                      {/* Discount (Conditional) */}
-                      {discountApplied > 0 && ( <div className="flex justify-between text-green-400"> <span>Discount:</span> <span className="font-medium">- ₹{formattedDiscount}</span> </div> )}
-                      {/* Total Amount */}
-                      <div className="border-t border-gray-700 !mt-3 pt-3 flex justify-between font-bold text-lg text-white">
-                        <span>Total Amount:</span>
-                        {/* Animate total price */}
-                        <motion.span key={totalAmount} initial={{ scale: 1.1, color: "#4ade80" }} animate={{ scale: 1, color: "#ffffff" }} transition={{ duration: 0.5, type: "spring" }} className="text-emerald-400"> ₹{formattedAmount} </motion.span>
-                      </div>
+                {/* Ultra Modern Order Summary Card */}
+                <motion.div
+                  variants={itemVariants}
+                  className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-xl rounded-2xl p-5 border border-gray-600/30 relative overflow-hidden"
+                  whileHover={{ scale: 1.02, y: -2 }}
+                  transition={{ duration: 0.2 }}
+                >
+                   {/* Card Glow Effect */}
+                   <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-cyan-500/5 rounded-2xl"></div>
+
+                   <div className="relative z-10">
+                     <h2 className="text-lg font-bold bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent mb-4 flex justify-between items-center">
+                        <span>Order Summary</span>
+                        {/* Display Order ID if available */}
+                        {orderId && <span className="text-xs font-mono text-gray-400 bg-gray-700/50 px-2 py-1 rounded-lg">ID: {orderId}</span>}
+                     </h2>
+
+                     <div className="space-y-3 text-sm">
+                        {/* Subtotal */}
+                        <div className="flex justify-between text-gray-300 p-2 rounded-lg bg-gray-700/30">
+                          <span>Subtotal:</span>
+                          <span className="font-semibold">₹{formattedSubtotal}</span>
+                        </div>
+
+                        {/* Discount (Conditional) */}
+                        {discountApplied > 0 && (
+                          <motion.div
+                            className="flex justify-between text-emerald-400 p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20"
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                          >
+                            <span>Discount:</span>
+                            <span className="font-semibold">- ₹{formattedDiscount}</span>
+                          </motion.div>
+                        )}
+
+                        {/* Total Amount */}
+                        <div className="border-t border-gray-600/50 !mt-4 pt-4 flex justify-between font-bold text-lg text-white bg-gradient-to-r from-gray-700/50 to-gray-800/50 p-3 rounded-xl">
+                          <span className="bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">Total Amount:</span>
+                          {/* Animate total price */}
+                          <motion.span
+                            key={totalAmount}
+                            initial={{ scale: 1.2, color: "#10b981" }}
+                            animate={{ scale: 1, color: "#10b981" }}
+                            transition={{ duration: 0.6, type: "spring" }}
+                            className="text-emerald-400 font-bold"
+                          >
+                            ₹{formattedAmount}
+                          </motion.span>
+                        </div>
+                     </div>
                    </div>
                 </motion.div>
 
-                {/* Payment Method Selector Card */}
-                <motion.div variants={itemVariants} className="bg-gray-800/70 rounded-xl p-4 border border-gray-700/70">
-                    <h3 className="text-base font-semibold text-blue-300 mb-4">Select Payment Method</h3>
-                    <div className="flex justify-center gap-3 flex-wrap">
-                        {/* Map through payment methods to create buttons */}
-                        {Object.keys(paymentMethods).map((method) => (
-                            <motion.button
-                                key={method} onClick={() => setSelectedMethod(method)}
-                                // Dynamic classes based on selection
-                                className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 flex items-center gap-2 border ${ selectedMethod === method ? `${paymentMethods[method].bgColor} ${paymentMethods[method].textColor} border-transparent shadow-lg scale-105` : "bg-gray-700/50 text-gray-300 border-gray-600 hover:bg-gray-700 hover:border-gray-500" }`}
-                                whileHover={{ y: -2 }} whileTap={{ scale: 0.95 }}
-                            > <span className="text-base">{paymentMethods[method].icon}</span> {paymentMethods[method].name} </motion.button>
-                        ))}
+                {/* Ultra Modern Payment Method Selector Card */}
+                <motion.div
+                  variants={itemVariants}
+                  className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-xl rounded-2xl p-5 border border-gray-600/30 relative overflow-hidden"
+                  whileHover={{ scale: 1.02, y: -2 }}
+                  transition={{ duration: 0.2 }}
+                >
+                    {/* Card Glow Effect */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-cyan-500/5 rounded-2xl"></div>
+
+                    <div className="relative z-10">
+                      <h3 className="text-lg font-bold bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent mb-5">Select Payment Method</h3>
+                      <div className="flex justify-center gap-4 flex-wrap">
+                          {/* Map through payment methods to create modern buttons */}
+                          {Object.keys(paymentMethods).map((method) => (
+                              <motion.button
+                                  key={method}
+                                  onClick={() => setSelectedMethod(method)}
+                                  className={`px-5 py-3 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center gap-3 border backdrop-blur-sm relative overflow-hidden ${
+                                    selectedMethod === method
+                                      ? `${paymentMethods[method].bgColor} ${paymentMethods[method].textColor} border-transparent shadow-xl scale-105`
+                                      : "bg-gray-700/50 text-gray-300 border-gray-600/50 hover:bg-gray-600/50 hover:border-gray-500/50 hover:text-white"
+                                  }`}
+                                  whileHover={{ y: -3, scale: selectedMethod === method ? 1.05 : 1.02 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  initial={{ opacity: 0, y: 20 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  transition={{ delay: 0.1 * Object.keys(paymentMethods).indexOf(method) }}
+                              >
+                                {/* Glow effect for selected method */}
+                                {selectedMethod === method && (
+                                  <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent rounded-xl"></div>
+                                )}
+                                <span className="text-lg relative z-10">{paymentMethods[method].icon}</span>
+                                <span className="relative z-10">{paymentMethods[method].name}</span>
+                              </motion.button>
+                          ))}
+                      </div>
                     </div>
                 </motion.div>
 
@@ -504,38 +640,142 @@ const PurchasePage = () => {
                  initial="initial"
                  animate="animate"
             >
-                {/* QR Code Card */}
-                <motion.div variants={itemVariants} className="bg-gray-800/70 rounded-xl p-4 border border-gray-700/70 text-center">
-                    <div className="flex justify-between items-center mb-3 text-left">
-                        <h3 className="text-sm font-medium text-gray-300"> Scan QR <span className="text-xs text-gray-400">({currentMethod.name})</span> </h3>
-                        {/* Download QR Button */}
-                        <motion.button onClick={downloadQR} className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}> <Download size={14} /> Save QR </motion.button>
+                {/* Ultra Modern QR Code Card */}
+                <motion.div
+                  variants={itemVariants}
+                  className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-xl rounded-2xl p-5 border border-gray-600/30 text-center relative overflow-hidden"
+                  whileHover={{ scale: 1.02, y: -2 }}
+                  transition={{ duration: 0.2 }}
+                >
+                    {/* Card Glow Effect */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-cyan-500/5 rounded-2xl"></div>
+
+                    <div className="relative z-10">
+                      <div className="flex justify-between items-center mb-4 text-left">
+                          <h3 className="text-base font-semibold bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
+                            Scan QR Code
+                            <span className="text-xs text-gray-400 ml-2 bg-gray-700/50 px-2 py-1 rounded-lg">({currentMethod.name})</span>
+                          </h3>
+                          {/* Enhanced Download QR Button */}
+                          <motion.button
+                            onClick={downloadQR}
+                            className="flex items-center gap-2 text-xs text-cyan-400 hover:text-cyan-300 bg-cyan-500/10 hover:bg-cyan-500/20 px-3 py-2 rounded-lg border border-cyan-500/20 transition-all duration-200"
+                            whileHover={{ scale: 1.05, y: -1 }}
+                            whileTap={{ scale: 0.95 }}
+                          >
+                            <Download size={14} /> Save QR
+                          </motion.button>
+                      </div>
+
+                      {/* Animate QR code change with enhanced styling */}
+                      <motion.div
+                        className="flex justify-center mb-4"
+                        key={selectedMethod + "-qr"}
+                        initial={{ opacity: 0, scale: 0.8, rotateY: 90 }}
+                        animate={{ opacity: 1, scale: 1, rotateY: 0 }}
+                        transition={{ duration: 0.5, type: "spring" }}
+                      >
+                          <div className="relative">
+                            <img
+                              src={currentMethod.qr}
+                              alt={`${currentMethod.name} QR Code`}
+                              className="w-40 h-40 md:w-44 md:h-44 object-contain rounded-xl border-2 border-gray-500/50 bg-white p-2 shadow-xl"
+                            />
+                            {/* QR Code Glow Effect */}
+                            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-cyan-500/20 rounded-xl blur-xl -z-10"></div>
+                          </div>
+                      </motion.div>
+
+                      <p className="text-sm text-gray-400 bg-gray-700/30 px-3 py-2 rounded-lg">
+                        Scan using your <span className="text-white font-semibold">{currentMethod.name}</span> app
+                      </p>
                     </div>
-                    {/* Animate QR code change */}
-                    <motion.div className="flex justify-center mb-2" key={selectedMethod + "-qr"} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.3 }}>
-                        <img src={currentMethod.qr} alt={`${currentMethod.name} QR Code`} className="w-36 h-36 md:w-40 md:h-40 object-contain rounded-lg border-2 border-gray-600 bg-white p-1.5" />
-                    </motion.div>
-                    <p className="text-xs text-gray-500">Scan using your {currentMethod.name} app.</p>
                 </motion.div>
 
-                {/* Payment Number Card */}
-                <motion.div variants={itemVariants} className="bg-gray-800/70 rounded-xl p-4 border border-gray-700/70">
-                    <h3 className="text-sm font-medium text-gray-300 mb-2">Or send payment to:</h3>
-                    <div className="flex items-center justify-between bg-gray-700/60 p-3 rounded-lg">
-                        {/* Display Payment Number */}
-                        <span className="font-mono text-base sm:text-lg font-semibold text-gray-100 tracking-wider"> {currentMethod.number} </span>
-                        {/* Copy Button */}
-                        <motion.button onClick={copyToClipboard} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${ copied ? "bg-emerald-600/30 text-emerald-400 border border-emerald-500/50" : "bg-gray-600 hover:bg-blue-600 text-gray-200 border border-transparent" }`} whileTap={{ scale: 0.95 }} whileHover={{ scale: copied ? 1 : 1.03 }}> {copied ? <CheckCircle size={14} /> : <Copy size={14} />} {copied ? "Copied!" : "Copy"} </motion.button>
+                {/* Ultra Modern Payment Number Card */}
+                <motion.div
+                  variants={itemVariants}
+                  className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-xl rounded-2xl p-5 border border-gray-600/30 relative overflow-hidden"
+                  whileHover={{ scale: 1.02, y: -2 }}
+                  transition={{ duration: 0.2 }}
+                >
+                    {/* Card Glow Effect */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-cyan-500/5 rounded-2xl"></div>
+
+                    <div className="relative z-10">
+                      <h3 className="text-base font-semibold bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent mb-3">Or send payment to:</h3>
+                      <div className="flex items-center justify-between bg-gradient-to-r from-gray-700/60 to-gray-800/60 p-4 rounded-xl border border-gray-600/30 backdrop-blur-sm">
+                          {/* Display Payment Number with enhanced styling */}
+                          <span className="font-mono text-lg sm:text-xl font-bold text-white tracking-wider bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
+                            {currentMethod.number}
+                          </span>
+
+                          {/* Enhanced Copy Button */}
+                          <motion.button
+                            onClick={copyToClipboard}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300 backdrop-blur-sm ${
+                              copied
+                                ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/50 shadow-lg shadow-emerald-500/20"
+                                : "bg-gradient-to-r from-purple-500/20 to-cyan-500/20 hover:from-purple-500/30 hover:to-cyan-500/30 text-white border border-purple-500/30 hover:border-cyan-500/50"
+                            }`}
+                            whileTap={{ scale: 0.95 }}
+                            whileHover={{ scale: copied ? 1 : 1.05, y: -1 }}
+                          >
+                            <motion.div
+                              animate={copied ? { rotate: 360 } : { rotate: 0 }}
+                              transition={{ duration: 0.3 }}
+                            >
+                              {copied ? <CheckCircle size={16} /> : <Copy size={16} />}
+                            </motion.div>
+                            {copied ? "Copied!" : "Copy"}
+                          </motion.button>
+                      </div>
                     </div>
                 </motion.div>
 
-                {/* Payment Confirmation Checkbox Card */}
-                <motion.div variants={itemVariants} className="flex items-start p-3 rounded-lg bg-gray-800/60 border border-gray-700/70">
-                   <input type="checkbox" id="paymentConfirmation" checked={paymentConfirmed} onChange={(e) => setPaymentConfirmed(e.target.checked)} className="h-5 w-5 rounded border-gray-600 focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-blue-500 bg-gray-700 mt-0.5 cursor-pointer accent-blue-500" />
-                   <label htmlFor="paymentConfirmation" className="ml-3 text-sm text-gray-200 cursor-pointer">
-                      <span className="block font-medium">I have completed the payment of ₹{formattedAmount}</span>
-                      <span className="text-xs text-gray-400"> {isMobile ? "Confirm via WhatsApp (send screenshot there)." : "Upload screenshot below before confirming."} </span>
-                   </label>
+                {/* Ultra Modern Payment Confirmation Checkbox Card */}
+                <motion.div
+                  variants={itemVariants}
+                  className="flex items-start p-4 rounded-2xl bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-xl border border-gray-600/30 relative overflow-hidden"
+                  whileHover={{ scale: 1.01, y: -1 }}
+                  transition={{ duration: 0.2 }}
+                >
+                   {/* Card Glow Effect */}
+                   <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-cyan-500/5 rounded-2xl"></div>
+
+                   <div className="relative z-10 flex items-start w-full">
+                     {/* Enhanced Checkbox */}
+                     <motion.div className="relative">
+                       <input
+                         type="checkbox"
+                         id="paymentConfirmation"
+                         checked={paymentConfirmed}
+                         onChange={(e) => setPaymentConfirmed(e.target.checked)}
+                         className="h-6 w-6 rounded-lg border-2 border-gray-500 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-800 bg-gray-700/50 mt-1 cursor-pointer accent-purple-500 transition-all duration-200"
+                       />
+                       {/* Custom checkmark animation */}
+                       {paymentConfirmed && (
+                         <motion.div
+                           className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                           initial={{ scale: 0, rotate: -180 }}
+                           animate={{ scale: 1, rotate: 0 }}
+                           transition={{ duration: 0.3, type: "spring" }}
+                         >
+                           <CheckCircle size={24} className="text-emerald-400" />
+                         </motion.div>
+                       )}
+                     </motion.div>
+
+                     <label htmlFor="paymentConfirmation" className="ml-4 text-sm text-gray-200 cursor-pointer flex-1">
+                        <span className="block font-semibold text-white mb-1">
+                          I have completed the payment of
+                          <span className="text-emerald-400 font-bold ml-1">₹{formattedAmount}</span>
+                        </span>
+                        <span className="text-xs text-gray-400 bg-gray-700/30 px-2 py-1 rounded-lg inline-block">
+                          {isMobile ? "Confirm via WhatsApp (send screenshot there)." : "Upload screenshot below before confirming."}
+                        </span>
+                     </label>
+                   </div>
                 </motion.div>
 
                 {/* Screenshot Upload Section (Desktop Only, Conditional) */}
@@ -574,19 +814,52 @@ const PurchasePage = () => {
                     )}
                 </AnimatePresence>
 
-                {/* Action Button: Confirm via WhatsApp */}
-                <motion.div variants={itemVariants} className="mt-6">
-                    <motion.button
-                        onClick={handleWhatsAppClick}
-                        disabled={!paymentConfirmed || (!isMobile && !screenshot)} // Disable logic
-                        className={`w-full py-3 rounded-xl font-semibold text-base flex items-center justify-center gap-2 transition-all duration-300 shadow-lg ${ paymentConfirmed && (isMobile || screenshot) ? "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white" : "bg-gray-700 text-gray-500 cursor-not-allowed" }`}
-                        whileHover={paymentConfirmed && (isMobile || screenshot) ? { scale: 1.03, y: -1, filter: 'brightness(1.1)' } : {}}
-                        whileTap={paymentConfirmed && (isMobile || screenshot) ? { scale: 0.97 } : {}}
-                    >
-                        {/* WhatsApp Icon */}
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"> <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-6.29-3.588c.545 1.422 1.663 2.43 2.98 2.453.386.006.772-.05 1.144-.15.525-.141 1.191-.471 1.715-.896.524-.426.936-.936 1.224-1.496.315-.615.473-1.289.473-1.97 0-.55-.107-1.1-.322-1.618-.213-.521-.663-.69-1.001-.575-.315.111-.853.38-1.177.65-.324.27-.744.715-.893 1.1-.149.386-.171.8-.057 1.213.115.413.173.686.057.896-.111.213-.396.27-.733.162-.338-.107-1.186-.396-1.694-1.263-.508-.866-.508-1.793-.396-1.981.111-.189.396-.27.632-.324.236-.054.396-.027.545.027.149.054.297.161.396.27.099.108.198.216.248.324.05.107.099.161.148.27.05.108.025.162-.025.27-.05.108-.149.27-.248.432-.099.162-.198.324-.149.432.05.108.297.54.644 1.003.346.462.793.893 1.157 1.157.364.264.644.35.744.35.099 0 .149-.027.198-.054.05-.027.099-.081.149-.189.05-.108.027-.216-.025-.324-.05-.107-.396-.853-.545-1.166-.149-.312-.297-.27-.396-.27-.099 0-.198-.027-.347-.081-.149-.054-.297-.108-.396-.162-.099-.054-.173-.081-.248-.027-.074.054-.05.27-.05.415 0 .144.025.754.322 1.263z"/> </svg>
-                        Confirm via WhatsApp
-                    </motion.button>
+                {/* Ultra Modern Action Button: Confirm via WhatsApp */}
+                <motion.div variants={itemVariants} className="mt-8">
+                    <div className="relative group">
+                        {/* Button Glow Effect */}
+                        <div className={`absolute -inset-1 rounded-2xl blur-lg transition-all duration-300 ${
+                            paymentConfirmed && (isMobile || screenshot)
+                                ? "bg-gradient-to-r from-emerald-500 via-green-500 to-emerald-600 opacity-75 group-hover:opacity-100"
+                                : "bg-gray-600/20 opacity-30"
+                        }`}></div>
+
+                        <motion.button
+                            onClick={handleWhatsAppClick}
+                            disabled={!paymentConfirmed || (!isMobile && !screenshot)}
+                            className={`relative w-full py-4 rounded-2xl font-bold text-lg flex items-center justify-center gap-3 transition-all duration-300 shadow-2xl backdrop-blur-sm border ${
+                                paymentConfirmed && (isMobile || screenshot)
+                                    ? "bg-gradient-to-r from-emerald-500 via-green-500 to-emerald-600 hover:from-emerald-400 hover:via-green-400 hover:to-emerald-500 text-white border-emerald-400/50 hover:border-emerald-300/70"
+                                    : "bg-gray-700/50 text-gray-500 cursor-not-allowed border-gray-600/30"
+                            }`}
+                            whileHover={paymentConfirmed && (isMobile || screenshot) ? {
+                                scale: 1.02,
+                                y: -2,
+                                filter: 'brightness(1.1)',
+                                boxShadow: '0 20px 40px rgba(16, 185, 129, 0.3)'
+                            } : {}}
+                            whileTap={paymentConfirmed && (isMobile || screenshot) ? { scale: 0.98 } : {}}
+                        >
+                            {/* Shimmer Effect for Active Button */}
+                            {paymentConfirmed && (isMobile || screenshot) && (
+                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent rounded-2xl animate-shimmer"></div>
+                            )}
+
+                            {/* WhatsApp Icon with enhanced styling */}
+                            <motion.div
+                                animate={paymentConfirmed && (isMobile || screenshot) ? { rotate: [0, 5, -5, 0] } : {}}
+                                transition={{ duration: 2, repeat: Infinity, repeatType: "reverse" }}
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-6.29-3.588c.545 1.422 1.663 2.43 2.98 2.453.386.006.772-.05 1.144-.15.525-.141 1.191-.471 1.715-.896.524-.426.936-.936 1.224-1.496.315-.615.473-1.289.473-1.97 0-.55-.107-1.1-.322-1.618-.213-.521-.663-.69-1.001-.575-.315.111-.853.38-1.177.65-.324.27-.744.715-.893 1.1-.149.386-.171.8-.057 1.213.115.413.173.686.057.896-.111.213-.396.27-.733.162-.338-.107-1.186-.396-1.694-1.263-.508-.866-.508-1.793-.396-1.981.111-.189.396-.27.632-.324.236-.054.396-.027.545.027.149.054.297.161.396.27.099.108.198.216.248.324.05.107.099.161.148.27.05.108.025.162-.025.27-.05.108-.149.27-.248.432-.099.162-.198.324-.149.432.05.108.297.54.644 1.003.346.462.793.893 1.157 1.157.364.264.644.35.744.35.099 0 .149-.027.198-.054.05-.027.099-.081.149-.189.05-.108.027-.216-.025-.324-.05-.107-.396-.853-.545-1.166-.149-.312-.297-.27-.396-.27-.099 0-.198-.027-.347-.081-.149-.054-.297-.108-.396-.162-.099-.054-.173-.081-.248-.027-.074.054-.05.27-.05.415 0 .144.025.754.322 1.263z"/>
+                                </svg>
+                            </motion.div>
+
+                            <span className="relative z-10 bg-gradient-to-r from-white to-gray-100 bg-clip-text text-transparent">
+                                Confirm via WhatsApp
+                            </span>
+                        </motion.button>
+                    </div>
                 </motion.div>
 
             </motion.div> {/* End Right Column */}

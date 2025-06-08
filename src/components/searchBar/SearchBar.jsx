@@ -84,7 +84,7 @@ const SearchBar = () => {
     };
 
     return (
-        <div className="relative w-full max-w-xs md:max-w-sm" ref={searchRef}>
+        <div className="relative w-full max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl" ref={searchRef}>
             {/* Search input */}
             <motion.div 
                 className="relative w-full"
@@ -99,10 +99,10 @@ const SearchBar = () => {
                     onChange={(e) => setSearch(e.target.value)}
                     onFocus={() => setIsFocused(true)}
                     onBlur={() => setTimeout(() => setIsFocused(false), 200)}
-                    className="bg-gray-50 placeholder-gray-400 rounded-full px-4 py-2 w-full outline-none text-gray-800 
-                    focus:bg-white focus:ring-2 focus:ring-blue-500 transition duration-200 
+                    className="bg-gray-50 placeholder-gray-400 rounded-full px-4 py-2.5 w-full outline-none text-gray-800
+                    focus:bg-white focus:ring-2 focus:ring-blue-500 transition duration-200
                     border border-gray-200 hover:border-blue-300 hover:bg-white hover:shadow-sm
-                    text-sm md:text-base pr-10"
+                    text-sm md:text-base lg:text-base pr-10 min-w-0"
                 />
                 
                 {/* Search icon (visible on mobile when not focused) */}

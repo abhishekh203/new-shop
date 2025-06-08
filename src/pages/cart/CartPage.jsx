@@ -1,598 +1,689 @@
 import { useDispatch, useSelector } from "react-redux";
 import Layout from "../../components/layout/Layout";
-import { Trash2, X, Check, Info, Minus, Plus, ShoppingCart, Ticket, XCircle } from "lucide-react"; // Added necessary icons
-import {
-  decrementQuantity,
-  deleteFromCart,
-  incrementQuantity
+import { Trash, X, Check, Info, ShoppingCart, Minus, Plus, Sparkles, Star, Package } from "lucide-react";
+import { 
+  decrementQuantity, 
+  deleteFromCart, 
+  incrementQuantity 
 } from "../../redux/cartSlice";
 import toast, { Toaster } from "react-hot-toast";
 import { useEffect, useState } from "react";
 import { Timestamp, addDoc, collection } from "firebase/firestore";
 import { fireDB } from "../../firebase/FirebaseConfig";
 import BuyNowModal from "../../components/buyNowModal/BuyNowModal";
-import { useNavigate } from "react-router-dom"; // Corrected import from react-router-dom
+import { Navigate, useNavigate } from "react-router";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 
 // Enhanced coupon system with better validation
 const validCoupons = {
-  "WELCOME": { discount: 1, minAmount: 0, description: "1% off any order" }, // Added description
-  "SAVE20": { discount: 2, minAmount: 1000, description: "2% off orders over ₹1000" },
-  "MEGA30": { discount: 3, minAmount: 2000, description: "3% off orders over ₹2000" },
+  "WELCOME": { discount: 1, minAmount: 0, maxUses: 1 },
+  "SAVE20": { discount: 2, minAmount: 1000, maxUses: 3 },
+  "MEGA30": { discount: 3, minAmount: 2000, maxUses: 1 },
 };
-
-// --- Animation Variants (Copied from previous enhanced version for consistency) ---
-const containerVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeInOut" } }
-};
-
-const itemMotionVariants = { // Renamed to avoid conflict with a component variable if any
-  hidden: { opacity: 0, x: -40 },
-  visible: { opacity: 1, x: 0, transition: { duration: 0.4, ease: "easeOut" } },
-  exit: {
-    opacity: 0,
-    x: 40,
-    transition: { duration: 0.3, ease: "easeIn" }
-  },
-  hover: {
-    scale: 1.015,
-    boxShadow: "0 4px 15px rgba(0, 0, 0, 0.15)",
-    transition: { duration: 0.2 }
-  }
-};
-
-const summaryVariants = {
-  initial: { opacity: 0.8, y: 15 },
-  animate: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut", delay: 0.1 } },
-}
-
-const totalPriceVariants = {
-  initial: { scale: 1.05, opacity: 0.8 },
-  animate: { scale: 1, opacity: 1, transition: { duration: 0.4, type: 'spring', stiffness: 120 } },
-}
-
-const couponSectionVariants = {
-  initial: { opacity: 0, height: 0, y: 10 },
-  animate: { opacity: 1, height: 'auto', y: 0, transition: { duration: 0.3, ease: 'easeOut' } },
-  exit: { opacity: 0, height: 0, y: -10, transition: { duration: 0.2, ease: 'easeIn' } }
-};
-
-const errorMessageVariants = {
-  initial: { opacity: 0, y: -10 },
-  animate: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-  exit: { opacity: 0, y: -5, transition: { duration: 0.2 } }
-};
-
 
 const CartPage = () => {
   const cartItems = useSelector((state) => state.cart);
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const [listRef] = useAutoAnimate({ duration: 300 }); // Corrected to listRef for clarity if used on ul/ol
+  const [parent] = useAutoAnimate({ duration: 300 });
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
   const [customCoupon, setCustomCoupon] = useState("");
   const [couponError, setCouponError] = useState(null);
-  const [isRemovingItemId, setIsRemovingItemId] = useState(null); // For exit animation state
+  const [isRemovingItem, setIsRemovingItem] = useState(null);
 
-  const cartItemTotal = cartItems.reduce((total, item) => total + (Number(item.quantity || 0)), 0);
-  const cartSubtotal = cartItems.reduce((total, item) => {
-    const itemPrice = Number(item.price || 0);
-    const itemQuantity = Number(item.quantity || 0);
-    return total + (itemPrice * itemQuantity);
-  }, 0);
+  const cartItemTotal = cartItems.reduce((total, item) => total + item.quantity, 0);
+  const cartSubtotal = cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
 
-
-  const getLoggedInUser = () => {
-    const userString = localStorage.getItem("users");
-    if (userString) {
-      try {
-        return JSON.parse(userString);
-      } catch (e) {
-        console.error("Error parsing user from localStorage:", e);
-        return null;
-      }
-    }
-    return null;
-  };
-  const user = getLoggedInUser();
+  const user = JSON.parse(localStorage.getItem("users"));
 
   const [addressInfo, setAddressInfo] = useState({
-    name: user?.name || "", // Pre-fill name if available
+    name: "",
     address: "",
-    country: "", // Added country field
     pincode: "",
     mobileNumber: "",
-    // time and date for address capture are better set when the address is confirmed/used
+    time: Timestamp.now(),
+    date: new Date().toLocaleString("en-US", { 
+      month: "short", 
+      day: "2-digit", 
+      year: "numeric" 
+    }),
   });
 
   // Enhanced coupon state management
-  const [couponState, setCouponState] = useState(() => {
-    const savedCode = localStorage.getItem("couponCode");
-    const savedDiscount = parseFloat(localStorage.getItem("discount")) || 0;
-    const couponDetails = savedCode ? validCoupons[savedCode.toUpperCase()] : null;
-    const savedPercentage = couponDetails ? couponDetails.discount : 0;
-
-    return {
-      code: savedCode || "",
-      discount: savedDiscount || 0,
-      applied: !!savedCode,
-      discountPercentage: savedPercentage,
-    };
+  const [couponState, setCouponState] = useState({
+    code: localStorage.getItem("couponCode") || "",
+    discount: parseFloat(localStorage.getItem("discount")) || 0,
+    applied: Boolean(localStorage.getItem("couponCode")),
+    discountPercentage: 0
   });
 
-  // Persist coupon state to localStorage
   useEffect(() => {
-    if (couponState.applied && couponState.code) {
-      localStorage.setItem("discount", couponState.discount.toString());
-      localStorage.setItem("couponCode", couponState.code);
-      // discountPercentage is derived, so not strictly needed in localStorage if always recalculated
-    } else {
-      localStorage.removeItem("discount");
-      localStorage.removeItem("couponCode");
-    }
+    localStorage.setItem("discount", couponState.discount);
+    localStorage.setItem("couponCode", couponState.code);
   }, [couponState]);
 
+  const validateCoupon = (code) => {
+    if (!validCoupons[code]) {
+      return { valid: false, message: "Invalid coupon code" };
+    }
+    
+    const coupon = validCoupons[code];
+    
+    if (cartSubtotal < coupon.minAmount) {
+      return { 
+        valid: false, 
+        message: `Minimum order amount of ₹${coupon.minAmount} required` 
+      };
+    }
+    
+    return { valid: true, coupon };
+  };
 
-  const validateAndApplyCoupon = (codeToApply, showSuccessToast = true) => {
-    if (!codeToApply || isApplyingCoupon) return;
-
+  const applyCoupon = (code) => {
     setIsApplyingCoupon(true);
     setCouponError(null);
-    const normalizedCode = codeToApply.toUpperCase(); // Normalize here
-
+    
     setTimeout(() => {
-      const coupon = validCoupons[normalizedCode];
-
-      if (!coupon) {
-        setCouponError("Invalid coupon code.");
+      const validation = validateCoupon(code);
+      
+      if (!validation.valid) {
+        setCouponError(validation.message);
         setIsApplyingCoupon(false);
-        if (couponState.code === normalizedCode) removeCoupon(false);
         return;
       }
-
-      if (cartSubtotal < coupon.minAmount) {
-        setCouponError(`Minimum ₹${coupon.minAmount.toFixed(0)} purchase required for ${normalizedCode}.`);
-        setIsApplyingCoupon(false);
-        if (couponState.code === normalizedCode) removeCoupon(false);
-        return;
-      }
-
+      
+      const { coupon } = validation;
       const discountAmount = (cartSubtotal * coupon.discount) / 100;
-
+      
       setCouponState({
-        code: normalizedCode,
+        code,
         discount: discountAmount,
         applied: true,
         discountPercentage: coupon.discount
       });
-
-      if (showSuccessToast) {
-        toast.success(
-          <div className="flex items-center gap-2">
-            <Check size={18} className="text-emerald-400" />
-            <span>{coupon.discount}% OFF ({normalizedCode}) applied!</span>
-          </div>, { duration: 2500 }
-        );
-      }
+      
+      toast.success(
+        <div className="flex items-center gap-2">
+          <Check className="text-green-400" />
+          <span>Coupon applied! {coupon.discount}% OFF</span>
+        </div>,
+        { duration: 2000 }
+      );
+      
       setIsApplyingCoupon(false);
       setCustomCoupon("");
-    }, 800); // Simulating API delay
+    }, 800);
   };
 
-  // Re-validate coupon if cart subtotal changes (from previous good version)
-  useEffect(() => {
-    if (couponState.applied && couponState.code) {
-      const coupon = validCoupons[couponState.code.toUpperCase()];
-      if (coupon) {
-        if (cartSubtotal < coupon.minAmount) {
-          toast.error(
-            <div className="flex items-center gap-2">
-                <Info size={18} className="text-amber-400" />
-                <span>Coupon {couponState.code} removed: Minimum purchase not met.</span>
-            </div>, { duration: 3000 }
-          );
-          removeCoupon(false);
-        } else {
-          const newDiscountAmount = (cartSubtotal * coupon.discount) / 100;
-          setCouponState(prevState => ({
-            ...prevState,
-            discount: newDiscountAmount,
-          }));
-        }
-      } else {
-        removeCoupon(false);
-      }
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cartSubtotal]); // Removed couponState.applied and couponState.code from deps to avoid loop, logic inside handles it.
-
-  const removeCoupon = (showToast = true) => {
-    setCouponState({ code: "", discount: 0, applied: false, discountPercentage: 0 });
-    setCouponError(null); // Clear any existing coupon errors
-    if (showToast) {
-      toast("Coupon removed.", { icon: <Trash2 size={16} className="text-amber-500" />, duration: 2000 });
-    }
+  const removeCoupon = () => {
+    setCouponState({
+      code: "",
+      discount: 0,
+      applied: false,
+      discountPercentage: 0
+    });
+    toast("Coupon removed", { icon: "🗑️" });
   };
 
   const handleRemoveItem = (item) => {
-    setIsRemovingItemId(item.id); // For animation
+    setIsRemovingItem(item.id);
     setTimeout(() => {
       dispatch(deleteFromCart(item));
-      // setIsRemovingItemId(null); // Not strictly necessary if AnimatePresence handles removal
-      toast.success("Item removed from cart", { icon: <Trash2 size={16} className="text-red-500"/> });
-    }, 300); // Match animation duration
+      setIsRemovingItem(null);
+      toast.success("Item removed from cart");
+    }, 300);
   };
 
-  const handleQuantityChange = (id, type) => {
-    if (type === 'inc') {
-      dispatch(incrementQuantity(id));
-    } else if (type === 'dec') {
-      const item = cartItems.find(cartItem => cartItem.id === id);
-      if (item && item.quantity > 1) {
-        dispatch(decrementQuantity(id));
-      }
-    }
-  };
+  const finalPrice = cartSubtotal - couponState.discount;
 
-
-  const finalPrice = Math.max(0, cartSubtotal - couponState.discount);
-
+  // Updated buyNowFunction to navigate to purchase page with state
   const buyNowFunction = async () => {
-    console.log("buyNowFunction called in CartPage");
-    const currentUser = getLoggedInUser();
-
-    if (!currentUser) {
-      toast.error("You must be logged in to place an order.", { icon: <Info size={16}/> });
-      navigate('/login', { state: { from: '/cart' } });
-      return;
+    if (!addressInfo.name || !addressInfo.address || !addressInfo.pincode || !addressInfo.mobileNumber) {
+      return toast.error("All fields are required");
     }
-    if (!currentUser.uid || !currentUser.email) {
-        console.error("User UID or Email is missing in localStorage:", currentUser);
-        toast.error("User information is incomplete. Please try logging out and back in.", { icon: <Info size={16}/> });
-        return;
-    }
-
-    // Validate address fields from addressInfo state
-    if (!addressInfo.name || !addressInfo.address || !addressInfo.pincode || !addressInfo.mobileNumber || !addressInfo.country) {
-      toast.error("Please fill all shipping details in the modal.", { icon: <Info size={16}/> });
-      return; // Stop if validation fails
-    }
-    console.log("Current Address Info for order:", addressInfo);
 
     const orderInfo = {
       cartItems,
-      addressInfo: { // Explicitly structure address for the order
-        name: addressInfo.name,
-        address: addressInfo.address,
-        pincode: addressInfo.pincode,
-        mobileNumber: addressInfo.mobileNumber,
-        country: addressInfo.country,
-        submittedAt: Timestamp.now(), // Timestamp for when address was submitted for this order
-      },
-      email: currentUser.email,
-      userid: currentUser.uid,
-      status: "confirmed", // Default status
+      addressInfo,
+      email: user.email,
+      userid: user.uid,
+      status: "confirmed",
       totalAmount: finalPrice,
       discountApplied: couponState.discount,
-      couponUsed: couponState.applied && couponState.code ? couponState.code : "None",
-      orderTimestamp: Timestamp.now(), // Timestamp for the order itself
-      orderDate: new Date().toLocaleString("en-US", {
-        month: "short",
-        day: "2-digit",
-        year: "numeric"
+      couponUsed: couponState.code || "None",
+      time: Timestamp.now(),
+      date: new Date().toLocaleString("en-US", { 
+        month: "short", 
+        day: "2-digit", 
+        year: "numeric" 
       }),
     };
-    console.log("Order Info to be saved to Firebase:", orderInfo);
 
     try {
-      // Note: User's code used "order". "orders" is more conventional.
       const orderRef = collection(fireDB, "order");
-      console.log("Attempting to add document to Firebase collection 'order'...");
-      const docRef = await addDoc(orderRef, orderInfo);
-      console.log("Document written to Firebase with ID: ", docRef.id);
-
-      toast.success("Order placed successfully!");
-
-      // Navigate to purchase page with the total, discount info, and crucially, the orderId
+      await addDoc(orderRef, orderInfo);
+      
+      // Navigate to purchase page with the total and discount info
       navigate("/purchase", {
         state: {
-          orderId: docRef.id, // **** THIS IS CRITICAL FOR PURCHASE PAGE ****
           totalAmount: finalPrice,
           discountApplied: couponState.discount,
-          cartSubtotal: cartSubtotal // Pass original subtotal for display if needed
+          cartSubtotal: cartSubtotal
         }
       });
-
-      // Reset address form fields
-      setAddressInfo({
-        name: currentUser.name || "", // Keep pre-filled name if user has one
-        address: "",
-        country: "",
-        pincode: "",
-        mobileNumber: ""
+      
+      setAddressInfo({ 
+        name: "", 
+        address: "", 
+        pincode: "", 
+        mobileNumber: "" 
       });
-      // Reset coupon
-      removeCoupon(false); // Silently remove coupon
-
-      // Optional: Clear the cart from Redux store
-      // cartItems.forEach(item => dispatch(deleteFromCart(item))); // Or a dedicated clear cart action
-
+      
+      setCouponState({
+        code: "",
+        discount: 0,
+        applied: false,
+        discountPercentage: 0
+      });
+      
+      localStorage.removeItem("discount");
+      localStorage.removeItem("couponCode");
+      
     } catch (error) {
-      console.error("Firebase Error - Failed to place order:", error);
+      console.error(error);
       toast.error(
         <div className="flex items-center gap-2">
-          <XCircle size={18} className="text-red-400" /> {/* Changed icon for clarity */}
-          <span>Failed to place order. Firebase error.</span>
+          <X className="text-red-400" />
+          <span>Failed to place order. Please try again.</span>
         </div>
       );
     }
   };
 
+  // Animation variants
+  const itemVariants = {
+    hidden: { opacity: 0, x: -50 },
+    visible: { 
+      opacity: 1, 
+      x: 0,
+      transition: { duration: 0.3 }
+    },
+    exit: { 
+      opacity: 0, 
+      x: 50,
+      transition: { duration: 0.2 }
+    }
+  };
 
   return (
     <Layout>
-      <Toaster position="top-center" reverseOrder={false} />
-      <div className="container mx-auto px-4 max-w-7xl lg:px-0 bg-gradient-to-b from-gray-950 via-gray-900 to-black min-h-screen py-12"> {/* Theme from previous good version */}
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="mx-auto max-w-2xl lg:max-w-6xl bg-gray-800/60 backdrop-blur-lg text-white rounded-2xl shadow-2xl border border-gray-700/40 overflow-hidden"
-        >
-          <div className="p-6 md:p-8 lg:p-10">
-            <h1 className="text-3xl lg:text-4xl font-bold tracking-tight text-center mb-8 text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-500 flex items-center justify-center gap-3">
-              <ShoppingCart size={32} /> Your Shopping Cart
-            </h1>
+      <Toaster position="top-center" />
 
+      {/* Futuristic Neon Background */}
+      <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black relative overflow-hidden">
+        {/* Neon Grid Background */}
+        <div className="absolute inset-0">
+          {/* Animated Neon Lines */}
+          <div className="absolute inset-0" style={{
+            backgroundImage: `
+              linear-gradient(90deg, transparent 98%, rgba(0, 255, 255, 0.3) 100%),
+              linear-gradient(0deg, transparent 98%, rgba(255, 0, 255, 0.3) 100%)
+            `,
+            backgroundSize: '50px 50px'
+          }}></div>
+
+          {/* Floating Neon Orbs */}
+          <div className="absolute top-20 left-20 w-32 h-32 bg-cyan-400/20 rounded-full blur-xl animate-pulse"></div>
+          <div className="absolute top-40 right-32 w-24 h-24 bg-pink-400/20 rounded-full blur-xl animate-bounce"></div>
+          <div className="absolute bottom-32 left-40 w-40 h-40 bg-green-400/20 rounded-full blur-xl animate-pulse"></div>
+          <div className="absolute bottom-20 right-20 w-28 h-28 bg-yellow-400/20 rounded-full blur-xl animate-bounce"></div>
+
+          {/* Scanning Lines Effect */}
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-cyan-500/5 to-transparent animate-pulse"></div>
+        </div>
+
+        <div className="container mx-auto px-4 max-w-7xl lg:px-0 relative z-10 py-12">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="mx-auto max-w-2xl lg:max-w-7xl"
+          >
+            {/* Cyberpunk Header */}
+            <motion.div
+              initial={{ opacity: 0, y: -30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="text-center mb-12"
+            >
+              {/* Neon Cart Icon */}
+              <motion.div
+                className="relative inline-flex items-center justify-center w-24 h-24 mb-6"
+                animate={{
+                  boxShadow: [
+                    "0 0 20px rgba(0, 255, 255, 0.5)",
+                    "0 0 40px rgba(255, 0, 255, 0.5)",
+                    "0 0 20px rgba(0, 255, 255, 0.5)"
+                  ]
+                }}
+                transition={{ duration: 2, repeat: Infinity }}
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-cyan-400 to-pink-400 rounded-2xl blur-sm opacity-75"></div>
+                <div className="relative bg-black/80 backdrop-blur-sm rounded-2xl w-full h-full flex items-center justify-center border border-cyan-400/50">
+                  <ShoppingCart size={40} className="text-cyan-400" />
+                </div>
+              </motion.div>
+
+              {/* Neon Title */}
+              <h1 className="text-4xl lg:text-6xl font-bold tracking-tight mb-4 relative">
+                <span className="relative inline-block">
+                  <span className="absolute inset-0 bg-gradient-to-r from-cyan-400 to-pink-400 bg-clip-text text-transparent blur-sm">
+                    SHOPPING CART
+                  </span>
+                  <span className="relative bg-gradient-to-r from-cyan-400 to-pink-400 bg-clip-text text-transparent">
+                    SHOPPING CART
+                  </span>
+                </span>
+              </h1>
+
+              {/* Glitch Effect Subtitle */}
+              <motion.p
+                className="text-green-400 text-lg max-w-2xl mx-auto font-mono"
+                animate={{ opacity: [1, 0.7, 1] }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+              >
+                &gt; SHOPPING LIST... [OK]
+              </motion.p>
+            </motion.div>
+
+            {/* Modern Cart Layout */}
             <div className="flex flex-col lg:flex-row gap-8">
+              {/* Cart Items Section */}
               <section aria-labelledby="cart-heading" className="flex-grow lg:w-2/3">
                 {cartItems.length > 0 && (
-                  <h2 className="text-lg font-semibold text-gray-300 mb-4 border-b border-gray-700 pb-2">
-                    Items ({cartItemTotal})
-                  </h2>
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.2 }}
+                    className="mb-6 p-6 bg-black/60 rounded-2xl border border-cyan-400/30 backdrop-blur-sm relative overflow-hidden"
+                  >
+                    {/* Neon Border Effect */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/10 to-pink-400/10 rounded-2xl"></div>
+
+                    <div className="relative flex items-center gap-3">
+                      <motion.div
+                        className="p-2 bg-black border border-green-400 rounded-lg"
+                        animate={{
+                          boxShadow: [
+                            "0 0 10px rgba(34, 197, 94, 0.5)",
+                            "0 0 20px rgba(34, 197, 94, 0.8)",
+                            "0 0 10px rgba(34, 197, 94, 0.5)"
+                          ]
+                        }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                      >
+                        <Package size={20} className="text-green-400" />
+                      </motion.div>
+                      <h2 className="text-xl font-bold text-cyan-400 font-mono">&gt; INVENTORY_SCAN</h2>
+                      <span className="text-sm bg-black border border-yellow-400 text-yellow-400 px-3 py-1 rounded font-mono">
+                        [{cartItemTotal}] {cartItemTotal === 1 ? "UNIT" : "UNITS"}
+                      </span>
+                    </div>
+                  </motion.div>
                 )}
-                <div role="list" ref={listRef} className="space-y-4"> {/* Using listRef from useAutoAnimate */}
-                  <AnimatePresence initial={false}>
+
+                <div ref={parent} role="list" className="space-y-4">
+                  <AnimatePresence>
                     {cartItems.length > 0 ? (
                       cartItems.map((item) => {
                         const { id, title, price, productImageUrl, quantity, category } = item;
                         return (
-                          <motion.div // Changed from li to div for consistency with itemMotionVariants if needed
+                          <motion.div
                             key={id}
-                            layout
-                            variants={itemMotionVariants} // Using renamed variants
+                            variants={itemVariants}
                             initial="hidden"
                             animate="visible"
                             exit="exit"
-                            whileHover="hover"
-                            className={`flex flex-col sm:flex-row items-center py-4 px-5 bg-gray-900/70 rounded-xl shadow-md border border-gray-700/50 transition-opacity duration-300 ${
-                              isRemovingItemId === id ? 'opacity-40' : 'opacity-100'
-                            }`}
+                            layout
+                            whileHover={{
+                              y: -2,
+                              boxShadow: "0 0 30px rgba(0, 255, 255, 0.3), 0 0 60px rgba(255, 0, 255, 0.2)"
+                            }}
+                            className={`flex flex-col sm:flex-row items-center py-6 px-6 bg-black/80 backdrop-blur-xl rounded-2xl border border-cyan-400/30 shadow-xl relative overflow-hidden ${
+                              isRemovingItem === id ? "opacity-0 scale-95" : "opacity-100 scale-100"
+                            } transition-all duration-300`}
                           >
-                            <div className="flex-shrink-0 mb-4 sm:mb-0 sm:mr-5">
-                              <motion.img
-                                layout
+                            {/* Neon Accent Line */}
+                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-cyan-400 to-pink-400"></div>
+                            <div className="flex-shrink-0 mb-4 sm:mb-0 sm:mr-6">
+                              <motion.div
                                 whileHover={{ scale: 1.05, rotateZ: 1 }}
-                                transition={{ type: 'spring', stiffness: 300 }}
-                                src={productImageUrl || 'https://placehold.co/80x80/374151/9ca3af?text=N/A'}
-                                alt={title || 'Product Image'}
-                                className="h-20 w-20 rounded-lg object-cover border border-gray-600 shadow-sm"
-                                onError={(e) => { e.target.onerror = null; e.target.src="https://placehold.co/80x80/374151/9ca3af?text=N/A"; }}
-                              />
+                                className="relative group"
+                              >
+                                {/* Holographic Effect */}
+                                <div className="absolute -inset-1 bg-gradient-to-r from-cyan-400 to-pink-400 rounded-xl blur opacity-50 group-hover:opacity-100 transition duration-500"></div>
+                                <div className="absolute -inset-0.5 bg-gradient-to-r from-green-400 to-yellow-400 rounded-xl blur-sm opacity-30 group-hover:opacity-60 transition duration-500"></div>
+                                <img
+                                  src={productImageUrl}
+                                  alt="Product"
+                                  className="relative h-24 w-24 rounded-xl object-contain bg-black/80 border border-cyan-400/50 shadow-lg"
+                                />
+                                {/* Scanning Line Effect */}
+                                <motion.div
+                                  className="absolute inset-0 bg-gradient-to-b from-transparent via-cyan-400/30 to-transparent h-1"
+                                  animate={{ y: [0, 96, 0] }}
+                                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                                />
+                              </motion.div>
                             </div>
                             <div className="flex-1 flex flex-col text-center sm:text-left mr-4">
-                              <h3 className="text-md font-semibold text-gray-100">{title || 'Product Title'}</h3>
-                              <p className="text-sm text-gray-400 mt-1">{category || 'Category'}</p>
-                              <p className="text-lg font-bold text-indigo-400 mt-1">
-                                ₹{Number(price || 0).toFixed(2)}
+                              <h3 className="text-lg font-bold text-cyan-400 mb-1 font-mono">{title}</h3>
+                              <p className="text-sm text-green-400 mb-2 font-mono uppercase tracking-wider">[{category}]</p>
+                              <p className="text-2xl font-bold font-mono">
+                                <span className="text-yellow-400">₹</span>
+                                <span className="bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">
+                                  {price}
+                                </span>
                               </p>
                             </div>
-                            <div className="flex items-center space-x-2 mt-3 sm:mt-0">
+                            <div className="flex items-center space-x-3 mt-4 sm:mt-0">
+                              {/* Cyberpunk Decrease Button */}
                               <motion.button
                                 whileTap={{ scale: 0.85 }}
-                                onClick={() => handleQuantityChange(id, 'dec')}
-                                className={`h-8 w-8 bg-gray-700 hover:bg-gray-600 text-white rounded-md flex items-center justify-center transition-colors ${Number(quantity || 0) <= 1 ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                disabled={Number(quantity || 0) <= 1}
-                                aria-label="Decrease quantity"
-                              > <Minus size={16} /> </motion.button>
-                              <div className="w-12 text-center border border-gray-600 rounded-md bg-gray-800 text-white px-1 py-1 text-sm tabular-nums overflow-hidden">
-                                <AnimatePresence mode="popLayout">
-                                  <motion.span
-                                    key={quantity} // Animate when quantity changes
-                                    initial={{ y: 10, opacity: 0 }}
-                                    animate={{ y: 0, opacity: 1 }}
-                                    exit={{ y: -10, opacity: 0 }}
-                                    transition={{ duration: 0.2 }}
-                                    className="inline-block"
-                                  >
-                                    {Number(quantity || 0)}
-                                  </motion.span>
-                                </AnimatePresence>
+                                whileHover={{
+                                  scale: 1.1,
+                                  boxShadow: "0 0 20px rgba(239, 68, 68, 0.5)"
+                                }}
+                                onClick={() => dispatch(decrementQuantity(id))}
+                                className={`h-10 w-10 bg-black border border-red-400 hover:bg-red-400/20 text-red-400 rounded-lg flex items-center justify-center transition-all duration-200 font-mono ${
+                                  quantity <= 1 ? 'opacity-50 cursor-not-allowed border-gray-600 text-gray-600' : ''
+                                }`}
+                                disabled={quantity <= 1}
+                              >
+                                <Minus size={18} />
+                              </motion.button>
+
+                              {/* Digital Display */}
+                              <div className="w-16 text-center border border-cyan-400 rounded-lg bg-black text-cyan-400 px-3 py-2 text-lg font-bold font-mono shadow-lg">
+                                <motion.span
+                                  key={quantity}
+                                  initial={{ scale: 1.2, color: "#00ff00" }}
+                                  animate={{ scale: 1, color: "#00ffff" }}
+                                  transition={{ duration: 0.3 }}
+                                >
+                                  {quantity.toString().padStart(2, '0')}
+                                </motion.span>
                               </div>
+
+                              {/* Cyberpunk Increase Button */}
                               <motion.button
                                 whileTap={{ scale: 0.85 }}
-                                onClick={() => handleQuantityChange(id, 'inc')}
-                                className="h-8 w-8 bg-gray-700 hover:bg-gray-600 text-white rounded-md flex items-center justify-center transition-colors"
-                                aria-label="Increase quantity"
-                              > <Plus size={16} /> </motion.button>
+                                whileHover={{
+                                  scale: 1.1,
+                                  boxShadow: "0 0 20px rgba(34, 197, 94, 0.5)"
+                                }}
+                                onClick={() => dispatch(incrementQuantity(id))}
+                                className="h-10 w-10 bg-black border border-green-400 hover:bg-green-400/20 text-green-400 rounded-lg flex items-center justify-center transition-all duration-200 font-mono"
+                              >
+                                <Plus size={18} />
+                              </motion.button>
+
+                              {/* Cyberpunk Delete Button */}
                               <motion.button
-                                whileHover={{ scale: 1.1, rotateZ: -5, backgroundColor: '#ef4444' }}
+                                whileHover={{
+                                  scale: 1.1,
+                                  rotateZ: -5,
+                                  boxShadow: "0 0 30px rgba(255, 0, 0, 0.6)"
+                                }}
                                 whileTap={{ scale: 0.9 }}
                                 onClick={() => handleRemoveItem(item)}
-                                className="ml-3 p-2 text-gray-300 hover:text-white rounded-full transition-colors duration-200"
-                                aria-label="Remove item"
-                              > <Trash2 size={18} /> </motion.button>
+                                className="ml-2 p-3 bg-black border border-red-500 hover:bg-red-500/20 text-red-500 rounded-lg flex items-center justify-center transition-all duration-200"
+                              >
+                                <Trash size={18} />
+                              </motion.button>
                             </div>
                           </motion.div>
                         );
                       })
                     ) : (
-                      <motion.div // Empty cart message from previous good version
+                      <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="text-center py-16 text-gray-400 flex flex-col items-center bg-gray-900/50 rounded-xl border border-dashed border-gray-700"
+                        className="text-center py-16 text-gray-400 flex flex-col items-center bg-black/80 backdrop-blur-xl rounded-2xl border border-red-400/30 relative overflow-hidden"
                       >
-                        <motion.div animate={{ y: [0, -5, 0] }} transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}>
-                          <ShoppingCart size={48} className="text-gray-600 mb-4 opacity-70" strokeWidth={1.5}/>
+                        {/* Error/Warning Effect */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-red-500/10 to-yellow-500/10 rounded-2xl"></div>
+
+                        <motion.div
+                          animate={{
+                            y: [0, -10, 0],
+                            boxShadow: [
+                              "0 0 20px rgba(239, 68, 68, 0.5)",
+                              "0 0 40px rgba(239, 68, 68, 0.8)",
+                              "0 0 20px rgba(239, 68, 68, 0.5)"
+                            ]
+                          }}
+                          transition={{
+                            duration: 2,
+                            repeat: Infinity,
+                            ease: "easeInOut"
+                          }}
+                          className="relative w-24 h-24 bg-black border border-red-400 rounded-2xl flex items-center justify-center mb-6"
+                        >
+                          <ShoppingCart size={48} className="text-red-400" strokeWidth={1.5} />
                         </motion.div>
-                        <p className="text-lg font-medium mb-2">Your Cart is Empty</p>
-                        <p className="text-sm text-gray-500">Looks like you haven't added anything yet.</p>
+
+                        <h3 className="text-2xl font-bold text-red-400 mb-2 font-mono">&gt; CART_EMPTY.ERROR</h3>
+                        <p className="text-green-400 mb-6 font-mono">
+                          &gt; NO_ITEMS_DETECTED<br/>
+                          &gt; INITIATING_SHOPPING_PROTOCOL...
+                        </p>
+
                         <motion.button
-                          whileHover={{ scale: 1.05, filter: 'brightness(1.1)' }}
+                          whileHover={{
+                            scale: 1.05,
+                            boxShadow: "0 0 30px rgba(34, 197, 94, 0.6)"
+                          }}
                           whileTap={{ scale: 0.95 }}
                           onClick={() => navigate('/')}
-                          className="mt-6 px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors shadow-md"
-                        > Start Shopping </motion.button>
+                          className="px-6 py-3 bg-black border border-green-400 hover:bg-green-400/20 text-green-400 font-bold rounded-xl transition-all duration-200 font-mono"
+                        >
+                          [START_SHOPPING]
+                        </motion.button>
                       </motion.div>
                     )}
                   </AnimatePresence>
                 </div>
               </section>
 
+              {/* Cyberpunk Price Summary Section */}
               {cartItems.length > 0 && (
                 <motion.aside
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.3 }}
                   layout
-                  variants={summaryVariants}
-                  initial="initial"
-                  animate="animate"
-                  className="lg:w-1/3 rounded-xl bg-gray-900/80 p-6 shadow-lg border border-gray-700/60 h-fit sticky top-10"
+                  className="lg:w-1/3 rounded-2xl bg-black/80 backdrop-blur-xl p-6 shadow-2xl border border-cyan-400/30 h-fit sticky top-10 relative overflow-hidden"
                 >
-                  <h2 className="border-b border-gray-700 pb-3 mb-4 text-lg font-semibold text-gray-200 flex items-center gap-2">
-                    Order Summary
-                  </h2>
-                  <div className="space-y-3 text-sm">
-                    <div className="flex justify-between text-gray-300">
-                      <span>Subtotal ({cartItemTotal} {cartItemTotal === 1 ? "item" : "items"})</span>
-                      <span>₹{cartSubtotal.toFixed(2)}</span>
+                  {/* Neon Border Effect */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-cyan-400/10 to-pink-400/10 rounded-2xl"></div>
+
+                  <div className="relative z-10">
+                    <div className="flex items-center gap-3 mb-6 pb-4 border-b border-cyan-400/30">
+                      <motion.div
+                        className="p-2 bg-black border border-yellow-400 rounded-lg"
+                        animate={{
+                          boxShadow: [
+                            "0 0 10px rgba(234, 179, 8, 0.5)",
+                            "0 0 20px rgba(234, 179, 8, 0.8)",
+                            "0 0 10px rgba(234, 179, 8, 0.5)"
+                          ]
+                        }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                      >
+                        <Star size={20} className="text-yellow-400" />
+                      </motion.div>
+                      <h2 className="text-xl font-bold text-cyan-400 font-mono">&gt; ORDER_SUMMARY</h2>
                     </div>
-                    <div className="pt-3 border-t border-gray-700/50 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <p className="text-gray-300 font-medium flex items-center gap-1.5"> <Ticket size={16} className="text-amber-400"/> Coupon Code</p>
+
+                    <div className="space-y-4">
+                    <div className="flex justify-between items-center text-green-400 bg-black/50 p-3 rounded-lg border border-green-400/30">
+                      <span className="flex items-center gap-2 font-mono">
+                        <Package size={16} />
+                        SUBTOTAL [{cartItemTotal} {cartItemTotal === 1 ? "UNIT" : "UNITS"}]
+                      </span>
+                      <span className="font-bold text-lg font-mono">₹{cartSubtotal.toFixed(2)}</span>
+                    </div>
+
+                    {/* Cyberpunk Coupon Section */}
+                    <div className="mt-6 pt-6 border-t border-cyan-400/30">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                          <Sparkles size={16} className="text-yellow-400" />
+                          <p className="text-yellow-400 font-bold font-mono">&gt; COUPON_PROTOCOL</p>
+                        </div>
                         {couponState.applied && (
                           <motion.button
-                            initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }}
-                            whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
-                            onClick={() => removeCoupon()}
-                            className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1 transition-colors"
-                          > <XCircle size={14} /> Remove </motion.button>
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={removeCoupon}
+                            className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-red-500/10 transition-all duration-200"
+                          >
+                            <X size={14} /> Remove
+                          </motion.button>
                         )}
                       </div>
-                      <div className="overflow-hidden relative min-h-[80px]">
-                        <AnimatePresence mode="wait">
-                          {couponState.applied ? (
-                            <motion.div
-                              key="coupon_applied_badge"
-                              variants={couponSectionVariants} initial="initial" animate="animate" exit="exit"
-                              className="bg-green-900/40 border border-green-700/60 rounded-lg p-3 flex items-center justify-between text-sm"
-                            >
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <Check size={16} className="text-green-400 flex-shrink-0" />
-                                <span className="font-medium text-gray-100">{couponState.code}</span>
-                                <span className="text-xs bg-green-500/80 text-white px-2 py-0.5 rounded-full">
-                                  {couponState.discountPercentage}% OFF
-                                </span>
-                              </div>
-                              <span className="font-medium text-green-400 whitespace-nowrap ml-2">
-                                - ₹{couponState.discount.toFixed(2)}
-                              </span>
-                            </motion.div>
-                          ) : (
-                            <motion.div
-                              key="coupon_input_area"
-                              variants={couponSectionVariants} initial="initial" animate="animate" exit="exit"
-                              className="space-y-3"
-                            >
-                              <div className="flex flex-wrap gap-2">
-                                {Object.entries(validCoupons).map(([code, { discount, description }]) => (
-                                  <motion.button
-                                    key={code}
-                                    whileHover={{ y: -2, filter: 'brightness(1.1)' }} whileTap={{ scale: 0.95 }}
-                                    onClick={() => validateAndApplyCoupon(code)}
-                                    disabled={isApplyingCoupon}
-                                    title={description} // Show description on hover
-                                    className={`px-3 py-1.5 text-xs rounded-md transition-all ${
-                                      isApplyingCoupon ? "bg-gray-600 cursor-not-allowed" : "bg-gray-700 hover:bg-indigo-600"
-                                    } text-white font-medium`}
-                                  > {code} ({discount}%) </motion.button>
-                                ))}
-                              </div>
-                              <div className="relative flex items-center">
-                                <input
-                                  type="text" placeholder="Enter code" value={customCoupon}
-                                  onChange={(e) => setCustomCoupon(e.target.value.toUpperCase())}
-                                  className="flex-grow bg-gray-800 border border-gray-600 rounded-md px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors pr-16"
-                                  disabled={isApplyingCoupon}
-                                />
-                                <motion.button
-                                  whileTap={{ scale: 0.95 }}
-                                  onClick={() => validateAndApplyCoupon(customCoupon)}
-                                  disabled={isApplyingCoupon || !customCoupon}
-                                  className={`absolute right-1 top-1/2 -translate-y-1/2 px-2.5 py-1 text-xs rounded font-medium transition-all ${ isApplyingCoupon || !customCoupon ? "bg-gray-600 text-gray-400 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-500 text-white" }`}
-                                > {isApplyingCoupon ? "..." : "Apply"} </motion.button>
-                              </div>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </div>
-                      <AnimatePresence>
-                        {couponError && !couponState.applied && (
-                          <motion.div
-                            variants={errorMessageVariants} initial="initial" animate="animate" exit="exit"
-                            className="text-red-400 text-xs flex items-center gap-1.5 pt-1"
-                          > <Info size={14} /> <span>{couponError}</span> </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                    <AnimatePresence>
-                      {couponState.applied && (
+
+                      {couponState.applied ? (
                         <motion.div
-                          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ delay: 0.1 }}
-                          className="flex justify-between text-green-400 pt-1"
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          className="bg-gradient-to-r from-green-900/40 to-emerald-900/40 border border-green-600/50 rounded-xl p-4 flex items-center justify-between backdrop-blur-sm"
                         >
-                          <span>Discount ({couponState.discountPercentage}%)</span>
-                          <span>- ₹{couponState.discount.toFixed(2)}</span>
+                          <div className="flex items-center gap-3">
+                            <div className="p-1 bg-green-500 rounded-full">
+                              <Check className="text-white" size={16} />
+                            </div>
+                            <span className="font-semibold text-white">{couponState.code}</span>
+                            <span className="text-xs bg-gradient-to-r from-green-500 to-emerald-500 text-white px-3 py-1 rounded-full font-semibold">
+                              {couponState.discountPercentage}% OFF
+                            </span>
+                          </div>
+                          <span className="text-green-400 font-bold text-lg">- ₹{couponState.discount.toFixed(2)}</span>
+                        </motion.div>
+                      ) : (
+                        <div className="space-y-4">
+                          <div className="grid grid-cols-3 gap-2">
+                            {Object.keys(validCoupons).map((code) => (
+                              <motion.button
+                                key={code}
+                                whileHover={{ y: -2, scale: 1.02 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => applyCoupon(code)}
+                                disabled={isApplyingCoupon}
+                                className={`px-3 py-3 text-xs rounded-xl transition-all ${
+                                  isApplyingCoupon ? "bg-gray-700/50 cursor-not-allowed" : "bg-gradient-to-r from-gray-700 to-gray-600 hover:from-gray-600 hover:to-gray-500"
+                                } text-white border border-gray-600/50 backdrop-blur-sm`}
+                              >
+                                <div className="font-semibold">{code}</div>
+                                <div className="text-yellow-400 text-[0.6rem] mt-1 font-medium">
+                                  {validCoupons[code].discount}% OFF
+                                </div>
+                              </motion.button>
+                            ))}
+                          </div>
+
+                          <div className="relative">
+                            <input
+                              type="text"
+                              placeholder="Enter coupon code"
+                              value={customCoupon}
+                              onChange={(e) => setCustomCoupon(e.target.value.toUpperCase())}
+                              className="w-full bg-gray-800/50 border border-gray-600 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 backdrop-blur-sm transition-all duration-200"
+                            />
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => applyCoupon(customCoupon)}
+                              disabled={isApplyingCoupon || !customCoupon}
+                              className={`absolute right-2 top-1/2 -translate-y-1/2 px-4 py-2 text-xs rounded-lg font-semibold transition-all duration-200 ${
+                                isApplyingCoupon || !customCoupon
+                                  ? "bg-gray-600 cursor-not-allowed text-gray-400"
+                                  : "bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white shadow-lg"
+                              }`}
+                            >
+                              {isApplyingCoupon ? "Applying..." : "Apply"}
+                            </motion.button>
+                          </div>
+                        </div>
+                      )}
+
+                      {couponError && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="mt-3 text-red-400 text-sm flex items-center gap-2 p-3 bg-red-500/10 rounded-lg border border-red-500/20"
+                        >
+                          <Info size={14} />
+                          <span>{couponError}</span>
                         </motion.div>
                       )}
-                    </AnimatePresence>
-                    <div className="flex justify-between border-t border-gray-600 pt-4 text-lg font-bold text-white">
-                      <span>Total</span>
-                      <motion.span
-                        key={finalPrice}
-                        variants={totalPriceVariants} initial="initial" animate="animate"
-                      > ₹{finalPrice.toFixed(2)} </motion.span>
                     </div>
-                    {couponState.applied && finalPrice < cartSubtotal && (
-                      <motion.div
-                        initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                        className="text-center text-green-400 text-xs pt-2"
-                      > 🎉 You saved ₹{(cartSubtotal - finalPrice).toFixed(2)}! </motion.div>
-                    )}
-                  </div>
-                  <div className="mt-6">
-                    {user ? (
-                      <BuyNowModal
-                        addressInfo={addressInfo}
-                        setAddressInfo={setAddressInfo}
-                        buyNowFunction={buyNowFunction} // This is the function from CartPage
-                        cartTotal={finalPrice} // Pass final price to modal for display
-                        itemCount={cartItemTotal} // Pass item count for display or disabling button
-                      />
-                    ) : (
-                       // If no user, redirect to login or show login button
-                       <motion.button
-                          whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-                          onClick={() => navigate('/login', { state: { from: '/cart' } })}
-                          className="w-full mt-4 px-5 py-2.5 bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold rounded-lg transition-colors shadow-md"
-                        > Login to Checkout </motion.button>
-                    )}
+                    </div>
+
+                    <div className="mt-6 space-y-4">
+                      <div className="flex justify-between text-green-400 bg-black/50 p-3 rounded-lg border border-green-400/30">
+                        <span className="flex items-center gap-2 font-mono">
+                          <Sparkles size={16} />
+                          DISCOUNT_APPLIED
+                        </span>
+                        <span className="font-bold font-mono">- ₹{couponState.discount.toFixed(2)}</span>
+                      </div>
+
+                      <div className="flex justify-between border-t border-cyan-400/30 pt-4 font-bold text-xl bg-black/50 p-4 rounded-lg border border-cyan-400/30">
+                        <span className="text-cyan-400 font-mono">&gt; TOTAL_AMOUNT</span>
+                        <motion.span
+                          key={finalPrice}
+                          initial={{ scale: 1.2, color: "#00ff00" }}
+                          animate={{ scale: 1, color: "#fbbf24" }}
+                          transition={{ duration: 0.5, type: "spring" }}
+                          className="font-bold text-2xl font-mono text-yellow-400"
+                        >
+                          ₹{finalPrice.toFixed(2)}
+                        </motion.span>
+                      </div>
+
+                      {finalPrice < cartSubtotal && (
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          className="text-center text-green-400 text-sm p-3 bg-green-500/10 rounded-lg border border-green-500/20"
+                        >
+                          🎉 You saved ₹{couponState.discount.toFixed(2)} on this order!
+                        </motion.div>
+                      )}
+                    </div>
+
+                    <div className="mt-8">
+                      {user ? (
+                        <BuyNowModal
+                          addressInfo={addressInfo}
+                          setAddressInfo={setAddressInfo}
+                          buyNowFunction={buyNowFunction}
+                          cartTotal={finalPrice}
+                          itemCount={cartItemTotal}
+                        />
+                      ) : (
+                        <Navigate to="/login" />
+                      )}
+                    </div>
                   </div>
                 </motion.aside>
               )}
             </div>
-          </div>
-        </motion.div>
+          </motion.div>
+        </div>
       </div>
     </Layout>
   );

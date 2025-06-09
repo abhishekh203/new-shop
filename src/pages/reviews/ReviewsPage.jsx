@@ -1,7 +1,12 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import Layout from '../../components/layout/Layout';
-import { FaStar, FaUsers, FaShieldAlt, FaQuoteLeft } from 'react-icons/fa';
+import {
+  FaStar, FaUsers, FaShieldAlt, FaQuoteLeft, FaCheckCircle,
+  FaHeart, FaThumbsUp, FaAward, FaCrown, FaFire
+} from 'react-icons/fa';
+import { HiSparkles, HiLightningBolt } from 'react-icons/hi';
+import { BsStars } from 'react-icons/bs';
 
 // Scrolling Image Column Component
 const ScrollingImageColumn = ({ images, durationMultiplier, columnId, initialY = "0%" }) => {
@@ -186,55 +191,126 @@ const ReviewsPage = () => {
 
     return (
         <Layout>
-            <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
-                {/* Modern Hero Section */}
-                <section className="relative py-20 md:py-32 overflow-hidden">
-                    {/* Background Elements */}
-                    <div className="absolute inset-0 opacity-10">
-                        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-teal-500 rounded-full filter blur-3xl"></div>
-                        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500 rounded-full filter blur-3xl"></div>
-                    </div>
+            <div className="min-h-screen bg-black relative overflow-hidden">
+                {/* Modern Background Pattern */}
+                <div className="absolute inset-0 opacity-3">
+                    <div className="absolute inset-0" style={{
+                        backgroundImage: `radial-gradient(circle at 25% 25%, #1f2937 0%, transparent 50%),
+                                         radial-gradient(circle at 75% 75%, #374151 0%, transparent 50%)`,
+                        backgroundSize: '150px 150px'
+                    }}></div>
+                </div>
 
+                {/* Floating Elements */}
+                <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                    <motion.div
+                        className="absolute top-20 left-10 w-24 h-24 bg-gray-800/20 rounded-full blur-2xl"
+                        animate={{ y: [0, -15, 0], x: [0, 8, 0] }}
+                        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+                    />
+                    <motion.div
+                        className="absolute top-40 right-20 w-20 h-20 bg-gray-700/20 rounded-full blur-2xl"
+                        animate={{ y: [0, 15, 0], x: [0, -10, 0] }}
+                        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+                    />
+                    <motion.div
+                        className="absolute bottom-32 left-1/4 w-32 h-32 bg-gray-600/20 rounded-full blur-2xl"
+                        animate={{ y: [0, -20, 0], x: [0, 15, 0] }}
+                        transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+                    />
+                </div>
+                {/* Enhanced Hero Section */}
+                <section className="relative py-20 md:py-32 overflow-hidden">
                     <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                         <motion.div
                             initial={{ opacity: 0, y: 30 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.8 }}
-                            className="text-center max-w-4xl mx-auto"
+                            className="text-center mb-20"
                         >
+                            {/* Enhanced Badge */}
                             <motion.div
                                 initial={{ scale: 0.8, opacity: 0 }}
                                 animate={{ scale: 1, opacity: 1 }}
                                 transition={{ delay: 0.2, duration: 0.6 }}
-                                className="inline-flex items-center px-4 py-2 bg-teal-500/10 border border-teal-500/20 rounded-full text-teal-400 text-sm font-medium mb-6"
+                                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600/20 to-cyan-600/20 backdrop-blur-sm border border-blue-500/30 rounded-full text-blue-300 text-sm font-medium mb-8"
                             >
-                                <FaStar className="mr-2" />
+                                <BsStars className="text-yellow-400" />
                                 Trusted by 5000+ customers
+                                <FaCheckCircle className="text-green-400" />
                             </motion.div>
 
-                            <h1 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-teal-400 via-blue-500 to-purple-600 bg-clip-text text-transparent mb-6 leading-tight">
-                                Customer Reviews
-                            </h1>
+                            {/* Enhanced Title */}
+                            <motion.h1
+                                initial={{ scale: 0.8, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                transition={{ duration: 0.8, delay: 0.4 }}
+                                className="text-6xl md:text-8xl font-black mb-8 leading-tight"
+                            >
+                                <span className="text-white">Customer </span>
+                                <span className="bg-gradient-to-r from-blue-400 via-cyan-400 to-teal-300 bg-clip-text text-transparent">
+                                    Reviews
+                                </span>
+                            </motion.h1>
 
-                            <p className="text-xl md:text-2xl text-gray-300 mb-8 leading-relaxed">
-                                Real feedback from real customers who love our premium digital services
-                            </p>
+                            {/* Enhanced Description */}
+                            <motion.p
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.6, delay: 0.6 }}
+                                className="text-xl md:text-2xl text-gray-300 max-w-4xl mx-auto leading-relaxed mb-12"
+                            >
+                                Real experiences from thousands of satisfied customers across Nepal who trust our
+                                <span className="text-cyan-400 font-semibold"> premium digital services</span>
+                            </motion.p>
 
-                            <div className="flex flex-wrap justify-center items-center gap-3 mb-6">
-                                <div className="flex items-center gap-1">
-                                    {[...Array(5)].map((_, i) => (
-                                        <FaStar key={i} className="text-2xl text-yellow-400" />
-                                    ))}
+                            {/* Enhanced Rating Display */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.6, delay: 0.8 }}
+                                className="flex flex-wrap justify-center items-center gap-8 mb-12"
+                            >
+                                <div className="flex items-center gap-2 bg-gradient-to-r from-yellow-600/20 to-orange-600/20 backdrop-blur-sm px-6 py-3 rounded-full border border-yellow-500/30">
+                                    <div className="flex items-center gap-1">
+                                        {[...Array(5)].map((_, i) => (
+                                            <FaStar key={i} className="text-xl text-yellow-400" />
+                                        ))}
+                                    </div>
+                                    <span className="text-white text-xl font-bold ml-2">4.9/5</span>
                                 </div>
-                                <span className="text-white text-2xl font-bold">4.9/5</span>
-                                <span className="text-gray-400 text-lg">• 1000+ reviews</span>
-                            </div>
+                                <div className="flex items-center gap-2 bg-gradient-to-r from-green-600/20 to-emerald-600/20 backdrop-blur-sm px-6 py-3 rounded-full border border-green-500/30">
+                                    <FaThumbsUp className="text-green-400" />
+                                    <span className="text-green-300 font-medium">1000+ reviews</span>
+                                </div>
+                            </motion.div>
+
+                            {/* Trust Indicators */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.6, delay: 1 }}
+                                className="flex flex-wrap justify-center gap-6"
+                            >
+                                <div className="flex items-center gap-2 bg-gradient-to-r from-purple-600/20 to-pink-600/20 backdrop-blur-sm px-4 py-2 rounded-full border border-purple-500/30">
+                                    <FaCrown className="text-yellow-400" />
+                                    <span className="text-purple-300 font-medium text-sm">VIP Members</span>
+                                </div>
+                                <div className="flex items-center gap-2 bg-gradient-to-r from-red-600/20 to-orange-600/20 backdrop-blur-sm px-4 py-2 rounded-full border border-red-500/30">
+                                    <FaFire className="text-red-400" />
+                                    <span className="text-red-300 font-medium text-sm">Trending</span>
+                                </div>
+                                <div className="flex items-center gap-2 bg-gradient-to-r from-teal-600/20 to-cyan-600/20 backdrop-blur-sm px-4 py-2 rounded-full border border-teal-500/30">
+                                    <FaAward className="text-teal-400" />
+                                    <span className="text-teal-300 font-medium text-sm">Best Service</span>
+                                </div>
+                            </motion.div>
                         </motion.div>
                     </div>
                 </section>
 
                 {/* Modern Scrolling Reviews Gallery */}
-                <section className="relative bg-gradient-to-br from-gray-950 via-black to-blue-950 py-20 md:py-32 overflow-hidden">
+                <section className="relative bg-black py-20 md:py-32 overflow-hidden">
                     {/* Animated background elements */}
                     <div className="absolute inset-0 opacity-20 overflow-hidden pointer-events-none">
                         <motion.div
@@ -418,21 +494,44 @@ const ReviewsPage = () => {
                     </div>
                 </section>
 
-                {/* Modern Reviews Section */}
-                <section className="py-20 bg-gray-900">
-                    <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+                {/* Enhanced Reviews Section */}
+                <section className="py-20 bg-gradient-to-br from-gray-900/50 to-black relative">
+                    {/* Background Pattern */}
+                    <div className="absolute inset-0 opacity-5">
+                        <div className="absolute inset-0" style={{
+                            backgroundImage: `radial-gradient(circle at 20% 20%, #1f2937 0%, transparent 50%),
+                                             radial-gradient(circle at 80% 80%, #374151 0%, transparent 50%)`,
+                            backgroundSize: '200px 200px'
+                        }}></div>
+                    </div>
+
+                    <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true, amount: 0.3 }}
                             transition={{ duration: 0.8 }}
-                            className="text-center mb-16"
+                            className="text-center mb-20"
                         >
-                            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-                                What Our Customers Say
+                            {/* Enhanced Section Header */}
+                            <motion.div
+                                initial={{ scale: 0.8, opacity: 0 }}
+                                whileInView={{ scale: 1, opacity: 1 }}
+                                viewport={{ once: true }}
+                                transition={{ duration: 0.6, delay: 0.2 }}
+                                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-cyan-600/20 to-blue-600/20 backdrop-blur-sm border border-cyan-500/30 rounded-full text-cyan-300 text-sm font-medium mb-8"
+                            >
+                                <HiSparkles className="text-yellow-400" />
+                                Customer Testimonials
+                                <HiLightningBolt className="text-blue-400" />
+                            </motion.div>
+
+                            <h2 className="text-5xl md:text-6xl font-black text-white mb-6">
+                                What Our <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">Customers</span> Say
                             </h2>
-                            <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-                                Real experiences from real customers who trust Digital Shop Nepal for their digital needs
+                            <p className="text-xl md:text-2xl text-gray-300 max-w-4xl mx-auto leading-relaxed">
+                                Real experiences from real customers who trust Digital Shop Nepal for their
+                                <span className="text-cyan-400 font-semibold"> premium digital services</span>
                             </p>
                         </motion.div>
 
@@ -443,47 +542,82 @@ const ReviewsPage = () => {
                             viewport={{ once: true, amount: 0.2 }}
                             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
                         >
-                            {reviews.map((review, index) => (
+                            {reviews.map((review) => (
                                 <motion.div
                                     key={review.id}
                                     variants={itemVariants}
-                                    whileHover={{ y: -10, scale: 1.02 }}
-                                    className="group bg-gradient-to-br from-gray-800/80 to-gray-700/60 backdrop-blur-lg p-8 rounded-3xl border border-white/10 shadow-2xl hover:shadow-teal-500/20 transition-all duration-300"
+                                    whileHover={{
+                                        y: -15,
+                                        scale: 1.03,
+                                        rotateY: 5,
+                                        boxShadow: "0 25px 50px rgba(6, 182, 212, 0.15)"
+                                    }}
+                                    className="group relative bg-gradient-to-br from-gray-900/80 to-gray-800/60 backdrop-blur-xl p-8 rounded-2xl border border-gray-700/30 hover:border-cyan-400/40 transition-all duration-500 overflow-hidden"
                                 >
+                                    {/* Background Glow Effect */}
+                                    <div className="absolute inset-0 bg-gradient-to-br from-cyan-600/0 to-blue-600/0 group-hover:from-cyan-600/5 group-hover:to-blue-600/5 transition-all duration-500 rounded-2xl"></div>
+
+                                    {/* Quote Icon */}
+                                    <div className="absolute top-6 right-6 text-cyan-400/20 group-hover:text-cyan-400/40 transition-colors duration-300">
+                                        <FaQuoteLeft className="text-3xl" />
+                                    </div>
+
                                     {/* Header */}
-                                    <div className="flex items-center mb-6">
-                                        <img
+                                    <div className="relative z-10 flex items-center mb-6">
+                                        <motion.img
                                             src={review.avatar}
                                             alt={review.name}
-                                            className="w-16 h-16 rounded-full border-2 border-teal-400 mr-4 group-hover:scale-110 transition-transform duration-300"
+                                            className="w-16 h-16 rounded-full border-2 border-cyan-400/50 mr-4 object-cover"
+                                            whileHover={{ scale: 1.1, rotate: 5 }}
+                                            transition={{ duration: 0.3 }}
                                         />
                                         <div className="flex-1">
-                                            <h3 className="text-lg font-bold text-white">{review.name}</h3>
-                                            <p className="text-sm text-teal-400 font-medium">{review.status}</p>
+                                            <h3 className="text-lg font-bold text-white group-hover:text-cyan-300 transition-colors duration-300">
+                                                {review.name}
+                                            </h3>
+                                            <p className="text-sm text-cyan-400 font-medium">{review.status}</p>
                                             <p className="text-xs text-gray-400">{review.date}</p>
                                         </div>
                                         {review.verified && (
-                                            <div className="bg-green-500/20 text-green-400 px-2 py-1 rounded-full text-xs font-medium">
+                                            <motion.div
+                                                className="flex items-center gap-1 bg-green-500/20 text-green-400 px-3 py-1 rounded-full text-xs font-medium border border-green-500/30"
+                                                whileHover={{ scale: 1.05 }}
+                                            >
+                                                <FaCheckCircle className="text-xs" />
                                                 Verified
-                                            </div>
+                                            </motion.div>
                                         )}
                                     </div>
 
-                                    {/* Rating */}
-                                    <div className="flex items-center mb-4">
-                                        {[...Array(5)].map((_, i) => (
-                                            <FaStar
-                                                key={i}
-                                                className={`text-lg ${i < review.rating ? 'text-yellow-400' : 'text-gray-600'}`}
-                                            />
-                                        ))}
-                                        <span className="ml-2 text-gray-400 text-sm">({review.rating}/5)</span>
+                                    {/* Enhanced Rating */}
+                                    <div className="relative z-10 flex items-center mb-6">
+                                        <div className="flex items-center gap-1 bg-yellow-500/10 px-3 py-1 rounded-full border border-yellow-500/20">
+                                            {[...Array(5)].map((_, i) => (
+                                                <motion.div
+                                                    key={i}
+                                                    initial={{ scale: 0 }}
+                                                    animate={{ scale: 1 }}
+                                                    transition={{ delay: i * 0.1, duration: 0.3 }}
+                                                >
+                                                    <FaStar
+                                                        className={`text-lg ${i < review.rating ? 'text-yellow-400' : 'text-gray-600'}`}
+                                                    />
+                                                </motion.div>
+                                            ))}
+                                        </div>
+                                        <span className="ml-3 text-gray-400 text-sm font-medium">({review.rating}/5)</span>
                                     </div>
 
-                                    {/* Review Text */}
-                                    <blockquote className="text-gray-300 leading-relaxed italic">
+                                    {/* Enhanced Review Text */}
+                                    <blockquote className="relative z-10 text-gray-300 leading-relaxed text-sm group-hover:text-gray-200 transition-colors duration-300">
                                         "{review.review}"
                                     </blockquote>
+
+                                    {/* Hover Shine Effect */}
+                                    <motion.div
+                                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"
+                                        style={{ transform: 'skewX(-20deg)' }}
+                                    />
                                 </motion.div>
                             ))}
                         </motion.div>
@@ -492,11 +626,29 @@ const ReviewsPage = () => {
 
 
 
-                {/* Modern Call to Action Section */}
-                <section className="py-20 bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 relative overflow-hidden">
-                    {/* Background Elements */}
-                    <div className="absolute inset-0 opacity-10">
-                        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-teal-500 to-blue-500 rounded-full filter blur-3xl"></div>
+                {/* Enhanced Call to Action Section */}
+                <section className="py-20 bg-black relative overflow-hidden">
+                    {/* Background Pattern */}
+                    <div className="absolute inset-0 opacity-5">
+                        <div className="absolute inset-0" style={{
+                            backgroundImage: `radial-gradient(circle at 30% 30%, #1f2937 0%, transparent 50%),
+                                             radial-gradient(circle at 70% 70%, #374151 0%, transparent 50%)`,
+                            backgroundSize: '200px 200px'
+                        }}></div>
+                    </div>
+
+                    {/* Floating Elements */}
+                    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                        <motion.div
+                            className="absolute top-20 left-20 w-32 h-32 bg-cyan-500/10 rounded-full blur-2xl"
+                            animate={{ y: [0, -20, 0], x: [0, 10, 0] }}
+                            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+                        />
+                        <motion.div
+                            className="absolute bottom-20 right-20 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl"
+                            animate={{ y: [0, 15, 0], x: [0, -15, 0] }}
+                            transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+                        />
                     </div>
 
                     <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
@@ -505,50 +657,81 @@ const ReviewsPage = () => {
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true, amount: 0.5 }}
                             transition={{ duration: 0.8 }}
-                            className="max-w-4xl mx-auto"
+                            className="max-w-5xl mx-auto"
                         >
-                            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-                                Ready to Join Our Happy Customers?
+                            {/* Enhanced CTA Badge */}
+                            <motion.div
+                                initial={{ scale: 0.8, opacity: 0 }}
+                                whileInView={{ scale: 1, opacity: 1 }}
+                                viewport={{ once: true }}
+                                transition={{ duration: 0.6, delay: 0.2 }}
+                                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-600/20 to-emerald-600/20 backdrop-blur-sm border border-green-500/30 rounded-full text-green-300 text-sm font-medium mb-8"
+                            >
+                                <FaHeart className="text-red-400" />
+                                Join the community
+                                <HiSparkles className="text-yellow-400" />
+                            </motion.div>
+
+                            <h2 className="text-5xl md:text-6xl font-black text-white mb-8 leading-tight">
+                                Ready to Join Our <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">Happy</span> Customers?
                             </h2>
-                            <p className="text-xl md:text-2xl text-gray-300 mb-10 leading-relaxed">
-                                Experience premium digital services at unbeatable prices. Join thousands of satisfied customers across Nepal!
+                            <p className="text-xl md:text-2xl text-gray-300 mb-12 leading-relaxed">
+                                Experience premium digital services at unbeatable prices. Join thousands of satisfied customers across Nepal and discover why we're the
+                                <span className="text-cyan-400 font-semibold"> #1 choice for digital subscriptions!</span>
                             </p>
 
-                            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                            <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-12">
                                 <motion.a
                                     href="/allproduct"
-                                    whileHover={{ scale: 1.05, y: -2 }}
+                                    whileHover={{
+                                        scale: 1.05,
+                                        y: -5,
+                                        boxShadow: "0 20px 40px rgba(6, 182, 212, 0.3)"
+                                    }}
                                     whileTap={{ scale: 0.95 }}
-                                    className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-teal-600 to-blue-700 hover:from-teal-500 hover:to-blue-600 text-white font-semibold rounded-2xl transition-all duration-300 shadow-lg hover:shadow-teal-500/25 border border-teal-400/20"
+                                    className="inline-flex items-center gap-3 px-10 py-4 bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-500 hover:to-blue-600 text-white font-bold rounded-2xl transition-all duration-300 shadow-xl border border-cyan-400/20 text-lg"
                                 >
-                                    <FaStar className="mr-2" />
+                                    <FaFire className="text-orange-400" />
                                     Shop Now
+                                    <HiLightningBolt className="text-yellow-400" />
                                 </motion.a>
 
                                 <motion.a
                                     href="/ContactUs"
-                                    whileHover={{ scale: 1.05, y: -2 }}
+                                    whileHover={{
+                                        scale: 1.05,
+                                        y: -5,
+                                        backgroundColor: "rgba(6, 182, 212, 0.1)"
+                                    }}
                                     whileTap={{ scale: 0.95 }}
-                                    className="inline-flex items-center px-8 py-4 bg-transparent border-2 border-white/20 hover:border-teal-400/50 text-white font-semibold rounded-2xl transition-all duration-300 hover:bg-white/5"
+                                    className="inline-flex items-center gap-3 px-10 py-4 bg-transparent border-2 border-gray-600/50 hover:border-cyan-400/50 text-white font-bold rounded-2xl transition-all duration-300 text-lg"
                                 >
+                                    <FaUsers className="text-cyan-400" />
                                     Contact Support
                                 </motion.a>
                             </div>
 
-                            <div className="mt-12 flex flex-wrap justify-center items-center gap-8 text-gray-400">
-                                <div className="flex items-center gap-2">
+                            {/* Enhanced Trust Indicators */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ duration: 0.6, delay: 0.4 }}
+                                className="flex flex-wrap justify-center items-center gap-8"
+                            >
+                                <div className="flex items-center gap-2 bg-gradient-to-r from-green-600/20 to-emerald-600/20 backdrop-blur-sm px-4 py-2 rounded-full border border-green-500/30">
                                     <FaShieldAlt className="text-green-400" />
-                                    <span>100% Secure</span>
+                                    <span className="text-green-300 font-medium">100% Secure</span>
                                 </div>
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-2 bg-gradient-to-r from-yellow-600/20 to-orange-600/20 backdrop-blur-sm px-4 py-2 rounded-full border border-yellow-500/30">
                                     <FaStar className="text-yellow-400" />
-                                    <span>4.9/5 Rating</span>
+                                    <span className="text-yellow-300 font-medium">4.9/5 Rating</span>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <FaUsers className="text-teal-400" />
-                                    <span>5000+ Customers</span>
+                                <div className="flex items-center gap-2 bg-gradient-to-r from-cyan-600/20 to-blue-600/20 backdrop-blur-sm px-4 py-2 rounded-full border border-cyan-500/30">
+                                    <FaUsers className="text-cyan-400" />
+                                    <span className="text-cyan-300 font-medium">5000+ Customers</span>
                                 </div>
-                            </div>
+                            </motion.div>
                         </motion.div>
                     </div>
                 </section>

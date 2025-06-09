@@ -35,38 +35,38 @@ const BrandsStock = () => {
     { name: "Figma", logo: "https://upload.wikimedia.org/wikipedia/commons/3/33/Figma-logo.svg" },
     { name: "Notion", logo: "https://upload.wikimedia.org/wikipedia/commons/4/45/Notion_app_logo.png" },
     { name: "GitHub", logo: "https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg" },
-    { name: "JetBrains", logo: "https://upload.wikimedia.org/wikipedia/commons/1/1a/JetBrains_Logo_2016.svg" },
+
     { name: "Unity", logo: "https://upload.wikimedia.org/wikipedia/commons/1/19/Unity_Technologies_logo.svg" },
   ];
 
   // Features data
   const features = [
-    { 
-      icon: <FaGlobe className="text-blue-400 text-3xl" />, 
-      title: "Free Worldwide Delivery", 
+    {
+      icon: <FaGlobe className="text-cyan-400 text-3xl" />,
+      title: "Free Worldwide Delivery",
       description: "Instant delivery via Email",
-      color: "from-blue-500 to-blue-700",
+      color: "from-gray-900/90 to-gray-800/70",
       animation: { rotate: [0, 5, -5, 0] }
     },
-    { 
-      icon: <FaHeadset className="text-green-400 text-3xl" />, 
-      title: "24/7 Support", 
+    {
+      icon: <FaHeadset className="text-green-400 text-3xl" />,
+      title: "24/7 Support",
       description: "Free human chat support",
-      color: "from-green-500 to-green-700",
+      color: "from-gray-900/90 to-gray-800/70",
       animation: { scale: [1, 1.03, 1] }
     },
-    { 
-      icon: <FaShieldAlt className="text-orange-400 text-3xl" />, 
-      title: "Safe & Stable", 
+    {
+      icon: <FaShieldAlt className="text-blue-400 text-3xl" />,
+      title: "Safe & Stable",
       description: "Hassle-free replacements",
-      color: "from-orange-500 to-orange-700",
+      color: "from-gray-900/90 to-gray-800/70",
       animation: { y: [0, -3, 0] }
     },
-    { 
-      icon: <FaCreditCard className="text-purple-400 text-3xl" />, 
-      title: "Secure Checkout", 
+    {
+      icon: <FaCreditCard className="text-yellow-400 text-3xl" />,
+      title: "Secure Checkout",
       description: "Esewa/Khalti/ImePay/Bank Transfer",
-      color: "from-purple-500 to-purple-700",
+      color: "from-gray-900/90 to-gray-800/70",
       animation: { x: [0, 3, -3, 0] }
     },
   ];
@@ -129,7 +129,7 @@ const BrandsStock = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
     try {
       const response = await fetch("https://getform.io/f/aqokwdxa", {
         method: "POST",
@@ -158,23 +158,32 @@ const BrandsStock = () => {
   };
 
   return (
-    <div className="bg-gradient-to-br from-gray-900 via-black to-blue-900 py-16 px-4 relative">
-      <div className="max-w-7xl mx-auto">
+    <div className="bg-black py-16 px-4 relative">
+      {/* Modern Background Pattern */}
+      <div className="absolute inset-0 opacity-3">
+        <div className="absolute inset-0" style={{
+          backgroundImage: `radial-gradient(circle at 25% 25%, #1f2937 0%, transparent 50%),
+                           radial-gradient(circle at 75% 75%, #374151 0%, transparent 50%)`,
+          backgroundSize: '150px 150px'
+        }}></div>
+      </div>
+
+      <div className="max-w-7xl mx-auto relative z-10">
         {/* Header Section */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 10 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           viewport={{ once: true }}
           className="text-center mb-12"
         >
-          <motion.h2 
+          <motion.h2
             className="text-3xl md:text-4xl font-bold text-white mb-4"
             whileHover={{ scale: 1.02 }}
           >
             Premium <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-orange-600">Brands</span> We Offer
           </motion.h2>
-          <motion.p 
+          <motion.p
             className="text-lg text-gray-300 max-w-3xl mx-auto"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -185,7 +194,7 @@ const BrandsStock = () => {
         </motion.div>
 
         {/* Brands Grid */}
-        <motion.div 
+        <motion.div
           variants={container}
           initial="hidden"
           whileInView="show"
@@ -196,13 +205,13 @@ const BrandsStock = () => {
             <motion.div
               key={index}
               variants={item}
-              whileHover={{ scale: 1.03, y: -3, boxShadow: "0 5px 15px rgba(59, 130, 246, 0.2)" }}
+              whileHover={{ scale: 1.03, y: -3, boxShadow: "0 5px 15px rgba(107, 114, 128, 0.15)" }}
               whileTap={{ scale: 0.98 }}
-              className="bg-gradient-to-br from-gray-800 to-gray-900 p-4 rounded-xl border border-gray-700 flex flex-col items-center justify-center h-28 hover:shadow-lg hover:shadow-blue-500/10 transition-all cursor-pointer"
+              className="bg-gradient-to-br from-gray-900/90 to-gray-800/70 backdrop-blur-sm p-4 rounded-xl border border-gray-700/50 flex flex-col items-center justify-center h-28 hover:shadow-lg hover:shadow-gray-500/10 transition-all cursor-pointer"
             >
-              <motion.img 
-                src={brand.logo} 
-                alt={brand.name} 
+              <motion.img
+                src={brand.logo}
+                alt={brand.name}
                 className="h-10 object-contain mb-2"
                 whileHover={{ scale: 1.05 }}
               />
@@ -212,7 +221,7 @@ const BrandsStock = () => {
         </motion.div>
 
         {/* Features Section */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.3 }}
@@ -239,21 +248,21 @@ const BrandsStock = () => {
         </motion.div>
 
         {/* CTA Section */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.5 }}
           viewport={{ once: true }}
           className="mt-12 text-center"
         >
-          <motion.p 
+          <motion.p
             className="text-gray-400 mb-4 text-sm md:text-base"
             animate={{ opacity: [0.8, 1, 0.8] }}
             transition={{ duration: 3, repeat: Infinity }}
           >
             NEED SOMETHING NOT LISTED HERE?
           </motion.p>
-          
+
           <div className="flex flex-col sm:flex-row justify-center gap-3 md:gap-4">
             <motion.button
               whileHover={{ scale: 1.03, boxShadow: "0 5px 15px rgba(245, 158, 11, 0.3)" }}
@@ -264,7 +273,7 @@ const BrandsStock = () => {
               <FaWhatsapp className="text-lg md:text-xl" />
               Request via WhatsApp
             </motion.button>
-            
+
             <motion.button
               whileHover={{ scale: 1.03, boxShadow: "0 5px 15px rgba(59, 130, 246, 0.3)" }}
               whileTap={{ scale: 0.98 }}
@@ -280,18 +289,18 @@ const BrandsStock = () => {
 
       {/* Custom Order Form Modal */}
       {isFormOpen && (
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className="fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center p-4"
         >
-          <motion.div 
+          <motion.div
             initial={{ scale: 0.9, y: 50 }}
             animate={{ scale: 1, y: 0 }}
             className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl border border-gray-700 max-w-md w-full p-6 relative"
           >
-            <button 
+            <button
               onClick={closeForm}
               className="absolute top-4 right-4 text-gray-400 hover:text-white"
             >
@@ -410,8 +419,8 @@ const BrandsStock = () => {
                     type="submit"
                     disabled={isSubmitting}
                     className={`w-full py-3 px-6 rounded-full font-bold transition-colors flex items-center justify-center gap-2 ${
-                      isSubmitting 
-                        ? 'bg-blue-700 cursor-not-allowed' 
+                      isSubmitting
+                        ? 'bg-blue-700 cursor-not-allowed'
                         : 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700'
                     }`}
                   >

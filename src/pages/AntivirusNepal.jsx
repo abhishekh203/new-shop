@@ -13,8 +13,10 @@ import {
   Settings as SettingsIcon,
   Discount as DiscountIcon
 } from '@mui/icons-material';
-import { Helmet, HelmetProvider } from 'react-helmet-async';
+import { HelmetProvider } from 'react-helmet-async';
 import Layout from "../components/layout/Layout";
+import SEOHelmet from "../components/SEO/SEOHelmet";
+import OptimizedImage from "../components/SEO/OptimizedImage";
 import Nepal from "./nepal";
 
 const AntivirusNepal = () => {
@@ -24,6 +26,44 @@ const AntivirusNepal = () => {
     keywords: "Antivirus Nepal, Best antivirus solutions in Nepal, Protect devices from malware, Online security Nepal, Affordable antivirus subscription Nepal",
     canonical: "https://www.digitalshopnepal.com/AntivirusNepal"
   };
+
+  const antivirusStructuredData = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": "Premium Antivirus Protection Nepal",
+    "description": "Comprehensive antivirus solution for Nepal with real-time protection and multi-device support",
+    "brand": {
+      "@type": "Brand",
+      "name": "Digital Shop Nepal"
+    },
+    "offers": [
+      {
+        "@type": "Offer",
+        "name": "6 Months Protection",
+        "priceCurrency": "NPR",
+        "price": "1299",
+        "availability": "https://schema.org/InStock"
+      },
+      {
+        "@type": "Offer",
+        "name": "1 Year Protection",
+        "priceCurrency": "NPR",
+        "price": "1999",
+        "availability": "https://schema.org/InStock"
+      }
+    ],
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.8",
+      "reviewCount": "85"
+    }
+  };
+
+  const breadcrumbs = [
+    { name: "Home", url: "/" },
+    { name: "Subscriptions", url: "/subscription" },
+    { name: "Antivirus Nepal", url: "/AntivirusNepal", isLast: true }
+  ];
 
   const pricingPlans = [
     
@@ -61,13 +101,16 @@ const AntivirusNepal = () => {
 
   return (
     <HelmetProvider>
-      <Layout>
-        <Helmet>
-          <title>{meta.title}</title>
-          <meta name="description" content={meta.description} />
-          <meta name="keywords" content={meta.keywords} />
-          <link rel="canonical" href={meta.canonical} />
-        </Helmet>
+      <SEOHelmet
+        title={meta.title}
+        description={meta.description}
+        keywords={meta.keywords}
+        canonical={meta.canonical}
+        structuredData={antivirusStructuredData}
+        breadcrumbs={breadcrumbs}
+        ogType="product"
+      />
+      <Layout showBreadcrumb={true} customBreadcrumbs={breadcrumbs}>
 
         <motion.div 
           initial={{ opacity: 0 }}
@@ -77,8 +120,16 @@ const AntivirusNepal = () => {
         >
           {/* Hero Section */}
           <div className="relative overflow-hidden">
-            <div className="absolute inset-0 bg-black/60 z-0"></div>
-            <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+            <div className="absolute inset-0 z-0">
+              <OptimizedImage
+                src="/img/antivirus.png"
+                alt="Antivirus Nepal Background"
+                className="w-full h-full opacity-10"
+                priority={true}
+              />
+            </div>
+            <div className="absolute inset-0 bg-black/60 z-10"></div>
+            <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
               <motion.div
                 initial={{ y: -20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}

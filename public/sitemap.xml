@@ -3,10 +3,14 @@
     <url>
         <loc>https://digitalshopnepal.com/</loc>
         <priority>1.0</priority>
+        <changefreq>daily</changefreq>
+        <lastmod>2024-01-15</lastmod>
     </url>
     <url>
         <loc>https://digitalshopnepal.com/NetflixNepal</loc>
         <priority>0.9</priority>
+        <changefreq>weekly</changefreq>
+        <lastmod>2024-01-15</lastmod>
     </url>
     <url>
         <loc>https://digitalshopnepal.com/SpotifyNepal</loc>
@@ -75,5 +79,27 @@
     <url>
         <loc>https://digitalshopnepal.com/allproduct</loc>
         <priority>0.7</priority>
+        <changefreq>weekly</changefreq>
+    </url>
+    <url>
+        <loc>https://digitalshopnepal.com/subscription</loc>
+        <priority>0.8</priority>
+        <changefreq>weekly</changefreq>
+    </url>
+    <url>
+        <loc>https://digitalshopnepal.com/Contactus</loc>
+        <priority>0.6</priority>
+        <changefreq>monthly</changefreq>
+    </url>
+    <url>
+        <loc>https://digitalshopnepal.com/reviews</loc>
+        <priority>0.6</priority>
+        <changefreq>weekly</changefreq>
+    </url>
+    <url>
+        <loc>https://digitalshopnepal.com/How-to-buy-netflix-in-nepal</loc>
+        <priority>0.8</priority>
+        <changefreq>monthly</changefreq>
+        <lastmod>2024-01-15</lastmod>
     </url>
 </urlset>

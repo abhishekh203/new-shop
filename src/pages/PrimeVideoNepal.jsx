@@ -1,38 +1,119 @@
 import React from "react";
 import { Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'; // Importing icons for lists
-import Layout from "../components/layout/Layout";  // Import Layout component
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import { HelmetProvider } from 'react-helmet-async';
+import { motion } from "framer-motion";
+import Layout from "../components/layout/Layout";
+import SEOHelmet from "../components/SEO/SEOHelmet";
+import OptimizedImage from "../components/SEO/OptimizedImage";
 import Nepal from "./nepal";
-import { Helmet, HelmetProvider } from 'react-helmet-async'; // Import Helmet and HelmetProvider
 
 const PrimeVideoNepal = () => {
     const meta = {
         title: "Prime Video Nepal - Stream Movies & TV Shows Online",
         description: "Enjoy unlimited streaming of movies and TV shows with Amazon Prime Video in Nepal. Access thousands of titles, including exclusive Amazon Originals, all in stunning picture quality. Stream anytime, anywhere on multiple devices.",
         keywords: "Prime Video Nepal, buy Prime Video Nepal, Amazon Prime Nepal, Prime Video subscription Nepal, watch Prime Video Nepal, stream Prime Video Nepal, VPN-free Prime Video Nepal, Ultra HD streaming Prime Video",
-        canonical: "https://www.digitalshopnepal.com/PrimeVideoNepal" // Update with your actual page URL
+        canonical: "https://www.digitalshopnepal.com/PrimeVideoNepal"
     };
+
+    const primeVideoStructuredData = {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        "name": "Amazon Prime Video Subscription Nepal",
+        "description": "Premium Amazon Prime Video subscription for Nepal with unlimited streaming, offline downloads, and exclusive content",
+        "brand": {
+            "@type": "Brand",
+            "name": "Amazon Prime Video"
+        },
+        "offers": [
+            {
+                "@type": "Offer",
+                "name": "Monthly Subscription",
+                "priceCurrency": "NPR",
+                "price": "199",
+                "availability": "https://schema.org/InStock"
+            },
+            {
+                "@type": "Offer",
+                "name": "3 Months Subscription",
+                "priceCurrency": "NPR",
+                "price": "399",
+                "availability": "https://schema.org/InStock"
+            },
+            {
+                "@type": "Offer",
+                "name": "6 Months Subscription",
+                "priceCurrency": "NPR",
+                "price": "599",
+                "availability": "https://schema.org/InStock"
+            },
+            {
+                "@type": "Offer",
+                "name": "Yearly Subscription",
+                "priceCurrency": "NPR",
+                "price": "1099",
+                "availability": "https://schema.org/InStock"
+            }
+        ],
+        "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "4.6",
+            "reviewCount": "95"
+        }
+    };
+
+    const breadcrumbs = [
+        { name: "Home", url: "/" },
+        { name: "Subscriptions", url: "/subscription" },
+        { name: "Prime Video Nepal", url: "/PrimeVideoNepal", isLast: true }
+    ];
 
     return (
         <HelmetProvider>
-            <Layout>
-                <Helmet>
-                    <title>{meta.title}</title>
-                    <meta name="description" content={meta.description} />
-                    <meta name="keywords" content={meta.keywords} />
-                    <link rel="canonical" href={meta.canonical} /> {/* Add canonical link */}
-                </Helmet>
-
-                <div className="min-h-screen bg-gradient-to-b from-black via-yellow-900 to-black p-8 text-white relative">
-                    {/* Adding a background image for a more cinematic look */}
+            <SEOHelmet
+                title={meta.title}
+                description={meta.description}
+                keywords={meta.keywords}
+                canonical={meta.canonical}
+                structuredData={primeVideoStructuredData}
+                breadcrumbs={breadcrumbs}
+                ogType="product"
+            />
+            <Layout showBreadcrumb={true} customBreadcrumbs={breadcrumbs}>
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.5 }}
+                    className="min-h-screen bg-gradient-to-b from-black via-yellow-900 to-black p-8 text-white relative"
+                >
+                    {/* Hero Background Image */}
+                    <div className="absolute inset-0 z-0">
+                        <OptimizedImage
+                            src="/img/hero.png"
+                            alt="Prime Video Nepal Background"
+                            className="w-full h-full opacity-10"
+                            priority={true}
+                        />
+                    </div>
 
                     {/* Content Section */}
                     <div className="relative z-10">
-
-                        {/* Hero Section */}
-                        <section className="text-center p-10 fade-in">
-                            <h1 className="text-5xl font-bold text-yellow-500 mb-6">Prime Video Nepal</h1>
+                        {/* Enhanced Hero Section */}
+                        <motion.section
+                            initial={{ y: -20, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            transition={{ duration: 0.6 }}
+                            className="text-center p-10"
+                        >
+                            <motion.h1
+                                initial={{ scale: 0.9 }}
+                                animate={{ scale: 1 }}
+                                transition={{ duration: 0.5, delay: 0.2 }}
+                                className="text-5xl md:text-6xl font-bold text-yellow-500 mb-6"
+                            >
+                                Prime Video Nepal
+                            </motion.h1>
                             <p className="text-xl text-gray-300 text-justify w-full leading-relaxed">
                                 Enjoy unlimited streaming of movies and TV shows with Amazon Prime Video in Nepal. With our affordable subscription, you can access thousands of titles, including exclusive Amazon Originals, all in stunning picture quality. Stream your favorite content on multiple devices anytime, anywhere.
                             </p>
@@ -58,7 +139,7 @@ const PrimeVideoNepal = () => {
                                     100% secure accounts, delivered with Email ID and Password.
                                 </li>
                             </ul>
-                        </section>
+                        </motion.section>
 
                         {/* Accordion Sections */}
                         <div className="my-8 max-w-4xl mx-auto">
@@ -149,7 +230,7 @@ const PrimeVideoNepal = () => {
                             <p>&copy; 2024 Prime Video Nepal. All Rights Reserved.</p>
                         </footer>
                     </div>
-                </div>
+                </motion.div>
             </Layout>
         </HelmetProvider>
     );

@@ -7,11 +7,11 @@ import Loader from "../../components/loader/Loader"; // Your existing Loader pat
 import {
     FiUser, FiMail, FiCalendar, FiShoppingBag,
     FiClock, FiDownload, FiChevronDown, FiChevronUp,
-    FiSearch, FiFilter, FiSun, FiMoon, FiCreditCard,
-    FiMapPin, FiPhone, FiPackage, FiRefreshCw, FiEdit3
+    FiSearch, FiSun, FiMoon, FiCreditCard,
+    FiMapPin, FiPackage, FiRefreshCw, FiEdit3
 } from "react-icons/fi";
 import {
-    BsBoxSeam, BsCurrencyRupee, BsGraphUp,
+    BsBoxSeam, BsCurrencyRupee,
     BsShieldCheck, BsQuestionCircle, BsLock, BsPhone
 } from "react-icons/bs";
 import {
@@ -19,129 +19,162 @@ import {
     FaRegStar, FaStar, FaRegHeart, FaHeart
 } from "react-icons/fa";
 import { RiRefund2Line, RiCustomerService2Line } from "react-icons/ri";
-import { MdOutlineLocalOffer, MdOutlineSecurity, MdDevicesOther } from "react-icons/md";
+import { MdOutlineSecurity, MdDevicesOther } from "react-icons/md";
 import { toast } from "react-hot-toast"; // Ensure Toaster is included in your Layout or App root
 // import Chart from 'react-apexcharts'; // Keep commented if not used or causes issues
 import { motion, AnimatePresence } from "framer-motion";
 
 // --- Reusable Components (Place these in the same file or import from separate files) ---
 
-// Stats Card Component
+// Enhanced Stats Card Component
 const StatsCard = ({ title, value, icon, bgColor, textColor, footerText, footerIcon }) => {
-    // ... (Keep the StatsCard component code from the previous response)
     const IconComponent = icon;
     const FooterIcon = footerIcon;
     return (
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm transition-colors duration-300">
-            <div className="flex items-center justify-between">
-                <div>
-                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{title}</p>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{value}</p>
+        <motion.div
+            className="bg-gradient-to-br from-gray-900/80 to-gray-800/60 backdrop-blur-xl rounded-2xl p-6 border border-gray-700/30 shadow-xl relative overflow-hidden"
+            whileHover={{ y: -5, scale: 1.02 }}
+            transition={{ duration: 0.3 }}
+        >
+            {/* Background Glow */}
+            <div className="absolute inset-0 bg-gradient-to-br from-cyan-600/5 to-blue-600/5 rounded-2xl"></div>
+
+            <div className="relative z-10">
+                <div className="flex items-center justify-between mb-4">
+                    <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-400 mb-2">{title}</p>
+                        <p className="text-3xl font-black text-white">{value}</p>
+                    </div>
+                    <motion.div
+                        className={`p-3 rounded-xl ${bgColor} ${textColor} shadow-lg`}
+                        whileHover={{ scale: 1.1, rotate: 5 }}
+                        transition={{ duration: 0.2 }}
+                    >
+                        <IconComponent className="w-6 h-6" />
+                    </motion.div>
                 </div>
-                <div className={`p-3 rounded-lg ${bgColor} ${textColor}`}>
-                    <IconComponent className="w-6 h-6" />
-                </div>
+                {footerText && (
+                    <div className="flex items-center text-sm text-gray-300 bg-gray-800/50 px-3 py-2 rounded-lg backdrop-blur-sm">
+                        {FooterIcon && <FooterIcon className="mr-2 w-4 h-4 text-cyan-400" />}
+                        <span>{footerText}</span>
+                    </div>
+                )}
             </div>
-            {footerText && (
-                <div className="mt-4 flex items-center text-sm text-gray-500 dark:text-gray-400">
-                    {FooterIcon && <FooterIcon className="mr-1.5 w-4 h-4" />}
-                    <span>{footerText}</span>
-                </div>
-            )}
-        </div>
+        </motion.div>
     );
 };
 
-// Product Card Component (for Wishlist / Recently Viewed)
-const ProductCard = ({ item, isFavorite, onToggleFavorite, onAddToCart, darkMode }) => {
-    // ... (Keep the ProductCard component code from the previous response)
+// Enhanced Product Card Component
+const ProductCard = ({ item, isFavorite, onToggleFavorite, onAddToCart }) => {
     const rating = 4; // Static rating for example
     return (
         <motion.div
-            className="bg-white dark:bg-gray-700 rounded-lg overflow-hidden shadow-sm border border-gray-200 dark:border-gray-600 transition-all duration-300 hover:shadow-md"
-            whileHover={{ y: -5 }}
-            layout // Add layout prop for animation if list changes
+            className="bg-gradient-to-br from-gray-900/80 to-gray-800/60 backdrop-blur-xl rounded-2xl overflow-hidden border border-gray-700/30 shadow-xl transition-all duration-300 relative"
+            whileHover={{ y: -10, scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            layout
         >
-            <div className="relative">
-                <img
-                    src={item.productImageUrl}
-                    alt={item.title}
-                    className="w-full h-48 object-cover"
-                    onError={(e) => {
-                        e.target.onerror = null; // prevent infinite loop if placeholder fails
-                        e.target.src = "https://via.placeholder.com/300/f0f0f0/cccccc?text=No+Image";
-                    }}
-                />
-                <button
-                    className="absolute top-3 right-3 bg-white dark:bg-gray-800 p-2 rounded-full shadow-md transition-colors duration-200 hover:bg-red-100 dark:hover:bg-red-900/50"
-                    onClick={(e) => { e.stopPropagation(); onToggleFavorite(item.id); }}
-                    aria-label={isFavorite ? "Remove from Wishlist" : "Add to Wishlist"}
-                >
-                    {isFavorite ? (
-                        <FaHeart className="text-red-500 w-4 h-4" />
-                    ) : (
-                        <FaRegHeart className="text-gray-500 dark:text-gray-300 w-4 h-4" />
-                    )}
-                </button>
-                 {item.category && (
-                    <div className="absolute bottom-3 left-3">
-                       <span className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs font-medium px-2.5 py-0.5 rounded capitalize">
-                            {item.category}
-                        </span>
-                    </div>
-                 )}
-            </div>
-            <div className="p-4">
-                <h3 className="font-medium text-gray-900 dark:text-white mb-1 line-clamp-1" title={item.title}>{item.title}</h3>
-                <div className="flex items-center mb-2">
-                    {[...Array(5)].map((_, i) => (
-                        i < rating ? ( // Use dynamic rating if available
-                            <FaStar key={i} className="w-4 h-4 text-yellow-400" />
-                        ) : (
-                            <FaRegStar key={i} className="w-4 h-4 text-yellow-400" />
-                        )
-                    ))}
-                    {/* Add review count if available */}
-                    {/* <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">(24)</span> */}
-                </div>
-                <div className="flex items-center justify-between">
-                    <span className="text-lg font-bold text-gray-900 dark:text-white">₹{Number(item.price).toFixed(2)}</span>
-                    <button
-                        onClick={() => onAddToCart(item)}
-                        className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium transition-colors duration-200"
+            {/* Background Glow */}
+            <div className="absolute inset-0 bg-gradient-to-br from-cyan-600/5 to-blue-600/5 rounded-2xl"></div>
+
+            <div className="relative z-10">
+                <div className="relative">
+                    <img
+                        src={item.productImageUrl}
+                        alt={item.title}
+                        className="w-full h-48 object-cover"
+                        onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = "https://via.placeholder.com/300/1f2937/9ca3af?text=No+Image";
+                        }}
+                    />
+                    <motion.button
+                        className="absolute top-3 right-3 bg-gray-900/80 backdrop-blur-sm p-2 rounded-full shadow-lg border border-gray-700/50 transition-colors duration-200 hover:bg-red-600/20"
+                        onClick={(e) => { e.stopPropagation(); onToggleFavorite(item.id); }}
+                        aria-label={isFavorite ? "Remove from Wishlist" : "Add to Wishlist"}
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
                     >
-                        Add to Cart
-                    </button>
+                        {isFavorite ? (
+                            <FaHeart className="text-red-400 w-4 h-4" />
+                        ) : (
+                            <FaRegHeart className="text-gray-300 w-4 h-4" />
+                        )}
+                    </motion.button>
+                    {item.category && (
+                        <div className="absolute bottom-3 left-3">
+                            <span className="bg-cyan-600/20 backdrop-blur-sm text-cyan-300 text-xs font-medium px-3 py-1 rounded-full border border-cyan-500/30 capitalize">
+                                {item.category}
+                            </span>
+                        </div>
+                    )}
+                </div>
+                <div className="p-6">
+                    <h3 className="font-bold text-white mb-2 line-clamp-1" title={item.title}>{item.title}</h3>
+                    <div className="flex items-center mb-3">
+                        {[...Array(5)].map((_, i) => (
+                            i < rating ? (
+                                <FaStar key={i} className="w-4 h-4 text-yellow-400" />
+                            ) : (
+                                <FaRegStar key={i} className="w-4 h-4 text-gray-500" />
+                            )
+                        ))}
+                    </div>
+                    <div className="flex items-center justify-between">
+                        <span className="text-xl font-black text-white">₹{Number(item.price).toFixed(2)}</span>
+                        <motion.button
+                            onClick={() => onAddToCart(item)}
+                            className="px-4 py-2 bg-gradient-to-r from-cyan-600 to-blue-600 text-white text-sm font-medium rounded-lg hover:from-cyan-500 hover:to-blue-500 transition-all duration-200 shadow-lg"
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                        >
+                            Add to Cart
+                        </motion.button>
+                    </div>
                 </div>
             </div>
         </motion.div>
     );
 };
 
-// Security Item Component
-const SecurityItem = ({ icon, title, description, buttonText, onClick, darkMode }) => {
-    // ... (Keep the SecurityItem component code from the previous response)
-     const IconComponent = icon;
+// Enhanced Security Item Component
+const SecurityItem = ({ icon, title, description, buttonText, onClick }) => {
+    const IconComponent = icon;
     return (
-        <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div className="flex items-center">
-                   <IconComponent className="w-6 h-6 mr-4 text-blue-500 flex-shrink-0" />
-                   <div>
-                       <h3 className="font-medium text-gray-900 dark:text-white mb-1">{title}</h3>
-                       <p className="text-gray-500 dark:text-gray-400 text-sm">
-                           {description}
-                       </p>
-                   </div>
+        <motion.div
+            className="bg-gradient-to-br from-gray-900/80 to-gray-800/60 backdrop-blur-xl rounded-2xl p-6 border border-gray-700/30 shadow-xl relative overflow-hidden"
+            whileHover={{ y: -2, scale: 1.01 }}
+            transition={{ duration: 0.2 }}
+        >
+            {/* Background Glow */}
+            <div className="absolute inset-0 bg-gradient-to-br from-cyan-600/5 to-blue-600/5 rounded-2xl"></div>
+
+            <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-center flex-1">
+                    <motion.div
+                        className="p-3 bg-gradient-to-r from-cyan-600/20 to-blue-600/20 rounded-xl mr-4 flex-shrink-0"
+                        whileHover={{ scale: 1.1, rotate: 5 }}
+                        transition={{ duration: 0.2 }}
+                    >
+                        <IconComponent className="w-6 h-6 text-cyan-400" />
+                    </motion.div>
+                    <div>
+                        <h3 className="font-bold text-white mb-1">{title}</h3>
+                        <p className="text-gray-300 text-sm leading-relaxed">
+                            {description}
+                        </p>
+                    </div>
                 </div>
-                <button
+                <motion.button
                     onClick={onClick}
-                    className="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-white rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition text-sm w-full sm:w-auto flex-shrink-0"
+                    className="px-6 py-3 bg-gradient-to-r from-gray-700/80 to-gray-600/60 backdrop-blur-sm text-white rounded-xl hover:from-cyan-600/20 hover:to-blue-600/20 transition-all duration-300 text-sm w-full sm:w-auto flex-shrink-0 border border-gray-600/30 font-medium"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                 >
                     {buttonText}
-                </button>
+                </motion.button>
             </div>
-        </div>
+        </motion.div>
     );
 };
 
@@ -155,7 +188,6 @@ const OrderCard = ({
     onTrackShipping,
     onToggleFavorite,
     favorites,
-    darkMode,
     calculateTotalAmount,
     handleAddToCart
 }) => {
@@ -432,10 +464,9 @@ const UserDashboard = () => {
     // Favorites state: Needs persistence (e.g., API call on change, load from API/localStorage on mount)
     const [favorites, setFavorites] = useState([]); // Initialize empty, load from persistent storage in useEffect
 
-    // Placeholder state for actual Wishlist and Recently Viewed items
+    // Placeholder state for actual Recently Viewed items
     // In a real app, fetch/load this data in useEffect
-    const [wishlistItems, setWishlistItems] = useState([]);
-    const [recentlyViewedItems, setRecentlyViewedItems] = useState([]);
+    const [recentlyViewedItems] = useState([]);
 
     // Load favorites, wishlist, recent items from storage/API on component mount
     useEffect(() => {
@@ -772,8 +803,34 @@ const UserDashboard = () => {
     // --- Main Render ---
     return (
         <Layout>
-            {/* ... (Keep the main JSX structure from the previous response) ... */}
-             <div className={`min-h-screen bg-gray-100 dark:bg-gray-900 py-8 px-4 sm:px-6 lg:px-8 transition-colors duration-300 font-sans`}>
+            <div className="min-h-screen bg-black py-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+                {/* Modern Background Pattern */}
+                <div className="absolute inset-0 opacity-3">
+                    <div className="absolute inset-0" style={{
+                        backgroundImage: `radial-gradient(circle at 25% 25%, #1f2937 0%, transparent 50%),
+                                         radial-gradient(circle at 75% 75%, #374151 0%, transparent 50%)`,
+                        backgroundSize: '150px 150px'
+                    }}></div>
+                </div>
+
+                {/* Floating Elements */}
+                <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                    <motion.div
+                        className="absolute top-20 left-10 w-24 h-24 bg-gray-800/20 rounded-full blur-2xl"
+                        animate={{ y: [0, -15, 0], x: [0, 8, 0] }}
+                        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+                    />
+                    <motion.div
+                        className="absolute top-40 right-20 w-20 h-20 bg-gray-700/20 rounded-full blur-2xl"
+                        animate={{ y: [0, 15, 0], x: [0, -10, 0] }}
+                        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+                    />
+                    <motion.div
+                        className="absolute bottom-32 left-1/4 w-32 h-32 bg-gray-600/20 rounded-full blur-2xl"
+                        animate={{ y: [0, -20, 0], x: [0, 15, 0] }}
+                        transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+                    />
+                </div>
                 {/* Dark Mode Toggle Button */}
                 <div className="fixed top-4 right-4 z-50">
                     <motion.button
@@ -801,95 +858,168 @@ const UserDashboard = () => {
                     </motion.button>
                 </div>
 
-                <div className="max-w-7xl mx-auto">
-                    {/* User Profile Header */}
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-6 mb-8 transition-colors duration-300">
-                        <div className="flex flex-col sm:flex-row items-center gap-6">
+                <div className="max-w-7xl mx-auto relative z-10">
+                    {/* Enhanced User Profile Header */}
+                    <motion.div
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.8 }}
+                        className="bg-gradient-to-br from-gray-900/80 to-gray-800/60 backdrop-blur-xl rounded-2xl border border-gray-700/30 shadow-2xl p-6 mb-8 overflow-hidden relative"
+                    >
+                        {/* Background Glow */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-cyan-600/5 to-blue-600/5 rounded-2xl"></div>
+                        <div className="relative z-10 flex flex-col sm:flex-row items-center gap-6">
                             <div className="relative flex-shrink-0">
-                                <img
+                                <motion.img
                                     src={user?.photoURL || "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"}
                                     alt="User Profile"
-                                    className="w-20 h-20 rounded-full border-4 border-blue-500 object-cover shadow-md bg-gray-200 dark:bg-gray-600" // Added bg color
+                                    className="w-24 h-24 rounded-full border-4 border-cyan-400/50 object-cover shadow-xl bg-gray-800"
                                     onError={(e) => {
                                         e.target.onerror = null;
                                         e.target.src = "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
                                     }}
+                                    whileHover={{ scale: 1.05, rotate: 2 }}
+                                    transition={{ duration: 0.3 }}
                                 />
-                                <div className="absolute -bottom-2 -right-2 bg-blue-600 rounded-full p-1.5 shadow-md border-2 border-white dark:border-gray-800">
-                                    <FiUser className="text-white text-base" />
-                                </div>
-                            </div>
-                            <div className="text-center sm:text-left flex-1">
-                                <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{user?.name || 'User Name'}</h1>
-                                <div className="space-y-1.5 text-gray-600 dark:text-gray-300 text-sm">
-                                    <div className="flex items-center justify-center sm:justify-start">
-                                        <FiMail className="mr-2 text-blue-500 flex-shrink-0" />
-                                        <span className="truncate" title={user?.email}>{user?.email || 'No Email'}</span>
-                                    </div>
-                                    <div className="flex items-center justify-center sm:justify-start">
-                                        <FiCalendar className="mr-2 text-blue-500 flex-shrink-0" />
-                                        <span>Member since: {user?.date ? new Date(user.date).toLocaleDateString() : 'N/A'}</span>
-                                    </div>
-                                    <div className="flex items-center justify-center sm:justify-start">
-                                        <FiShoppingBag className="mr-2 text-blue-500 flex-shrink-0" />
-                                        <span className="capitalize">{user?.role || 'User'}</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="flex flex-col sm:flex-row gap-3 mt-4 sm:mt-0">
-                                {/* Make sure these Links point to valid routes in your app */}
-                                <Link
-                                    to="/account/edit" // Example Path
-                                    className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition text-sm flex items-center justify-center"
+                                <motion.div
+                                    className="absolute -bottom-2 -right-2 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full p-2 shadow-lg border-2 border-gray-900"
+                                    whileHover={{ scale: 1.1 }}
                                 >
-                                     <FiEdit3 className="mr-2 w-4 h-4"/> Edit Profile
-                                </Link>
-                                <button
+                                    <FiUser className="text-white text-sm" />
+                                </motion.div>
+
+                                {/* Status Indicator */}
+                                <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-gray-900 animate-pulse"></div>
+                            </div>
+                            <div className="text-center sm:text-left flex-1 relative z-10">
+                                <motion.h1
+                                    className="text-3xl md:text-4xl font-black text-white mb-3"
+                                    initial={{ opacity: 0, x: -20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ duration: 0.6, delay: 0.2 }}
+                                >
+                                    Welcome back, <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">{user?.name || 'User'}</span>!
+                                </motion.h1>
+
+                                <motion.div
+                                    className="flex flex-col sm:flex-row gap-4 mb-4"
+                                    initial={{ opacity: 0, x: -20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ duration: 0.6, delay: 0.4 }}
+                                >
+                                    <div className="flex items-center gap-2 bg-gray-800/50 px-3 py-2 rounded-full backdrop-blur-sm">
+                                        <FiMail className="text-cyan-400" />
+                                        <span className="text-sm text-gray-300 truncate" title={user?.email}>{user?.email || 'No Email'}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 bg-gray-800/50 px-3 py-2 rounded-full backdrop-blur-sm">
+                                        <FiCalendar className="text-green-400" />
+                                        <span className="text-sm text-gray-300">Member since: {user?.date ? new Date(user.date).toLocaleDateString() : 'N/A'}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 bg-gray-800/50 px-3 py-2 rounded-full backdrop-blur-sm">
+                                        <FiShoppingBag className="text-blue-400" />
+                                        <span className="text-sm text-gray-300 capitalize">{user?.role || 'User'}</span>
+                                    </div>
+                                </motion.div>
+
+                                {/* User Status Badge */}
+                                <motion.div
+                                    className="inline-flex items-center gap-2 bg-gradient-to-r from-green-600/20 to-emerald-600/20 backdrop-blur-sm px-4 py-2 rounded-full border border-green-500/30"
+                                    initial={{ opacity: 0, scale: 0.8 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    transition={{ duration: 0.6, delay: 0.6 }}
+                                >
+                                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                                    <span className="text-green-300 font-medium text-sm">Premium Member</span>
+                                </motion.div>
+                            </div>
+                            <motion.div
+                                className="flex flex-col sm:flex-row gap-3 mt-4 sm:mt-0 relative z-10"
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.6, delay: 0.8 }}
+                            >
+                                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                                    <Link
+                                        to="/account/edit"
+                                        className="px-6 py-3 bg-gradient-to-r from-gray-800/80 to-gray-700/60 backdrop-blur-sm text-white rounded-xl hover:from-gray-700/80 hover:to-gray-600/60 transition-all duration-300 text-sm flex items-center justify-center border border-gray-600/30 shadow-lg"
+                                    >
+                                        <FiEdit3 className="mr-2 w-4 h-4"/> Edit Profile
+                                    </Link>
+                                </motion.div>
+                                <motion.button
                                     onClick={() => setActiveTab(TAB_SECURITY)}
-                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm flex items-center justify-center"
+                                    className="px-6 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 text-white rounded-xl hover:from-cyan-500 hover:to-blue-500 transition-all duration-300 text-sm flex items-center justify-center shadow-lg"
+                                    whileHover={{ scale: 1.05, boxShadow: "0 10px 25px rgba(6, 182, 212, 0.3)" }}
+                                    whileTap={{ scale: 0.95 }}
                                 >
                                     <MdOutlineSecurity className="mr-2 w-4 h-4"/> Security
-                                </button>
-                            </div>
+                                </motion.button>
+                            </motion.div>
                         </div>
-                    </div>
+                    </motion.div>
 
-                    {/* Dashboard Tabs */}
-                    <div className="mb-8">
-                        <div className="border-b border-gray-200 dark:border-gray-700">
-                            <nav className="-mb-px flex space-x-6 sm:space-x-8 overflow-x-auto scrollbar-hide">
+                    {/* Enhanced Dashboard Tabs */}
+                    <motion.div
+                        className="mb-8"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6, delay: 0.4 }}
+                    >
+                        <div className="bg-gradient-to-r from-gray-900/80 to-gray-800/60 backdrop-blur-xl rounded-2xl border border-gray-700/30 p-2 shadow-xl">
+                            <nav className="flex space-x-2 overflow-x-auto scrollbar-hide">
                                 {[
                                     { name: TAB_ORDERS, label: "My Orders", icon: BsBoxSeam, count: userOrders.length },
-                                    { name: TAB_WISHLIST, label: "Wishlist", icon: FaRegHeart, count: favorites.length }, // Use favorites count
+                                    { name: TAB_WISHLIST, label: "Wishlist", icon: FaRegHeart, count: favorites.length },
                                     { name: TAB_RECENT, label: "Recently Viewed", icon: FiRefreshCw, count: recentlyViewedItems.length },
                                     { name: TAB_SECURITY, label: "Security", icon: MdOutlineSecurity, count: null }
                                 ].map(tab => {
                                     const Icon = tab.icon;
                                     const isActive = activeTab === tab.name;
                                     return (
-                                        <button
+                                        <motion.button
                                             key={tab.name}
                                             onClick={() => setActiveTab(tab.name)}
-                                            className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center transition-colors duration-200 ${isActive
-                                                    ? "border-blue-500 text-blue-600 dark:text-blue-400"
-                                                    : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-700"
-                                                }`}
+                                            className={`relative whitespace-nowrap py-3 px-6 font-medium text-sm flex items-center rounded-xl transition-all duration-300 ${
+                                                isActive
+                                                    ? "bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-lg"
+                                                    : "text-gray-300 hover:text-white hover:bg-gray-700/50"
+                                            }`}
                                             role="tab"
                                             aria-selected={isActive}
+                                            whileHover={{ scale: 1.05 }}
+                                            whileTap={{ scale: 0.95 }}
                                         >
-                                            <Icon className={`mr-2 w-4 h-4 ${isActive ? 'text-blue-500' : ''}`} />
+                                            <Icon className={`mr-2 w-4 h-4 ${isActive ? 'text-white' : 'text-gray-400'}`} />
                                             {tab.label}
                                             {tab.count !== null && tab.count > 0 && (
-                                                <span className={`ml-2 text-xs font-medium px-2 py-0.5 rounded-full ${isActive ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200' : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200'}`}>
+                                                <motion.span
+                                                    className={`ml-2 text-xs font-medium px-2 py-1 rounded-full ${
+                                                        isActive
+                                                            ? 'bg-white/20 text-white'
+                                                            : 'bg-gray-600/50 text-gray-300'
+                                                    }`}
+                                                    initial={{ scale: 0 }}
+                                                    animate={{ scale: 1 }}
+                                                    transition={{ delay: 0.2 }}
+                                                >
                                                     {tab.count}
-                                                </span>
+                                                </motion.span>
                                             )}
-                                        </button>
+
+                                            {/* Active indicator */}
+                                            {isActive && (
+                                                <motion.div
+                                                    className="absolute inset-0 bg-gradient-to-r from-cyan-600/20 to-blue-600/20 rounded-xl"
+                                                    layoutId="activeTab"
+                                                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                                                />
+                                            )}
+                                        </motion.button>
                                     );
                                 })}
                             </nav>
                         </div>
-                    </div>
+                    </motion.div>
 
                     {/* Tab Content */}
                     <AnimatePresence mode="wait">

@@ -2,35 +2,108 @@ import React from "react";
 import { Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
-import { Helmet, HelmetProvider } from 'react-helmet-async'; // Import HelmetProvider and Helmet
-import Layout from "../components/layout/Layout"; // Import Layout component
+import { HelmetProvider } from 'react-helmet-async';
+import { motion } from "framer-motion";
+import Layout from "../components/layout/Layout";
+import SEOHelmet from "../components/SEO/SEOHelmet";
+import OptimizedImage from "../components/SEO/OptimizedImage";
 import Nepal from "./nepal";
 
 const UlluNepal = () => {
     const meta = {
-        title: "Ullu Nepal - Watch Ullu Web Series & Movies",
-        description: "Stream Ullu Originals, web series, and movies in Nepal. Get access to exclusive Indian content and enjoy streaming across devices.",
-        keywords: "Ullu Nepal, Watch Ullu online Nepal, Stream Ullu Nepal, Ullu web series Nepal, Ullu subscription Nepal",
-        canonical: "https://www.digitalshopnepal.com/UlluNepal" // Update with your actual page URL
+        title: "Ullu Nepal - Premium Bold Content Subscription at Best NPR Prices",
+        description: "Get Ullu premium subscription in Nepal at best prices. Stream bold web series & original content in Kathmandu, Pokhara & all Nepal. 18+ content, NPR pricing, eSewa/Khalti accepted.",
+        keywords: "Ullu Nepal, Ullu subscription Nepal, buy Ullu Nepal, Ullu premium Nepal, Ullu account Nepal, watch Ullu Nepal, Ullu price Nepal, Ullu NPR, Ullu Kathmandu, Ullu web series Nepal, bold content Nepal, adult content Nepal, original series Nepal, streaming service Nepal",
+        canonical: "https://www.digitalshopnepal.com/UlluNepal"
     };
+
+    const ulluStructuredData = {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        "name": "Ullu Premium Subscription Nepal",
+        "description": "Premium Ullu subscription for Nepal with bold web series and original content for mature audiences",
+        "brand": {
+            "@type": "Brand",
+            "name": "Ullu"
+        },
+        "offers": {
+            "@type": "Offer",
+            "price": "999",
+            "priceCurrency": "NPR",
+            "availability": "https://schema.org/InStock",
+            "priceValidUntil": "2024-12-31",
+            "areaServed": {
+                "@type": "Country",
+                "name": "Nepal"
+            }
+        },
+        "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "4.2",
+            "reviewCount": "67"
+        },
+        "category": "Adult Entertainment Streaming",
+        "audience": {
+            "@type": "Audience",
+            "geographicArea": {
+                "@type": "Country",
+                "name": "Nepal"
+            },
+            "suggestedMinAge": 18
+        }
+    };
+
+    const breadcrumbs = [
+        { name: "Home", url: "/" },
+        { name: "Subscriptions", url: "/subscription" },
+        { name: "Ullu Nepal", url: "/UlluNepal", isLast: true }
+    ];
 
     return (
         <HelmetProvider>
-            <Layout>
-                <Helmet>
-                    <title>{meta.title}</title>
-                    <meta name="description" content={meta.description} />
-                    <meta name="keywords" content={meta.keywords} />
-                    <link rel="canonical" href={meta.canonical} />
-                </Helmet>
+            <SEOHelmet
+                title={meta.title}
+                description={meta.description}
+                keywords={meta.keywords}
+                canonical={meta.canonical}
+                structuredData={ulluStructuredData}
+                breadcrumbs={breadcrumbs}
+                ogType="product"
+            />
+            <Layout showBreadcrumb={true} customBreadcrumbs={breadcrumbs}>
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.5 }}
+                    className="min-h-screen bg-gradient-to-b from-black via-red-900 to-black p-8 text-white relative"
+                >
+                    {/* Hero Background Image */}
+                    <div className="absolute inset-0 z-0">
+                        <OptimizedImage
+                            src="/img/ullu.png"
+                            alt="Ullu Nepal Background"
+                            className="w-full h-full opacity-10"
+                            priority={true}
+                        />
+                    </div>
 
-                <div className="min-h-screen bg-gradient-to-b from-black via-red-900 to-black p-8 text-white relative">
                     {/* Content Section */}
                     <div className="relative z-10">
-
-                        {/* Hero Section */}
-                        <section className="text-center p-10 fade-in">
-                            <h1 className="text-5xl font-bold text-yellow-500 mb-6">Ullu Nepal</h1>
+                        {/* Enhanced Hero Section */}
+                        <motion.section
+                            initial={{ y: -20, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            transition={{ duration: 0.6 }}
+                            className="text-center p-10"
+                        >
+                            <motion.h1
+                                initial={{ scale: 0.9 }}
+                                animate={{ scale: 1 }}
+                                transition={{ duration: 0.5, delay: 0.2 }}
+                                className="text-5xl md:text-6xl font-bold text-yellow-500 mb-6"
+                            >
+                                Ullu Nepal
+                            </motion.h1>
                             <p className="text-xl text-gray-300 text-justify w-full leading-relaxed">
                                 Dive into a world of captivating stories and original content with Ullu Nepal. Enjoy a variety of shows and movies that cater to diverse tastes, all available without any hassles!
                             </p>
@@ -56,7 +129,7 @@ const UlluNepal = () => {
                                     Affordable Plans: Competitive pricing for all users.
                                 </li>
                             </ul>
-                        </section>
+                        </motion.section>
 
                         {/* Accordion Sections */}
                         <div className="my-8 max-w-4xl mx-auto">
@@ -138,7 +211,7 @@ const UlluNepal = () => {
                             <p>&copy; 2024 Ullu Nepal. All Rights Reserved.</p>
                         </footer>
                     </div>
-                </div>
+                </motion.div>
             </Layout>
         </HelmetProvider>
     );

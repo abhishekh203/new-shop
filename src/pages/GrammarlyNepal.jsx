@@ -2,35 +2,107 @@ import React from "react";
 import { Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
-import { Helmet, HelmetProvider } from 'react-helmet-async'; // Import HelmetProvider and Helmet
-import Layout from "../components/layout/Layout";  // Import Layout component
+import { HelmetProvider } from 'react-helmet-async';
+import { motion } from "framer-motion";
+import Layout from "../components/layout/Layout";
+import SEOHelmet from "../components/SEO/SEOHelmet";
+import OptimizedImage from "../components/SEO/OptimizedImage";
 import Nepal from "./nepal";
 
 const GrammarlyNepal = () => {
     const meta = {
-        title: "Grammarly Nepal - Improve Your Writing Instantly",
-        description: "Improve your writing with Grammarly in Nepal. Correct grammar, punctuation, and spelling mistakes with real-time suggestions. Perfect for professionals and students.",
-        keywords: "Grammarly Nepal, Grammarly subscription Nepal, Grammarly writing tool Nepal, Correct grammar Nepal, Writing assistant Nepal, Grammar checker Nepal",
-        canonical: "https://www.digitalshopnepal.com/GrammarlyNepal" // Update this with the actual URL of your page
+        title: "Grammarly Nepal - Premium Writing Assistant at Best NPR Prices",
+        description: "Get Grammarly premium subscription in Nepal at best prices. Advanced grammar checking, writing assistance in Kathmandu, Pokhara & all Nepal. NPR pricing, eSewa/Khalti accepted.",
+        keywords: "Grammarly Nepal, Grammarly subscription Nepal, buy Grammarly Nepal, Grammarly premium Nepal, Grammarly account Nepal, writing assistant Nepal, grammar checker Nepal, Grammarly price Nepal, Grammarly NPR, Grammarly Kathmandu, improve writing Nepal, English writing Nepal, grammar tool Nepal",
+        canonical: "https://www.digitalshopnepal.com/GrammarlyNepal"
     };
+
+    const grammarlyStructuredData = {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        "name": "Grammarly Premium Subscription Nepal",
+        "description": "Premium Grammarly subscription for Nepal with advanced grammar checking and writing assistance",
+        "brand": {
+            "@type": "Brand",
+            "name": "Grammarly"
+        },
+        "offers": {
+            "@type": "Offer",
+            "price": "999",
+            "priceCurrency": "NPR",
+            "availability": "https://schema.org/InStock",
+            "priceValidUntil": "2024-12-31",
+            "areaServed": {
+                "@type": "Country",
+                "name": "Nepal"
+            }
+        },
+        "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "4.7",
+            "reviewCount": "89"
+        },
+        "category": "Writing Software",
+        "audience": {
+            "@type": "Audience",
+            "geographicArea": {
+                "@type": "Country",
+                "name": "Nepal"
+            }
+        }
+    };
+
+    const breadcrumbs = [
+        { name: "Home", url: "/" },
+        { name: "Subscriptions", url: "/subscription" },
+        { name: "Grammarly Nepal", url: "/GrammarlyNepal", isLast: true }
+    ];
 
     return (
         <HelmetProvider>
-            <Layout>
-                <Helmet>
-                    <title>{meta.title}</title>
-                    <meta name="description" content={meta.description} />
-                    <meta name="keywords" content={meta.keywords} />
-                    <link rel="canonical" href={meta.canonical} /> {/* Add canonical link */}
-                </Helmet>
+            <SEOHelmet
+                title={meta.title}
+                description={meta.description}
+                keywords={meta.keywords}
+                canonical={meta.canonical}
+                structuredData={grammarlyStructuredData}
+                breadcrumbs={breadcrumbs}
+                ogType="product"
+            />
+            <Layout showBreadcrumb={true} customBreadcrumbs={breadcrumbs}>
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.5 }}
+                    className="min-h-screen bg-gradient-to-b from-black via-blue-800 to-black p-8 text-white relative"
+                >
+                    {/* Hero Background Image */}
+                    <div className="absolute inset-0 z-0">
+                        <OptimizedImage
+                            src="/img/grammarly.png"
+                            alt="Grammarly Nepal Background"
+                            className="w-full h-full opacity-10"
+                            priority={true}
+                        />
+                    </div>
 
-                <div className="min-h-screen bg-gradient-to-b from-black via-blue-800 to-black p-8 text-white relative">
                     {/* Content Section */}
                     <div className="relative z-10">
-
-                        {/* Hero Section */}
-                        <section className="text-center p-10 fade-in">
-                            <h1 className="text-5xl font-bold text-yellow-500 mb-6">Grammarly Nepal</h1>
+                        {/* Enhanced Hero Section */}
+                        <motion.section
+                            initial={{ y: -20, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            transition={{ duration: 0.6 }}
+                            className="text-center p-10"
+                        >
+                            <motion.h1
+                                initial={{ scale: 0.9 }}
+                                animate={{ scale: 1 }}
+                                transition={{ duration: 0.5, delay: 0.2 }}
+                                className="text-5xl md:text-6xl font-bold text-yellow-500 mb-6"
+                            >
+                                Grammarly Nepal
+                            </motion.h1>
                             <p className="text-xl text-gray-300 text-justify w-full leading-relaxed">
                                 Unlock the full potential of your writing with Grammarly in Nepal! Our subscription offers comprehensive grammar checks, style suggestions, and plagiarism detection, ensuring your content is polished and professional. Perfect for students, professionals, and writers looking to enhance their communication skills.
                             </p>
@@ -56,7 +128,7 @@ const GrammarlyNepal = () => {
                                     No VPN required for seamless access in Nepal.
                                 </li>
                             </ul>
-                        </section>
+                        </motion.section>
 
                         {/* Accordion Sections */}
                         <div className="my-8 max-w-4xl mx-auto">
@@ -138,7 +210,7 @@ const GrammarlyNepal = () => {
                             <p>&copy; 2024 Grammarly Nepal. All Rights Reserved.</p>
                         </footer>
                     </div>
-                </div>
+                </motion.div>
             </Layout>
         </HelmetProvider>
     );

@@ -1,9 +1,12 @@
 import React from "react";
 import { Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'; // Importing icons for lists
-import { Helmet, HelmetProvider } from 'react-helmet-async'; // Import HelmetProvider and Helmet
-import Layout from "../components/layout/Layout"; // Import Layout component
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import { HelmetProvider } from 'react-helmet-async';
+import { motion } from "framer-motion";
+import Layout from "../components/layout/Layout";
+import SEOHelmet from "../components/SEO/SEOHelmet";
+import OptimizedImage from "../components/SEO/OptimizedImage";
 import Nepal from "./nepal";
 
 const Zee5Nepal = () => {
@@ -11,26 +14,83 @@ const Zee5Nepal = () => {
         title: "Zee5 Nepal - Watch Zee5 Shows & Movies Online",
         description: "Dive into the world of Zee5 in Nepal and enjoy your favorite shows, movies, and original content. With a subscription, stream a wide array of regional and international content anytime, anywhere, on your preferred device.",
         keywords: "Zee5 Nepal, zee5 subscription nepal, Watch Zee5 online Nepal, Zee5 shows, Zee5 movies",
-        canonical: "https://www.digitalshopnepal.com/Zee5Nepal" // Update this with the actual URL of your page
+        canonical: "https://www.digitalshopnepal.com/Zee5Nepal"
     };
+
+    const zee5StructuredData = {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        "name": "Zee5 Premium Subscription Nepal",
+        "description": "Premium Zee5 subscription for Nepal with unlimited shows, movies, and original content",
+        "brand": {
+            "@type": "Brand",
+            "name": "Zee5"
+        },
+        "offers": {
+            "@type": "Offer",
+            "priceCurrency": "NPR",
+            "price": "999",
+            "availability": "https://schema.org/InStock",
+            "seller": {
+                "@type": "Organization",
+                "name": "Digital Shop Nepal"
+            }
+        },
+        "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "4.4",
+            "reviewCount": "65"
+        }
+    };
+
+    const breadcrumbs = [
+        { name: "Home", url: "/" },
+        { name: "Subscriptions", url: "/subscription" },
+        { name: "Zee5 Nepal", url: "/Zee5Nepal", isLast: true }
+    ];
 
     return (
         <HelmetProvider>
-            <Layout>
-                <Helmet>
-                    <title>{meta.title}</title>
-                    <meta name="description" content={meta.description} />
-                    <meta name="keywords" content={meta.keywords} />
-                    <link rel="canonical" href={meta.canonical} /> {/* Add canonical link */}
-                </Helmet>
+            <SEOHelmet
+                title={meta.title}
+                description={meta.description}
+                keywords={meta.keywords}
+                canonical={meta.canonical}
+                structuredData={zee5StructuredData}
+                breadcrumbs={breadcrumbs}
+                ogType="product"
+            />
+            <Layout showBreadcrumb={true} customBreadcrumbs={breadcrumbs}>
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.5 }}
+                    className="min-h-screen bg-gradient-to-b from-black via-yellow-900 to-black p-8 text-white relative"
+                >
+                    <div className="absolute inset-0 z-0">
+                        <OptimizedImage
+                            src="/img/zee5.png"
+                            alt="Zee5 Nepal Background"
+                            className="w-full h-full opacity-10"
+                            priority={true}
+                        />
+                    </div>
 
-                <div className="min-h-screen bg-gradient-to-b from-black via-blue-900 to-black p-8 text-white relative">
-                    {/* Content Section */}
                     <div className="relative z-10">
-
-                        {/* Hero Section */}
-                        <section className="text-center p-10 fade-in">
-                            <h1 className="text-5xl font-bold text-yellow-400 mb-6">Zee5 Nepal</h1>
+                        <motion.section
+                            initial={{ y: -20, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            transition={{ duration: 0.6 }}
+                            className="text-center p-10"
+                        >
+                            <motion.h1
+                                initial={{ scale: 0.9 }}
+                                animate={{ scale: 1 }}
+                                transition={{ duration: 0.5, delay: 0.2 }}
+                                className="text-5xl md:text-6xl font-bold text-yellow-400 mb-6"
+                            >
+                                Zee5 Nepal
+                            </motion.h1>
                             <p className="text-xl text-gray-300 text-justify w-full leading-relaxed">
                                 Dive into the world of Zee5 in Nepal and enjoy your favorite shows, movies, and original content. With a subscription, stream a wide array of regional and international content anytime, anywhere, on your preferred device.
                             </p>
@@ -56,7 +116,7 @@ const Zee5Nepal = () => {
                                     Affordable subscription plans available.
                                 </li>
                             </ul>
-                        </section>
+                        </motion.section>
 
                         {/* Accordion Sections */}
                         <div className="my-8 max-w-4xl mx-auto">
@@ -143,7 +203,7 @@ const Zee5Nepal = () => {
                             <p>&copy; 2024 Zee5 Nepal. All Rights Reserved.</p>
                         </footer>
                     </div>
-                </div>
+                </motion.div>
             </Layout>
         </HelmetProvider>
     );

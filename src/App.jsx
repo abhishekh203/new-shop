@@ -21,6 +21,7 @@ import MyState from "./context/myState";
 import { Toaster } from "react-hot-toast";
 import { ProtectedRouteForUser } from "./protectedRoute/ProtectedRouteForUser";
 import { ProtectedRouteForAdmin } from "./protectedRoute/ProtectedRouteForAdmin";
+import PerformanceOptimizer from "./components/SEO/PerformanceOptimizer";
 import CategoryPage from "./pages/category/CategoryPage";
 import ContactUs from "./components/Contactus/ContactUs";
 import PurchasePage from "./components/Purchasepage/PurchasePage"; // Import PurchasePage
@@ -48,6 +49,7 @@ const App = () => {
   return (
     <MyState>
       <Router>
+        <PerformanceOptimizer />
         <ScrollTop />
         <Routes>
           <Route path="/" element={<HomePage />} />

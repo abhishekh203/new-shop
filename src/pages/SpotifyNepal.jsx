@@ -1,9 +1,12 @@
 import React from "react";
 import { Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'; // Importing icons for lists
-import { Helmet, HelmetProvider } from 'react-helmet-async'; // Import HelmetProvider and Helmet for meta tags
-import Layout from "../components/layout/Layout";  // Import Layout component
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import { HelmetProvider } from 'react-helmet-async';
+import { motion } from "framer-motion";
+import Layout from "../components/layout/Layout";
+import SEOHelmet from "../components/SEO/SEOHelmet";
+import OptimizedImage from "../components/SEO/OptimizedImage";
 import Nepal from "./nepal";
 
 const SpotifyNepal = () => {
@@ -11,28 +14,112 @@ const SpotifyNepal = () => {
         title: "Spotify Nepal - Stream Music & Podcasts Online",
         description: "Stream Spotify music & podcasts online or download to listen offline on your smartphone, tablet, PC, or Mac in Nepal. Unlimited streaming, quick delivery, no VPN required.",
         keywords: "Spotify Nepal, spotify premium nepal, buy spotify premium nepal, spotify subscription nepal, Spotify subscription, Stream Spotify Nepal, Listen to Music Nepal, Unlimited Music Nepal, VPN Free Spotify",
-        canonical: "https://www.digitalshopnepal.com/Spotify-Nepal" // Update with your actual page URL
+        canonical: "https://www.digitalshopnepal.com/SpotifyNepal"
     };
+
+    const spotifyStructuredData = {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        "name": "Spotify Premium Subscription Nepal",
+        "description": "Premium Spotify subscription for Nepal with ad-free music streaming, offline downloads, and unlimited skips",
+        "brand": {
+            "@type": "Brand",
+            "name": "Spotify"
+        },
+        "offers": [
+            {
+                "@type": "Offer",
+                "name": "3 Months Subscription",
+                "priceCurrency": "NPR",
+                "price": "599",
+                "availability": "https://schema.org/InStock",
+                "seller": {
+                    "@type": "Organization",
+                    "name": "Digital Shop Nepal"
+                }
+            },
+            {
+                "@type": "Offer",
+                "name": "6 Months Subscription",
+                "priceCurrency": "NPR",
+                "price": "999",
+                "availability": "https://schema.org/InStock",
+                "seller": {
+                    "@type": "Organization",
+                    "name": "Digital Shop Nepal"
+                }
+            },
+            {
+                "@type": "Offer",
+                "name": "Yearly Subscription",
+                "priceCurrency": "NPR",
+                "price": "1699",
+                "availability": "https://schema.org/InStock",
+                "seller": {
+                    "@type": "Organization",
+                    "name": "Digital Shop Nepal"
+                }
+            }
+        ],
+        "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "4.7",
+            "reviewCount": "120"
+        }
+    };
+
+    const breadcrumbs = [
+        { name: "Home", url: "/" },
+        { name: "Subscriptions", url: "/subscription" },
+        { name: "Spotify Nepal", url: "/SpotifyNepal", isLast: true }
+    ];
 
     return (
         <HelmetProvider>
-            <Layout>
-                <Helmet>
-                    <title>{meta.title}</title>
-                    <meta name="description" content={meta.description} />
-                    <meta name="keywords" content={meta.keywords} />
-                    <link rel="canonical" href={meta.canonical} />
-                </Helmet>
+            <SEOHelmet
+                title={meta.title}
+                description={meta.description}
+                keywords={meta.keywords}
+                canonical={meta.canonical}
+                structuredData={spotifyStructuredData}
+                breadcrumbs={breadcrumbs}
+                ogType="product"
+            />
+            <Layout showBreadcrumb={true} customBreadcrumbs={breadcrumbs}>
 
-                <div className="min-h-screen bg-gradient-to-b from-black via-green-900 to-black p-8 text-white relative">
-                    {/* Adding a background image for a more immersive look */}
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.5 }}
+                    className="min-h-screen bg-gradient-to-b from-black via-green-900 to-black p-8 text-white relative"
+                >
+                    {/* Hero Background Image */}
+                    <div className="absolute inset-0 z-0">
+                        <OptimizedImage
+                            src="/img/spotify.png"
+                            alt="Spotify Premium Nepal Background"
+                            className="w-full h-full opacity-10"
+                            priority={true}
+                        />
+                    </div>
 
                     {/* Content Section */}
                     <div className="relative z-10">
-
-                        {/* Hero Section */}
-                        <section className="text-center p-10 fade-in">
-                            <h1 className="text-5xl font-bold text-green-500 mb-6">Spotify Nepal</h1>
+                        {/* Enhanced Hero Section */}
+                        <motion.section
+                            initial={{ y: -20, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            transition={{ duration: 0.6 }}
+                            className="text-center p-10"
+                        >
+                            <motion.h1
+                                initial={{ scale: 0.9 }}
+                                animate={{ scale: 1 }}
+                                transition={{ duration: 0.5, delay: 0.2 }}
+                                className="text-5xl md:text-6xl font-bold text-green-500 mb-6"
+                            >
+                                Spotify Nepal
+                            </motion.h1>
                             <p className="text-xl text-gray-300 text-justify w-full leading-relaxed">
                                 Discover unlimited music streaming with Spotify Premium in Nepal. With our affordable Premium subscription, you can listen to your favorite songs, albums, and podcasts ad-free and offline on multiple devices. Enjoy high-quality audio with no interruptions and personalized playlists curated just for you.
                             </p>
@@ -66,7 +153,7 @@ const SpotifyNepal = () => {
                                     No VPN required for Spotify in Nepal.
                                 </li>
                             </ul>
-                        </section>
+                        </motion.section>
 
                         {/* Accordion Sections */}
                         <div className="my-8 max-w-4xl mx-auto">
@@ -158,7 +245,7 @@ const SpotifyNepal = () => {
                             <p>&copy; 2024 Spotify Nepal. All Rights Reserved.</p>
                         </footer>
                     </div>
-                </div>
+                </motion.div>
             </Layout>
         </HelmetProvider>
     );

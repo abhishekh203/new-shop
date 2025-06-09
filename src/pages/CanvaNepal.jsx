@@ -15,8 +15,10 @@ import {
   Lock as LockIcon,
   Report as ReportIcon
 } from '@mui/icons-material';
-import { Helmet, HelmetProvider } from 'react-helmet-async';
+import { HelmetProvider } from 'react-helmet-async';
 import Layout from "../components/layout/Layout";
+import SEOHelmet from "../components/SEO/SEOHelmet";
+import OptimizedImage from "../components/SEO/OptimizedImage";
 import Nepal from "./nepal";
 
 const CanvaNepal = () => {
@@ -26,6 +28,39 @@ const CanvaNepal = () => {
         keywords: "Canva Nepal, canva buy nepal, canva subscription nepal, Canva design Nepal, Canva templates, Create designs Nepal, Online design tool Nepal, Create graphics Nepal",
         canonical: "https://www.digitalshopnepal.com/CanvaNepal"
     };
+
+    const canvaStructuredData = {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        "name": "Canva Pro Subscription Nepal",
+        "description": "Premium Canva subscription for Nepal with unlimited templates, advanced design tools, and team collaboration",
+        "brand": {
+            "@type": "Brand",
+            "name": "Canva"
+        },
+        "offers": {
+            "@type": "Offer",
+            "name": "Pro Plan",
+            "priceCurrency": "NPR",
+            "price": "2250",
+            "availability": "https://schema.org/InStock",
+            "seller": {
+                "@type": "Organization",
+                "name": "Digital Shop Nepal"
+            }
+        },
+        "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "4.9",
+            "reviewCount": "75"
+        }
+    };
+
+    const breadcrumbs = [
+        { name: "Home", url: "/" },
+        { name: "Subscriptions", url: "/subscription" },
+        { name: "Canva Nepal", url: "/CanvaNepal", isLast: true }
+    ];
 
     const pricingPlans = [
         { 
@@ -73,13 +108,16 @@ const CanvaNepal = () => {
 
     return (
         <HelmetProvider>
-            <Layout>
-                <Helmet>
-                    <title>{meta.title}</title>
-                    <meta name="description" content={meta.description} />
-                    <meta name="keywords" content={meta.keywords} />
-                    <link rel="canonical" href={meta.canonical} />
-                </Helmet>
+            <SEOHelmet
+                title={meta.title}
+                description={meta.description}
+                keywords={meta.keywords}
+                canonical={meta.canonical}
+                structuredData={canvaStructuredData}
+                breadcrumbs={breadcrumbs}
+                ogType="product"
+            />
+            <Layout showBreadcrumb={true} customBreadcrumbs={breadcrumbs}>
 
                 <motion.div 
                     initial={{ opacity: 0 }}
@@ -89,8 +127,16 @@ const CanvaNepal = () => {
                 >
                     {/* Hero Section */}
                     <div className="relative overflow-hidden">
-                        <div className="absolute inset-0 bg-gradient-to-r from-blue-900/70 to-purple-900/70 z-0"></div>
-                        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+                        <div className="absolute inset-0 z-0">
+                            <OptimizedImage
+                                src="/img/canva.png"
+                                alt="Canva Nepal Background"
+                                className="w-full h-full opacity-10"
+                                priority={true}
+                            />
+                        </div>
+                        <div className="absolute inset-0 bg-gradient-to-r from-blue-900/70 to-purple-900/70 z-10"></div>
+                        <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
                             <motion.div
                                 initial={{ y: -20, opacity: 0 }}
                                 animate={{ y: 0, opacity: 1 }}

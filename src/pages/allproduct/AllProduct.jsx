@@ -1,16 +1,34 @@
 import React, { useContext, useEffect, useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import myContext from "../../context/myContext"; // Assuming context path is correct
+import myContext from "../../context/myContext";
 import { useDispatch, useSelector } from "react-redux";
-import toast from "react-hot-toast"; // Using react-hot-toast
-import { addToCart, deleteFromCart } from "../../redux/cartSlice"; // Assuming cartSlice path is correct
-import { FaStar } from "react-icons/fa"; // Using FaStar for rating
-import { FiLoader, FiXCircle, FiSliders, FiChevronDown, FiSearch, FiFilter, FiRefreshCw, FiShoppingCart, FiCheck } from "react-icons/fi"; // Consolidated icons
+import toast from "react-hot-toast";
+import { addToCart, deleteFromCart } from "../../redux/cartSlice";
+import { FaStar, FaHeart, FaRegHeart, FaEye, FaShoppingBag, FaTags, FaFire, FaHome } from "react-icons/fa";
+import {
+    FiXCircle, FiSliders, FiChevronDown, FiSearch,
+    FiRefreshCw, FiShoppingCart
+} from "react-icons/fi";
+import { BsStars, BsLightningChargeFill } from "react-icons/bs";
 import { motion, AnimatePresence } from "framer-motion";
 
-// Assuming Layout component path is correct
 import Layout from "../../components/layout/Layout";
-// Removed Loader import if LoadingCard is sufficient
+
+// --- Helper Functions ---
+const getCategoryIcon = (category) => {
+    const icons = {
+        'netflix': '🎬',
+        'spotify': '🎵',
+        'software': '💻',
+        'games': '🎮',
+        'education': '📚',
+        'productivity': '⚡',
+        'design': '🎨',
+        'security': '🔒',
+        'default': '📦'
+    };
+    return icons[category.toLowerCase()] || icons.default;
+};
 
 // --- Animation Variants ---
 const pageVariants = {
@@ -46,47 +64,67 @@ const filterPanelVariants = {
     exit: { opacity: 0, height: 0, y: -15, transition: { duration: 0.3, ease: [0.64, 0, 0.78, 0] } } // Smoother ease
 };
 
-// --- Loading Skeleton Card ---
+// --- Enhanced Loading Skeleton Card ---
 const LoadingCard = ({ index }) => (
     <motion.div
-        initial={{ opacity: 0, y: 15 }}
+        initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: index * 0.06, duration: 0.5, ease: "easeOut" }} // Staggered fade-in
-        className="relative group bg-gray-800/40 backdrop-blur-sm border border-gray-700/40 rounded-xl overflow-hidden shadow-md h-[420px]" // Fixed height, slightly less intense bg
+        transition={{ delay: index * 0.08, duration: 0.6, ease: "easeOut" }}
+        className="relative group bg-gradient-to-br from-gray-900/80 to-gray-800/60 border border-gray-700/30 rounded-2xl overflow-hidden shadow-xl backdrop-blur-sm h-[420px]"
     >
-        {/* Improved Shimmer Effect */}
+        {/* Enhanced Shimmer Effect */}
         <div className="absolute inset-0 overflow-hidden">
             <motion.div
-                className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-gray-700/20 to-transparent" // Softer shimmer
+                className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-blue-400/10 to-transparent"
                 animate={{ x: ["-100%", "100%"] }}
-                transition={{ repeat: Infinity, duration: 1.8, ease: "linear" }} // Slightly slower
+                transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
             />
         </div>
-        {/* Image Placeholder */}
-        <div className="h-60 w-full bg-gray-700/30"></div> {/* Adjusted height */}
+
+        {/* Image Placeholder with Gradient */}
+        <div className="h-60 w-full bg-gradient-to-br from-gray-700/20 to-gray-600/30 relative">
+            <div className="absolute inset-0 bg-gradient-to-t from-gray-800/50 to-transparent"></div>
+            {/* Floating Elements */}
+            <div className="absolute top-4 left-4 w-16 h-6 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 rounded-full"></div>
+        </div>
+
         {/* Content Placeholder */}
-        <div className="p-4 space-y-3">
-            <div className="h-4 w-1/3 bg-gray-700/30 rounded"></div> {/* Category placeholder */}
-            <div className="h-5 w-4/5 bg-gray-700/30 rounded"></div> {/* Title placeholder */}
-             <div className="h-5 w-3/5 bg-gray-700/30 rounded mt-1"></div> {/* Second line title placeholder */}
-            <div className="flex justify-between items-center pt-6"> {/* Adjusted spacing */}
-                <div className="h-6 w-1/4 bg-gray-700/30 rounded"></div> {/* Price placeholder */}
-                <div className="h-9 w-1/3 bg-gray-700/30 rounded-lg"></div> {/* Button placeholder */}
+        <div className="p-5 space-y-4">
+            {/* Category & Rating Row */}
+            <div className="flex justify-between items-center">
+                <div className="h-3 w-20 bg-gradient-to-r from-gray-600/30 to-gray-700/30 rounded-full"></div>
+                <div className="h-5 w-12 bg-gradient-to-r from-yellow-500/20 to-yellow-600/20 rounded-full"></div>
+            </div>
+
+            {/* Title Lines */}
+            <div className="space-y-2">
+                <div className="h-5 w-4/5 bg-gradient-to-r from-gray-600/30 to-gray-700/30 rounded-lg"></div>
+                <div className="h-5 w-3/5 bg-gradient-to-r from-gray-600/30 to-gray-700/30 rounded-lg"></div>
+            </div>
+
+            {/* Spacer */}
+            <div className="flex-grow"></div>
+
+            {/* Price & Button Row */}
+            <div className="flex justify-between items-center pt-4">
+                <div className="h-7 w-24 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 rounded-lg"></div>
+                <div className="h-10 w-28 bg-gradient-to-r from-blue-600/20 to-cyan-600/20 rounded-xl"></div>
             </div>
         </div>
     </motion.div>
 );
 
-// --- Product Card Component ---
+// --- Enhanced Product Card Component ---
 const ProductCard = ({ item, isInCart, onAddToCart, onDeleteFromCart, onNavigate }) => {
-    const { id, title, price, productImageUrl, rating = 4.5, category } = item; // Default rating
+    const { id, title, price, productImageUrl, rating = 4.5, category } = item;
+    const [isWishlisted, setIsWishlisted] = useState(false);
 
     const formatPrice = useCallback((priceValue) => {
         return `₹${Number(priceValue || 0).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
     }, []);
 
     const handleCartClick = (e) => {
-        e.stopPropagation(); // Prevent card click when clicking button
+        e.stopPropagation();
         if (isInCart) {
             onDeleteFromCart(item);
         } else {
@@ -94,80 +132,160 @@ const ProductCard = ({ item, isInCart, onAddToCart, onDeleteFromCart, onNavigate
         }
     };
 
+    const handleWishlistClick = (e) => {
+        e.stopPropagation();
+        setIsWishlisted(!isWishlisted);
+    };
+
+    const handleQuickView = (e) => {
+        e.stopPropagation();
+        onNavigate(`/productinfo/${id}`);
+    };
+
     return (
         <motion.div
-            layout // Animate layout changes (reordering)
+            layout
             variants={itemVariants}
-            exit="exit" // Use exit variant defined above
-            whileHover="hover" // Define hover state (can be used with variants or direct style)
-            className="relative group bg-gray-800/60 backdrop-blur-md border border-gray-700/50 rounded-xl overflow-hidden shadow-lg hover:shadow-blue-400/20 transition-all duration-300 hover:border-blue-500/60 hover:-translate-y-1.5 flex flex-col h-[420px] cursor-pointer" // Enhanced hover, fixed height
+            exit="exit"
+            whileHover="hover"
+            className="relative group bg-gradient-to-br from-gray-900/90 to-gray-800/70 border border-gray-700/30 rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-500 hover:border-blue-400/40 hover:-translate-y-2 flex flex-col h-[420px] cursor-pointer backdrop-blur-sm"
             onClick={() => onNavigate(`/productinfo/${id}`)}
         >
-            {/* Category Badge - Enhanced Style */}
-            <span className="absolute top-3 left-3 bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full z-10 uppercase tracking-wider shadow-sm">
-                {category || 'General'}
-            </span>
-
-            {/* Image */}
-            <div className="relative h-60 w-full overflow-hidden"> {/* Fixed image height */}
-                <motion.img
-                    className="h-full w-full object-cover transition-transform duration-500 ease-in-out group-hover:scale-105"
-                    src={productImageUrl || 'https://placehold.co/300x240/1a202c/718096?text=N/A'} // Darker placeholder
-                    alt={title || 'Product Image'}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.1, duration: 0.4 }}
-                    onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/300x240/1a202c/718096?text=Error'; }} // Darker error placeholder
-                />
-                {/* Subtle Hover Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            {/* Floating Action Buttons */}
+            <div className="absolute top-3 right-3 flex flex-col gap-2 z-20 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
+                <motion.button
+                    onClick={handleWishlistClick}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    className={`p-2 rounded-full backdrop-blur-md border transition-all duration-200 ${
+                        isWishlisted
+                            ? 'bg-red-500/20 border-red-400/50 text-red-400'
+                            : 'bg-gray-800/60 border-gray-600/50 text-gray-300 hover:text-red-400'
+                    }`}
+                >
+                    {isWishlisted ? <FaHeart size={14} /> : <FaRegHeart size={14} />}
+                </motion.button>
+                <motion.button
+                    onClick={handleQuickView}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    className="p-2 rounded-full bg-gray-800/60 backdrop-blur-md border border-gray-600/50 text-gray-300 hover:text-blue-400 transition-all duration-200"
+                >
+                    <FaEye size={14} />
+                </motion.button>
             </div>
 
-            {/* Content */}
-            <div className="p-4 flex flex-col flex-grow"> {/* Use flex-grow to push button down */}
-                {/* Title and Rating */}
-                <div className="flex justify-between items-start mb-1.5">
-                    <h3 className="text-base font-semibold text-gray-100 group-hover:text-blue-300 transition-colors line-clamp-2 flex-grow mr-2" title={title}>
+            {/* Category Badge */}
+            <div className="absolute top-3 left-3 z-10">
+                <motion.span
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className="inline-flex items-center gap-1 bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider shadow-lg backdrop-blur-sm"
+                >
+                    <BsStars size={10} />
+                    {category || 'Digital'}
+                </motion.span>
+            </div>
+
+            {/* Enhanced Image Section */}
+            <div className="relative h-60 w-full overflow-hidden group/image">
+                <motion.img
+                    className="h-full w-full object-cover transition-all duration-700 ease-out group-hover:scale-110"
+                    src={productImageUrl || 'https://placehold.co/300x240/1a202c/718096?text=N/A'}
+                    alt={title || 'Product Image'}
+                    initial={{ opacity: 0, scale: 1.1 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.1, duration: 0.6 }}
+                    onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/300x240/1a202c/718096?text=Error'; }}
+                />
+
+                {/* Gradient Overlays */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-600/0 to-cyan-600/0 group-hover:from-blue-600/10 group-hover:to-cyan-600/10 transition-all duration-500"></div>
+
+                {/* Quick Action Overlay */}
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
+                    <motion.div
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        whileHover={{ scale: 1, opacity: 1 }}
+                        className="bg-white/10 backdrop-blur-md rounded-full p-3 border border-white/20"
+                    >
+                        <FaEye className="text-white text-lg" />
+                    </motion.div>
+                </div>
+            </div>
+
+            {/* Enhanced Content Section */}
+            <div className="p-5 flex flex-col flex-grow">
+                {/* Title and Rating Row */}
+                <div className="flex justify-between items-start mb-3">
+                    <h3 className="text-lg font-bold text-gray-100 group-hover:text-white transition-colors line-clamp-2 flex-grow mr-3 leading-tight" title={title}>
                         {title || 'Untitled Product'}
                     </h3>
-                    {/* Rating - Slightly improved style */}
-                    <div className="flex-shrink-0 flex items-center bg-gray-700/60 px-2 py-0.5 rounded text-xs mt-0.5">
-                        <FaStar className="text-yellow-400 mr-1" size={12} />
-                        <span className="text-gray-200 font-medium">{Number(rating).toFixed(1)}</span>
-                    </div>
+
+                    {/* Enhanced Rating Badge */}
+                    <motion.div
+                        whileHover={{ scale: 1.05 }}
+                        className="flex-shrink-0 flex items-center bg-gradient-to-r from-yellow-500/20 to-orange-500/20 backdrop-blur-sm px-2.5 py-1 rounded-full border border-yellow-500/30"
+                    >
+                        <FaStar className="text-yellow-400 mr-1.5" size={12} />
+                        <span className="text-yellow-200 font-semibold text-xs">{Number(rating).toFixed(1)}</span>
+                    </motion.div>
                 </div>
 
-                 {/* Spacer to push price and button down */}
-                 <div className="flex-grow"></div>
+                {/* Spacer */}
+                <div className="flex-grow"></div>
 
-                {/* Price */}
-                <p className="text-xl font-bold text-blue-400 mb-3">{formatPrice(price)}</p>
+                {/* Price Section */}
+                <div className="mb-4">
+                    <motion.p
+                        className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent"
+                        whileHover={{ scale: 1.05 }}
+                    >
+                        {formatPrice(price)}
+                    </motion.p>
+                    <p className="text-xs text-gray-400 mt-1">Digital Product</p>
+                </div>
 
-                {/* Add to Cart Button - Enhanced Animation */}
+                {/* Enhanced Action Button */}
                 <motion.button
-                    className={`w-full py-2.5 px-4 rounded-lg text-sm font-semibold transition-all duration-250 ease-out flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 ${
+                    className={`w-full py-3 px-4 rounded-xl text-sm font-bold transition-all duration-300 flex items-center justify-center gap-2.5 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 relative overflow-hidden ${
                         isInCart
-                            ? "bg-red-600/20 text-red-400 border border-red-500/50 hover:bg-red-600/30 focus:ring-red-500"
-                            : "bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white shadow-md hover:shadow-lg focus:ring-cyan-500"
+                            ? "bg-gradient-to-r from-red-500/20 to-pink-500/20 text-red-400 border border-red-500/40 hover:from-red-500/30 hover:to-pink-500/30 focus:ring-red-500"
+                            : "bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white shadow-lg hover:shadow-xl hover:shadow-blue-500/25 focus:ring-cyan-500"
                     }`}
                     onClick={handleCartClick}
-                    whileHover={{ scale: 1.03, y: -1 }} // Subtle lift on hover
-                    whileTap={{ scale: 0.97 }}
-                    // Animate presence for icon change
-                    initial={false} // Prevent initial animation on load
-                    animate={{ backgroundColor: isInCart ? 'rgba(220, 38, 38, 0.2)' : 'linear-gradient(to right, #2563EB, #0891B2)' }} // Approximate gradient as target - Framer Motion might struggle with direct gradient animation
+                    whileHover={{ scale: 1.02, y: -2 }}
+                    whileTap={{ scale: 0.98 }}
                 >
+                    {/* Button Background Effect */}
+                    <motion.div
+                        className="absolute inset-0 bg-gradient-to-r from-white/0 to-white/10"
+                        initial={{ x: '-100%' }}
+                        whileHover={{ x: '100%' }}
+                        transition={{ duration: 0.6 }}
+                    />
+
                     <AnimatePresence mode="wait" initial={false}>
                         <motion.span
                             key={isInCart ? "remove" : "add"}
                             initial={{ opacity: 0, y: -10 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: 10 }}
-                            transition={{ duration: 0.15 }}
-                            className="flex items-center justify-center gap-2"
+                            transition={{ duration: 0.2 }}
+                            className="flex items-center justify-center gap-2.5 relative z-10"
                         >
-                           {isInCart ? <FiXCircle size={15} /> : <FiShoppingCart size={15}/>}
-                           {isInCart ? "Remove" : "Add to Cart"}
+                            {isInCart ? (
+                                <>
+                                    <FiXCircle size={16} />
+                                    <span>Remove from Cart</span>
+                                </>
+                            ) : (
+                                <>
+                                    <FiShoppingCart size={16} />
+                                    <span>Add to Cart</span>
+                                </>
+                            )}
                         </motion.span>
                     </AnimatePresence>
                 </motion.button>
@@ -291,146 +409,275 @@ const AllProduct = () => {
         <Layout>
             <motion.div
                 variants={pageVariants} initial="hidden" animate="show" exit="exit"
-                className="py-10 bg-gradient-to-br from-gray-900 via-black to-gray-950 min-h-screen text-gray-200" // Adjusted padding
+                className="py-16 bg-gradient-to-br from-gray-900 via-black to-gray-950 min-h-screen text-gray-200 relative overflow-hidden"
             >
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                    {/* Header Section */}
+                {/* Background Pattern */}
+                <div className="absolute inset-0 opacity-5">
+                    <div className="absolute inset-0" style={{
+                        backgroundImage: `radial-gradient(circle at 25% 25%, #3b82f6 0%, transparent 50%),
+                                         radial-gradient(circle at 75% 75%, #06b6d4 0%, transparent 50%)`,
+                        backgroundSize: '100px 100px'
+                    }}></div>
+                </div>
+
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+                    {/* Enhanced Header Section */}
                     <motion.div
-                        initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.1, ease: "easeOut" }}
-                        className="mb-12 text-center" // Increased margin bottom
+                        initial={{ opacity: 0, y: -30 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.8, delay: 0.1, ease: "easeOut" }}
+                        className="mb-16 text-center relative"
                     >
-                        <h1 className="text-4xl md:text-5xl font-bold text-white tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-cyan-400 to-teal-300 pb-1"> {/* Added via color */}
-                            Explore Our Collection
-                        </h1>
-                        <p className="mt-4 text-lg text-gray-400 max-w-2xl mx-auto"> {/* Adjusted text color */}
-                            Discover premium digital products tailored for your needs.
-                        </p>
+                        {/* Background Decoration */}
+                        <div className="absolute inset-0 flex items-center justify-center opacity-5">
+                            <BsStars className="text-blue-400 text-[200px]" />
+                        </div>
+
+                        {/* Main Title */}
+                        <motion.h1
+                            className="text-5xl md:text-7xl font-black text-white tracking-tight mb-6 relative z-10"
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ duration: 0.8, delay: 0.3 }}
+                        >
+                            <span className="bg-gradient-to-r from-blue-400 via-cyan-400 to-teal-300 bg-clip-text text-transparent">
+                                Digital
+                            </span>
+                            <br />
+                            <span className="text-white">Collection</span>
+                        </motion.h1>
+
+                        {/* Subtitle */}
+                        <motion.p
+                            className="mt-6 text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed relative z-10"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.6, delay: 0.5 }}
+                        >
+                            Discover premium digital products, software, and subscriptions
+                            <span className="text-cyan-400 font-semibold"> tailored for your needs</span>
+                        </motion.p>
+
+                        {/* Stats or Features */}
+                        <motion.div
+                            className="mt-8 flex flex-wrap justify-center gap-6 text-sm text-gray-400"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ duration: 0.6, delay: 0.7 }}
+                        >
+                            <div className="flex items-center gap-2">
+                                <BsLightningChargeFill className="text-yellow-400" />
+                                <span>Instant Delivery</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <FaStar className="text-yellow-400" />
+                                <span>Premium Quality</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <FaShoppingBag className="text-green-400" />
+                                <span>Secure Purchase</span>
+                            </div>
+                        </motion.div>
                     </motion.div>
 
-                    {/* Search and Filter Bar - Enhanced Style */}
+                    {/* Enhanced Search and Filter Bar */}
                     <motion.div
-                        initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.5 }}
-                        className="sticky top-4 z-30 mb-8 " // Adjust top offset if needed, increased z-index
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.9, duration: 0.6 }}
+                        className="sticky top-4 z-30 mb-12"
                     >
-                       <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-gray-900/60 backdrop-blur-lg rounded-xl p-4 border border-gray-700/50 shadow-xl">
-                            {/* Search Input */}
-                            <div className="relative w-full md:w-auto md:flex-grow md:max-w-md"> {/* Allow search to grow */}
-                                <FiSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none" />
-                                <input
-                                    type="text" placeholder="Search products, categories..."
-                                    className="w-full pl-10 pr-10 py-2.5 border border-gray-600 rounded-lg bg-gray-800/70 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/60 focus:border-blue-500/0 transition duration-200 placeholder-gray-500 text-gray-100 shadow-inner" // Enhanced styling
-                                    value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
-                                />
-                                {searchTerm && (
+                        <div className="bg-gradient-to-r from-gray-900/80 via-gray-800/80 to-gray-900/80 backdrop-blur-xl rounded-2xl p-6 border border-gray-700/30 shadow-2xl">
+                            <div className="flex flex-col lg:flex-row gap-6 items-center">
+                                {/* Enhanced Search Input */}
+                                <div className="relative w-full lg:flex-1 lg:max-w-lg">
+                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                                        <FiSearch className="h-5 w-5 text-gray-400" />
+                                        <div className="h-4 w-px bg-gray-600"></div>
+                                    </div>
+                                    <input
+                                        type="text"
+                                        placeholder="Search products, categories, or keywords..."
+                                        className="w-full pl-12 pr-12 py-4 border border-gray-600/50 rounded-xl bg-gray-800/50 text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-300 text-sm backdrop-blur-sm"
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                    />
+                                    <AnimatePresence>
+                                        {searchTerm && (
+                                            <motion.button
+                                                className="absolute right-4 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-gray-700/50 transition-colors"
+                                                onClick={() => setSearchTerm("")}
+                                                initial={{ opacity: 0, scale: 0.8 }}
+                                                animate={{ opacity: 1, scale: 1 }}
+                                                exit={{ opacity: 0, scale: 0.8 }}
+                                                whileHover={{ scale: 1.1 }}
+                                                whileTap={{ scale: 0.9 }}
+                                                aria-label="Clear search"
+                                            >
+                                                <FiXCircle className="text-gray-400 hover:text-gray-200 h-4 w-4" />
+                                            </motion.button>
+                                        )}
+                                    </AnimatePresence>
+                                </div>
+
+                                {/* Filter and Sort Controls */}
+                                <div className="flex items-center gap-4 w-full lg:w-auto">
+                                    {/* Enhanced Filter Toggle */}
                                     <motion.button
-                                        className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                                        onClick={() => setSearchTerm("")}
-                                        initial={{ opacity: 0, scale: 0.5 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.5 }}
-                                        whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
-                                        aria-label="Clear search"
-                                    > <FiXCircle className="text-gray-500 hover:text-gray-300 h-4 w-4" /> </motion.button>
-                                )}
-                            </div>
-
-                            {/* Filter Toggle & Sort Dropdown */}
-                            <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end flex-shrink-0"> {/* Prevent shrinking */}
-                                <motion.button
-                                    className="flex items-center gap-1.5 px-4 py-2 bg-gray-700/50 hover:bg-gray-700 border border-gray-600 rounded-lg text-sm transition duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/60 focus:ring-offset-2 focus:ring-offset-gray-900" // Added focus state
-                                    onClick={() => setShowFilters(!showFilters)}
-                                    whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-                                    aria-expanded={showFilters}
-                                > <FiSliders className="h-4 w-4" /> Filters <FiChevronDown className={`h-4 w-4 transition-transform duration-300 ${showFilters ? 'rotate-180' : ''}`} /> </motion.button>
-
-                                {/* Sort Dropdown */}
-                                <div className="relative flex items-center">
-                                    {/* <label htmlFor="sort-select" className="text-sm text-gray-400 whitespace-nowrap mr-2 sr-only">Sort by:</label> */}
-                                    <select id="sort-select"
-                                        className="appearance-none w-full md:w-44 pl-3 pr-8 py-2 border border-gray-600 rounded-lg bg-gray-800/70 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/60 focus:border-transparent transition duration-200 cursor-pointer" // Removed custom background image, using default arrow via appearance-none + custom arrow below
-                                        value={sortOption} onChange={(e) => setSortOption(e.target.value)}
+                                        className={`flex items-center gap-2.5 px-5 py-3 rounded-xl text-sm font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2 focus:ring-offset-gray-900 ${
+                                            showFilters
+                                                ? 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg'
+                                                : 'bg-gray-700/50 hover:bg-gray-700/70 border border-gray-600/50 text-gray-300 hover:text-white'
+                                        }`}
+                                        onClick={() => setShowFilters(!showFilters)}
+                                        whileHover={{ scale: 1.02 }}
+                                        whileTap={{ scale: 0.98 }}
+                                        aria-expanded={showFilters}
                                     >
-                                        <option value="default" className="bg-gray-800">Newest</option>
-                                        <option value="price-low" className="bg-gray-800">Price: Low to High</option>
-                                        <option value="price-high" className="bg-gray-800">Price: High to Low</option>
-                                        <option value="name" className="bg-gray-800">Name (A-Z)</option>
-                                        {/* <option value="rating" className="bg-gray-800">Rating</option> */}
-                                    </select>
-                                     <FiChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none"/>
+                                        <FiSliders className="h-4 w-4" />
+                                        <span>Filters</span>
+                                        <motion.div
+                                            animate={{ rotate: showFilters ? 180 : 0 }}
+                                            transition={{ duration: 0.3 }}
+                                        >
+                                            <FiChevronDown className="h-4 w-4" />
+                                        </motion.div>
+                                    </motion.button>
+
+                                    {/* Enhanced Sort Dropdown */}
+                                    <div className="relative">
+                                        <select
+                                            id="sort-select"
+                                            className="appearance-none w-full lg:w-48 pl-4 pr-10 py-3 border border-gray-600/50 rounded-xl bg-gray-700/50 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-300 cursor-pointer backdrop-blur-sm"
+                                            value={sortOption}
+                                            onChange={(e) => setSortOption(e.target.value)}
+                                        >
+                                            <option value="default" className="bg-gray-800">🆕 Newest First</option>
+                                            <option value="price-low" className="bg-gray-800">💰 Price: Low to High</option>
+                                            <option value="price-high" className="bg-gray-800">💎 Price: High to Low</option>
+                                            <option value="name" className="bg-gray-800">🔤 Name (A-Z)</option>
+                                        </select>
+                                        <FiChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none"/>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </motion.div>
 
-                    {/* Collapsible Filter Panel */}
+                    {/* Enhanced Collapsible Filter Panel */}
                     <AnimatePresence>
                         {showFilters && (
                             <motion.div
-                                variants={filterPanelVariants} initial="hidden" animate="show" exit="exit"
-                                className="mb-8 bg-gray-800/60 backdrop-blur-md p-5 rounded-xl border border-gray-700/50 overflow-hidden shadow-lg" // Increased padding
+                                variants={filterPanelVariants}
+                                initial="hidden"
+                                animate="show"
+                                exit="exit"
+                                className="mb-12 bg-gradient-to-br from-gray-900/90 to-gray-800/70 backdrop-blur-xl p-8 rounded-2xl border border-gray-700/30 overflow-hidden shadow-2xl"
                             >
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6 items-start"> {/* Adjusted grid layout */}
-                                    {/* Category Filter */}
-                                    <div className="lg:col-span-2"> {/* Span categories across more space */}
-                                        <h3 className="text-base font-semibold text-gray-100 mb-3">Category</h3>
-                                        <div className="flex flex-wrap gap-2">
+                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                                    {/* Enhanced Category Filter */}
+                                    <div className="lg:col-span-2">
+                                        <div className="flex items-center gap-3 mb-6">
+                                            <div className="p-2 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-lg">
+                                                <FaTags className="text-white text-sm" />
+                                            </div>
+                                            <h3 className="text-xl font-bold text-white">Categories</h3>
+                                        </div>
+                                        <div className="flex flex-wrap gap-3">
                                             {categories.map(category => (
                                                 <motion.button
                                                     key={category}
-                                                    className={`px-3.5 py-1.5 rounded-full text-xs font-medium border transition-all duration-200 ${activeFilter === category
-                                                        ? 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white border-blue-500/0 shadow-md' // Gradient active state
-                                                        : 'bg-gray-700/50 text-gray-300 border-gray-600 hover:bg-gray-700 hover:border-gray-500 hover:text-gray-100'
-                                                        }`}
+                                                    className={`px-5 py-2.5 rounded-xl text-sm font-semibold border transition-all duration-300 ${
+                                                        activeFilter === category
+                                                            ? 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white border-blue-500/0 shadow-lg shadow-blue-500/25'
+                                                            : 'bg-gray-800/50 text-gray-300 border-gray-600/50 hover:bg-gray-700/70 hover:border-gray-500/70 hover:text-white hover:shadow-md'
+                                                    }`}
                                                     onClick={() => setActiveFilter(category)}
-                                                    whileHover={{ y: -2 }} whileTap={{ scale: 0.95 }}
-                                                > {category.charAt(0).toUpperCase() + category.slice(1)} </motion.button>
+                                                    whileHover={{ y: -2, scale: 1.02 }}
+                                                    whileTap={{ scale: 0.98 }}
+                                                >
+                                                    <span className="capitalize">
+                                                        {category === 'all' ? '🌟 All Products' : `${getCategoryIcon(category)} ${category}`}
+                                                    </span>
+                                                </motion.button>
                                             ))}
                                         </div>
                                     </div>
 
-                                    {/* Price Range Filter */}
-                                    {isClient && ( // Render slider only on client-side
+                                    {/* Enhanced Price Range Filter */}
+                                    {isClient && (
                                         <div>
-                                             <h3 className="text-base font-semibold text-gray-100 mb-3 flex justify-between items-center">
-                                                <span>Price Range</span>
-                                                 {(priceRange[0] !== 0 || priceRange[1] !== maxPrice) && ( // Show reset only if not default
-                                                      <button
-                                                        onClick={() => setPriceRange([0, maxPrice])} // Reset to dynamic max
-                                                        className="text-xs font-medium text-indigo-400 hover:text-indigo-300 transition-colors"
-                                                     >Reset</button>
-                                                 )}
-                                             </h3>
-                                            <input
-                                                type="range"
-                                                min="0"
-                                                max={maxPrice} // Use dynamic max price
-                                                step="100" // Or adjust step based on maxPrice
-                                                value={priceRange[1]} // Control the upper thumb
-                                                onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value)])}
-                                                className="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer range-lg accent-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2 focus:ring-offset-gray-800" // Style the slider
-                                            />
-                                            <div className="flex justify-between mt-2 text-gray-400 text-sm font-medium">
-                                                <span>₹{priceRange[0].toLocaleString('en-IN')}</span>
-                                                <span>₹{priceRange[1].toLocaleString('en-IN')}</span>
+                                            <div className="flex items-center gap-3 mb-6">
+                                                <div className="p-2 bg-gradient-to-r from-green-600 to-emerald-500 rounded-lg">
+                                                    <FaFire className="text-white text-sm" />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <h3 className="text-xl font-bold text-white">Price Range</h3>
+                                                    <p className="text-sm text-gray-400">Filter by budget</p>
+                                                </div>
+                                                {(priceRange[0] !== 0 || priceRange[1] !== maxPrice) && (
+                                                    <motion.button
+                                                        onClick={() => setPriceRange([0, maxPrice])}
+                                                        whileHover={{ scale: 1.05 }}
+                                                        whileTap={{ scale: 0.95 }}
+                                                        className="text-xs font-medium text-cyan-400 hover:text-cyan-300 transition-colors px-2 py-1 rounded-md hover:bg-cyan-400/10"
+                                                    >
+                                                        Reset
+                                                    </motion.button>
+                                                )}
+                                            </div>
+
+                                            <div className="space-y-4">
+                                                <input
+                                                    type="range"
+                                                    min="0"
+                                                    max={maxPrice}
+                                                    step="100"
+                                                    value={priceRange[1]}
+                                                    onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value)])}
+                                                    className="w-full h-3 bg-gray-700 rounded-lg appearance-none cursor-pointer slider-thumb accent-gradient focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                                />
+
+                                                <div className="flex justify-between items-center">
+                                                    <div className="bg-gray-800/60 px-3 py-2 rounded-lg border border-gray-600/50">
+                                                        <span className="text-sm font-semibold text-green-400">₹{priceRange[0].toLocaleString('en-IN')}</span>
+                                                    </div>
+                                                    <div className="text-gray-500">—</div>
+                                                    <div className="bg-gray-800/60 px-3 py-2 rounded-lg border border-gray-600/50">
+                                                        <span className="text-sm font-semibold text-green-400">₹{priceRange[1].toLocaleString('en-IN')}</span>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     )}
                                 </div>
-                                {/* Add a general Reset Filters button for convenience */}
-                                <div className="mt-6 pt-4 border-t border-gray-700/50 flex justify-end">
-                                     <motion.button
-                                        whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+
+                                {/* Enhanced Reset Button */}
+                                <div className="mt-8 pt-6 border-t border-gray-700/30 flex justify-between items-center">
+                                    <div className="text-sm text-gray-400">
+                                        Showing {filteredAndSortedProducts.length} products
+                                    </div>
+                                    <motion.button
+                                        whileHover={{ scale: 1.05 }}
+                                        whileTap={{ scale: 0.95 }}
                                         onClick={handleResetFilters}
-                                        className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors shadow-md flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/60 focus:ring-offset-2 focus:ring-offset-gray-800"
-                                     > <FiRefreshCw size={14}/> Reset All Filters </motion.button>
+                                        className="px-6 py-3 bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 text-white text-sm font-bold rounded-xl transition-all shadow-lg flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:ring-offset-2 focus:ring-offset-gray-900"
+                                    >
+                                        <FiRefreshCw size={16}/>
+                                        <span>Reset All Filters</span>
+                                    </motion.button>
                                 </div>
                             </motion.div>
                         )}
                     </AnimatePresence>
 
-                    {/* Products Grid */}
+                    {/* Enhanced Products Grid */}
                     <motion.div
-                        layout // Animate layout changes within the grid container itself
-                        variants={containerVariants} initial="hidden" animate="show"
-                        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" // Responsive columns
+                        layout
+                        variants={containerVariants}
+                        initial="hidden"
+                        animate="show"
+                        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-8"
                     >
                          {/* Use AnimatePresence to handle the transition between loading, content, and empty states */}
                         <AnimatePresence mode="wait">
@@ -466,25 +713,69 @@ const AllProduct = () => {
                                 </AnimatePresence>
 
                             ) : (
-                                // Empty State: Render when no products match filters
+                                // Enhanced Empty State
                                 <motion.div
-                                     key="empty"
-                                     initial={{ opacity: 0, y: 20 }}
-                                     animate={{ opacity: 1, y: 0 }}
-                                     exit={{ opacity: 0, y: -10 }}
-                                     transition={{ duration: 0.4, ease:"easeInOut" }}
-                                     className="sm:col-span-2 lg:col-span-3 xl:col-span-4 text-center py-20 px-6 bg-gray-800/40 rounded-xl border border-dashed border-gray-700 flex flex-col items-center justify-center min-h-[350px]" // Increased min-height and padding
+                                    key="empty"
+                                    initial={{ opacity: 0, y: 30 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -20 }}
+                                    transition={{ duration: 0.6, ease: "easeOut" }}
+                                    className="sm:col-span-2 lg:col-span-3 xl:col-span-4 2xl:col-span-5 text-center py-24 px-8 bg-gradient-to-br from-gray-900/60 to-gray-800/40 rounded-2xl border border-dashed border-gray-600/50 flex flex-col items-center justify-center min-h-[400px] backdrop-blur-sm"
                                 >
-                                    <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.1 }}>
-                                        <FiSearch size={48} className="mx-auto text-gray-600 mb-5" strokeWidth={1}/> {/* Thinner icon stroke */}
+                                    {/* Animated Icon */}
+                                    <motion.div
+                                        initial={{ scale: 0.5, opacity: 0 }}
+                                        animate={{ scale: 1, opacity: 1 }}
+                                        transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.2 }}
+                                        className="relative mb-8"
+                                    >
+                                        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-cyan-600/20 rounded-full blur-xl"></div>
+                                        <div className="relative bg-gradient-to-r from-gray-800 to-gray-700 p-6 rounded-full border border-gray-600/50">
+                                            <FiSearch size={64} className="text-gray-400" strokeWidth={1}/>
+                                        </div>
                                     </motion.div>
-                                    <p className="text-xl font-semibold text-gray-300 mb-2">No Products Found</p>
-                                    <p className="text-base text-gray-400 mb-6">Your search or filter combination yielded no results.</p>
-                                    <motion.button
-                                        whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.95 }}
-                                        onClick={handleResetFilters} // Use the reset handler
-                                        className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white text-sm font-medium rounded-lg transition-all shadow-lg flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/60 focus:ring-offset-2 focus:ring-offset-gray-800" // Gradient button
-                                    > <FiRefreshCw size={15}/> Clear Filters & Search </motion.button>
+
+                                    {/* Content */}
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.4, duration: 0.6 }}
+                                        className="space-y-4 mb-8"
+                                    >
+                                        <h3 className="text-2xl font-bold text-white">No Products Found</h3>
+                                        <p className="text-lg text-gray-400 max-w-md mx-auto leading-relaxed">
+                                            We couldn't find any products matching your search criteria.
+                                            Try adjusting your filters or search terms.
+                                        </p>
+                                    </motion.div>
+
+                                    {/* Action Buttons */}
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.6, duration: 0.6 }}
+                                        className="flex flex-col sm:flex-row gap-4"
+                                    >
+                                        <motion.button
+                                            whileHover={{ scale: 1.05, y: -2 }}
+                                            whileTap={{ scale: 0.95 }}
+                                            onClick={handleResetFilters}
+                                            className="px-8 py-4 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white text-sm font-bold rounded-xl transition-all shadow-xl flex items-center gap-3 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2 focus:ring-offset-gray-900"
+                                        >
+                                            <FiRefreshCw size={18}/>
+                                            <span>Clear All Filters</span>
+                                        </motion.button>
+
+                                        <motion.button
+                                            whileHover={{ scale: 1.05, y: -2 }}
+                                            whileTap={{ scale: 0.95 }}
+                                            onClick={() => navigate('/')}
+                                            className="px-8 py-4 bg-gray-700/50 hover:bg-gray-700/70 text-gray-300 hover:text-white text-sm font-bold rounded-xl transition-all border border-gray-600/50 hover:border-gray-500/70 flex items-center gap-3 focus:outline-none focus:ring-2 focus:ring-gray-500/50 focus:ring-offset-2 focus:ring-offset-gray-900"
+                                        >
+                                            <FaHome size={16}/>
+                                            <span>Back to Home</span>
+                                        </motion.button>
+                                    </motion.div>
                                 </motion.div>
                             )}
                         </AnimatePresence>

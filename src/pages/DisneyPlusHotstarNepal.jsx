@@ -1,9 +1,12 @@
 import React from "react";
 import { Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'; // Importing icons for lists
-import { Helmet, HelmetProvider } from 'react-helmet-async'; // Import HelmetProvider and Helmet
-import Layout from "../components/layout/Layout"; // Import Layout component
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import { HelmetProvider } from 'react-helmet-async';
+import { motion } from "framer-motion";
+import Layout from "../components/layout/Layout";
+import SEOHelmet from "../components/SEO/SEOHelmet";
+import OptimizedImage from "../components/SEO/OptimizedImage";
 import Nepal from "./nepal";
 
 const DisneyPlusHotstarNepal = () => {
@@ -11,18 +14,53 @@ const DisneyPlusHotstarNepal = () => {
         title: "DisneyPlus Hotstar Nepal - Stream Disney, Marvel & More",
         description: "Stream Disney, Marvel, Star Wars, Pixar, and Hotstar Originals on DisneyPlus Hotstar in Nepal. HD streaming with no VPN required.",
         keywords: "DisneyPlus Hotstar Nepal, Disney+ Nepal, Watch Hotstar Nepal, Marvel movies Nepal, Stream Disney Nepal",
-        canonical: "https://www.digitalshopnepal.com/DisneyPlusHotstarNepal" // Update this with the actual URL of your page
+        canonical: "https://www.digitalshopnepal.com/DisneyPlusHotstarNepal"
     };
+
+    const disneyStructuredData = {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        "name": "Disney+ Hotstar Premium Subscription Nepal",
+        "description": "Premium Disney+ Hotstar subscription for Nepal with Disney, Marvel, Star Wars, and Pixar content",
+        "brand": {
+            "@type": "Brand",
+            "name": "Disney+ Hotstar"
+        },
+        "offers": {
+            "@type": "Offer",
+            "priceCurrency": "NPR",
+            "price": "1299",
+            "availability": "https://schema.org/InStock",
+            "seller": {
+                "@type": "Organization",
+                "name": "Digital Shop Nepal"
+            }
+        },
+        "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "4.7",
+            "reviewCount": "110"
+        }
+    };
+
+    const breadcrumbs = [
+        { name: "Home", url: "/" },
+        { name: "Subscriptions", url: "/subscription" },
+        { name: "Disney+ Hotstar Nepal", url: "/DisneyPlusHotstarNepal", isLast: true }
+    ];
 
     return (
         <HelmetProvider>
-            <Layout>
-                <Helmet>
-                    <title>{meta.title}</title>
-                    <meta name="description" content={meta.description} />
-                    <meta name="keywords" content={meta.keywords} />
-                    <link rel="canonical" href={meta.canonical} /> {/* Add canonical link */}
-                </Helmet>
+            <SEOHelmet
+                title={meta.title}
+                description={meta.description}
+                keywords={meta.keywords}
+                canonical={meta.canonical}
+                structuredData={disneyStructuredData}
+                breadcrumbs={breadcrumbs}
+                ogType="product"
+            />
+            <Layout showBreadcrumb={true} customBreadcrumbs={breadcrumbs}>
 
                 <div className="min-h-screen bg-gradient-to-b from-black via-blue-900 to-black p-8 text-white relative">
                     {/* Content Section */}

@@ -2,35 +2,123 @@ import React from "react";
 import { Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
-import { Helmet, HelmetProvider } from 'react-helmet-async'; // Import HelmetProvider and Helmet
-import Layout from "../components/layout/Layout"; // Import Layout component
+import { HelmetProvider } from 'react-helmet-async';
+import { motion } from "framer-motion";
+import Layout from "../components/layout/Layout";
+import SEOHelmet from "../components/SEO/SEOHelmet";
+import OptimizedImage from "../components/SEO/OptimizedImage";
+import NepalFAQ from "../components/SEO/NepalFAQ";
 import Nepal from "./nepal";
 
 const VPNNepal = () => {
     const meta = {
-        title: "VPN Nepal - Secure Your Internet Connection",
-        description: "Protect your privacy and bypass restrictions with VPN in Nepal. Access geo-restricted content securely on any device. Stay safe online with a trusted VPN.",
-        keywords: "VPN Nepal, vpn buy nepal, vpn subscription nepal, Secure VPN Nepal, VPN service Nepal, Unblock websites Nepal, Private browsing Nepal",
-        canonical: "https://www.digitalshopnepal.com/VpnNepal" // Update with your actual page URL
+        title: "VPN Nepal - Premium VPN Services at Best Prices in NPR",
+        description: "Get premium VPN services in Nepal at best prices. Secure internet, access global content in Kathmandu, Pokhara & all Nepal. NordVPN, Windscribe, IPVanish available. NPR pricing, eSewa/Khalti accepted.",
+        keywords: "VPN Nepal, VPN subscription Nepal, buy VPN Nepal, VPN service Nepal, secure VPN Nepal, NordVPN Nepal, Windscribe Nepal, IPVanish Nepal, VPN price Nepal, VPN NPR, VPN Kathmandu, VPN Pokhara, unblock websites Nepal, private browsing Nepal, secure internet Nepal, VPN account Nepal, cheap VPN Nepal, best VPN Nepal",
+        canonical: "https://www.digitalshopnepal.com/VpnNepal"
     };
+
+    const vpnStructuredData = {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        "name": "Premium VPN Services Nepal",
+        "description": "Premium VPN services for Nepal including NordVPN, Windscribe, and IPVanish with secure browsing and global content access",
+        "brand": {
+            "@type": "Brand",
+            "name": "Digital Shop Nepal"
+        },
+        "offers": [
+            {
+                "@type": "Offer",
+                "name": "NordVPN Nepal",
+                "price": "1999",
+                "priceCurrency": "NPR",
+                "availability": "https://schema.org/InStock",
+                "priceValidUntil": "2024-12-31"
+            },
+            {
+                "@type": "Offer",
+                "name": "Windscribe VPN Nepal",
+                "price": "1499",
+                "priceCurrency": "NPR",
+                "availability": "https://schema.org/InStock",
+                "priceValidUntil": "2024-12-31"
+            },
+            {
+                "@type": "Offer",
+                "name": "IPVanish VPN Nepal",
+                "price": "1799",
+                "priceCurrency": "NPR",
+                "availability": "https://schema.org/InStock",
+                "priceValidUntil": "2024-12-31"
+            }
+        ],
+        "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "4.6",
+            "reviewCount": "92"
+        },
+        "category": "VPN Services",
+        "audience": {
+            "@type": "Audience",
+            "geographicArea": {
+                "@type": "Country",
+                "name": "Nepal"
+            }
+        }
+    };
+
+    const breadcrumbs = [
+        { name: "Home", url: "/" },
+        { name: "Subscriptions", url: "/subscription" },
+        { name: "VPN Nepal", url: "/VpnNepal", isLast: true }
+    ];
 
     return (
         <HelmetProvider>
-            <Layout>
-                <Helmet>
-                    <title>{meta.title}</title>
-                    <meta name="description" content={meta.description} />
-                    <meta name="keywords" content={meta.keywords} />
-                    <link rel="canonical" href={meta.canonical} />
-                </Helmet>
+            <SEOHelmet
+                title={meta.title}
+                description={meta.description}
+                keywords={meta.keywords}
+                canonical={meta.canonical}
+                structuredData={vpnStructuredData}
+                breadcrumbs={breadcrumbs}
+                ogType="product"
+            />
+            <Layout showBreadcrumb={true} customBreadcrumbs={breadcrumbs}>
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.5 }}
+                    className="min-h-screen bg-gradient-to-b from-black via-blue-900 to-black p-8 text-white relative"
+                >
+                    {/* Hero Background Image */}
+                    <div className="absolute inset-0 z-0">
+                        <OptimizedImage
+                            src="/img/vpn.png"
+                            alt="VPN Nepal Background"
+                            className="w-full h-full opacity-10"
+                            priority={true}
+                        />
+                    </div>
 
-                <div className="min-h-screen bg-gradient-to-b from-black via-blue-900 to-black p-8 text-white relative">
                     {/* Content Section */}
                     <div className="relative z-10">
-
-                        {/* Hero Section */}
-                        <section className="text-center p-10 fade-in">
-                            <h1 className="text-5xl font-bold text-green-500 mb-6">VPN Nepal</h1>
+                        {/* Enhanced Hero Section */}
+                        <motion.section
+                            initial={{ y: -20, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            transition={{ duration: 0.6 }}
+                            className="text-center p-10"
+                        >
+                            <motion.h1
+                                initial={{ scale: 0.9 }}
+                                animate={{ scale: 1 }}
+                                transition={{ duration: 0.5, delay: 0.2 }}
+                                className="text-5xl md:text-6xl font-bold text-green-500 mb-6"
+                            >
+                                VPN Nepal
+                            </motion.h1>
                             <p className="text-xl text-gray-300 text-justify w-full leading-relaxed">
                                 Secure your online activities and access restricted content with a reliable VPN in Nepal. Explore top VPN options and choose the one that fits your needs!
                             </p>
@@ -56,7 +144,7 @@ const VPNNepal = () => {
                                     User-friendly apps for all devices.
                                 </li>
                             </ul>
-                        </section>
+                        </motion.section>
 
                         {/* VPN Options Section */}
                         <div className="my-8 max-w-4xl mx-auto">
@@ -149,6 +237,10 @@ const VPNNepal = () => {
                                 </AccordionDetails>
                             </Accordion>
                         </div>
+
+                        {/* Nepal FAQ Section */}
+                        <NepalFAQ service="vpn" />
+
                         <Nepal />
 
                         {/* Footer Section */}
@@ -156,7 +248,7 @@ const VPNNepal = () => {
                             <p>&copy; 2024 VPN Nepal. All Rights Reserved.</p>
                         </footer>
                     </div>
-                </div>
+                </motion.div>
             </Layout>
         </HelmetProvider>
     );

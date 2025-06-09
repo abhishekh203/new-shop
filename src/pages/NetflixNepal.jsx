@@ -14,15 +14,16 @@ import {
   Discount as DiscountIcon,
   Support as SupportIcon
 } from '@mui/icons-material';
-import { Helmet, HelmetProvider } from 'react-helmet-async';
+import { HelmetProvider } from 'react-helmet-async';
 import Layout from "../components/layout/Layout";
+import SEOHelmet from "../components/SEO/SEOHelmet";
 import Nepal from "./nepal";
 
 const NetflixNepal = () => {
     const meta = {
-        title: "Netflix Nepal - Stream Movies & TV Shows Online",
-        description: "Watch Netflix movies & TV shows online or stream right to your smart TV, game console, PC, Mac, mobile, tablet and more in Nepal. Ultra HD, quick delivery, no VPN required.",
-        keywords: "Netflix Nepal, netflix premium nepal, Netflix subscription nepal, buy netflix premium nepal, how to buy netflix in nepal, how to purchase netflix in nepal, netflix purchase nepal, netflix subscription nepal, Watch Netflix Nepal, Stream Netflix Nepal, Buy Netflix account in Nepal, Ultra HD Netflix Nepal, VPN Free Netflix, Purchase Netflix in Nepal, Netflix Nepal subscription, Streaming services in Nepal",
+        title: "Netflix Nepal - Premium Subscription at Best Prices in NPR",
+        description: "Get Netflix premium subscription in Nepal at best prices. Stream unlimited movies & TV shows in Kathmandu, Pokhara & all Nepal. No VPN required, instant delivery, NPR pricing, local support available.",
+        keywords: "Netflix Nepal, Netflix subscription Nepal, buy Netflix Nepal, Netflix premium Nepal, Netflix account Nepal, watch Netflix Nepal, Netflix price Nepal, Netflix NPR, Netflix Kathmandu, Netflix Pokhara, Netflix streaming Nepal, how to get Netflix in Nepal, Netflix without VPN Nepal, Netflix family plan Nepal, cheap Netflix Nepal, affordable Netflix Nepal, best Netflix price Nepal, Netflix subscription service Nepal, digital subscription Nepal",
         canonical: "https://www.digitalshopnepal.com/NetflixNepal"
     };
 
@@ -60,15 +61,92 @@ const NetflixNepal = () => {
         "Log out from the current device before logging in on another"
     ];
 
+    const netflixStructuredData = {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        "name": "Netflix Premium Subscription Nepal",
+        "description": "Premium Netflix subscription for Nepal with Ultra HD streaming, no VPN required. Available in Kathmandu, Pokhara and all major cities of Nepal.",
+        "brand": {
+            "@type": "Brand",
+            "name": "Netflix"
+        },
+        "offers": [
+            {
+                "@type": "Offer",
+                "name": "1 Month Netflix Nepal",
+                "price": "399",
+                "priceCurrency": "NPR",
+                "availability": "https://schema.org/InStock",
+                "priceValidUntil": "2024-12-31",
+                "seller": {
+                    "@type": "Organization",
+                    "name": "Digital Shop Nepal",
+                    "address": {
+                        "@type": "PostalAddress",
+                        "addressCountry": "NP",
+                        "addressLocality": "Kathmandu",
+                        "addressRegion": "Bagmati Province"
+                    }
+                },
+                "areaServed": {
+                    "@type": "Country",
+                    "name": "Nepal"
+                },
+                "eligibleRegion": {
+                    "@type": "Country",
+                    "name": "Nepal"
+                }
+            },
+            {
+                "@type": "Offer",
+                "name": "3 Months Netflix Nepal",
+                "price": "1169",
+                "priceCurrency": "NPR",
+                "availability": "https://schema.org/InStock",
+                "priceValidUntil": "2024-12-31"
+            },
+            {
+                "@type": "Offer",
+                "name": "1 Year Netflix Nepal",
+                "price": "4499",
+                "priceCurrency": "NPR",
+                "availability": "https://schema.org/InStock",
+                "priceValidUntil": "2024-12-31"
+            }
+        ],
+        "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "4.8",
+            "reviewCount": "150"
+        },
+        "category": "Digital Subscription Services",
+        "audience": {
+            "@type": "Audience",
+            "geographicArea": {
+                "@type": "Country",
+                "name": "Nepal"
+            }
+        }
+    };
+
+    const breadcrumbs = [
+        { name: "Home", url: "/" },
+        { name: "Subscriptions", url: "/subscription" },
+        { name: "Netflix Nepal", url: "/NetflixNepal", isLast: true }
+    ];
+
     return (
         <HelmetProvider>
-            <Layout>
-                <Helmet>
-                    <title>{meta.title}</title>
-                    <meta name="description" content={meta.description} />
-                    <meta name="keywords" content={meta.keywords} />
-                    <link rel="canonical" href={meta.canonical} />
-                </Helmet>
+            <SEOHelmet
+                title={meta.title}
+                description={meta.description}
+                keywords={meta.keywords}
+                canonical={meta.canonical}
+                structuredData={netflixStructuredData}
+                breadcrumbs={breadcrumbs}
+                ogType="product"
+            />
+            <Layout showBreadcrumb={true} customBreadcrumbs={breadcrumbs}>
 
                 <motion.div 
                     initial={{ opacity: 0 }}

@@ -1,36 +1,116 @@
 import React from "react";
 import { Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'; // Importing icons for lists
-import { Helmet, HelmetProvider } from 'react-helmet-async'; // Import HelmetProvider and Helmet
-import Layout from "../components/layout/Layout"; // Import Layout component
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import { HelmetProvider } from 'react-helmet-async';
+import { motion } from "framer-motion";
+import Layout from "../components/layout/Layout";
+import SEOHelmet from "../components/SEO/SEOHelmet";
+import OptimizedImage from "../components/SEO/OptimizedImage";
+import NepalFAQ from "../components/SEO/NepalFAQ";
 import Nepal from "./nepal";
 
 const JioCinemaNepal = () => {
     const meta = {
-        title: "JioCinema Nepal - Stream Movies & Shows",
-        description: "Enjoy unlimited streaming of your favorite movies and TV shows with JioCinema in Nepal. Access a diverse library of regional and international content in HD. VPN required for access.",
-        keywords: "JioCinema Nepal, Watch movies in Nepal, JioCinema VPN Nepal, Stream Bollywood movies Nepal, JioCinema content Nepal",
-        canonical: "https://www.digitalshopnepal.com/JioCinemaNepal" // Update this with the actual URL of your page
+        title: "JioCinema Nepal - Premium Streaming at Best Prices in NPR",
+        description: "Get JioCinema premium subscription in Nepal at best prices. Stream Bollywood movies, TV shows & originals in Kathmandu, Pokhara & all Nepal. HD streaming, NPR pricing, eSewa/Khalti accepted.",
+        keywords: "JioCinema Nepal, JioCinema subscription Nepal, buy JioCinema Nepal, JioCinema premium Nepal, JioCinema account Nepal, watch JioCinema Nepal, JioCinema price Nepal, JioCinema NPR, JioCinema Kathmandu, JioCinema Pokhara, Bollywood movies Nepal, Indian content Nepal, streaming service Nepal, JioCinema original Nepal, HD streaming Nepal",
+        canonical: "https://www.digitalshopnepal.com/JioCinemaNepal"
     };
+
+    const jiocinemaStructuredData = {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        "name": "JioCinema Premium Subscription Nepal",
+        "description": "Premium JioCinema subscription for Nepal with unlimited Bollywood movies, TV shows, and original content",
+        "brand": {
+            "@type": "Brand",
+            "name": "JioCinema"
+        },
+        "offers": [
+            {
+                "@type": "Offer",
+                "name": "Monthly JioCinema Nepal",
+                "price": "199",
+                "priceCurrency": "NPR",
+                "availability": "https://schema.org/InStock",
+                "priceValidUntil": "2024-12-31"
+            },
+            {
+                "@type": "Offer",
+                "name": "Yearly JioCinema Nepal",
+                "price": "1999",
+                "priceCurrency": "NPR",
+                "availability": "https://schema.org/InStock",
+                "priceValidUntil": "2024-12-31"
+            }
+        ],
+        "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "4.3",
+            "reviewCount": "78"
+        },
+        "category": "Streaming Services",
+        "audience": {
+            "@type": "Audience",
+            "geographicArea": {
+                "@type": "Country",
+                "name": "Nepal"
+            }
+        }
+    };
+
+    const breadcrumbs = [
+        { name: "Home", url: "/" },
+        { name: "Subscriptions", url: "/subscription" },
+        { name: "JioCinema Nepal", url: "/JioCinemaNepal", isLast: true }
+    ];
 
     return (
         <HelmetProvider>
-            <Layout>
-                <Helmet>
-                    <title>{meta.title}</title>
-                    <meta name="description" content={meta.description} />
-                    <meta name="keywords" content={meta.keywords} />
-                    <link rel="canonical" href={meta.canonical} /> {/* Add canonical link */}
-                </Helmet>
+            <SEOHelmet
+                title={meta.title}
+                description={meta.description}
+                keywords={meta.keywords}
+                canonical={meta.canonical}
+                structuredData={jiocinemaStructuredData}
+                breadcrumbs={breadcrumbs}
+                ogType="product"
+            />
+            <Layout showBreadcrumb={true} customBreadcrumbs={breadcrumbs}>
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.5 }}
+                    className="min-h-screen bg-gradient-to-b from-black via-purple-900 to-black p-8 text-white relative"
+                >
+                    {/* Hero Background Image */}
+                    <div className="absolute inset-0 z-0">
+                        <OptimizedImage
+                            src="/img/jiocinema.png"
+                            alt="JioCinema Nepal Background"
+                            className="w-full h-full opacity-10"
+                            priority={true}
+                        />
+                    </div>
 
-                <div className="min-h-screen bg-gradient-to-b from-black via-purple-900 to-black p-8 text-white relative">
                     {/* Content Section */}
                     <div className="relative z-10">
-
-                        {/* Hero Section */}
-                        <section className="text-center p-10 fade-in">
-                            <h1 className="text-5xl font-bold text-red-600 mb-6">JioCinema Nepal</h1>
+                        {/* Enhanced Hero Section */}
+                        <motion.section
+                            initial={{ y: -20, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            transition={{ duration: 0.6 }}
+                            className="text-center p-10"
+                        >
+                            <motion.h1
+                                initial={{ scale: 0.9 }}
+                                animate={{ scale: 1 }}
+                                transition={{ duration: 0.5, delay: 0.2 }}
+                                className="text-5xl md:text-6xl font-bold text-red-600 mb-6"
+                            >
+                                JioCinema Nepal
+                            </motion.h1>
                             <p className="text-xl text-gray-300 text-justify w-full leading-relaxed">
                                 Enjoy unlimited streaming of your favorite movies and TV shows with JioCinema in Nepal. Access a diverse library of regional and international content in high definition (HD), tailored to satisfy all your entertainment needs. From blockbuster films to popular TV series, JioCinema offers an extensive selection that caters to every taste. Stream seamlessly on your devices and never miss out on the latest hits, all available using VPN. Subscribe today for an immersive viewing experience and explore the best of entertainment with JioCinema in Nepal.
                             </p>
@@ -56,7 +136,7 @@ const JioCinemaNepal = () => {
                                     Affordable subscription plans tailored for everyone.
                                 </li>
                             </ul>
-                        </section>
+                        </motion.section>
 
                         {/* Accordion Sections */}
                         <div className="my-8 max-w-4xl mx-auto">
@@ -145,7 +225,7 @@ const JioCinemaNepal = () => {
                             <p>&copy; 2024 JioCinema Nepal. All Rights Reserved.</p>
                         </footer>
                     </div>
-                </div>
+                </motion.div>
             </Layout>
         </HelmetProvider>
     );

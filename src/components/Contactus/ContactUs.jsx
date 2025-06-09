@@ -1,23 +1,38 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button, TextField, CircularProgress, Accordion, AccordionSummary, AccordionDetails, Typography } from "@mui/material";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import { Send as SendIcon, WhatsApp, Telegram, Email, Chat, ExpandMore } from "@mui/icons-material";
+import toast from "react-hot-toast";
 import emailjs from "@emailjs/browser";
 import { motion, AnimatePresence } from "framer-motion";
-import Particles from "react-tsparticles";
-import { loadFull } from "tsparticles";
+import {
+  FaPaperPlane, FaWhatsapp, FaTelegram, FaEnvelope, FaComments,
+  FaChevronDown, FaShieldAlt, FaRocket, FaStar, FaCheckCircle,
+  FaQuestionCircle
+} from "react-icons/fa";
 
-// Improved glass card effect styles
-const glassStyle = {
-  background: 'rgba(255, 255, 255, 0.08)',
-  backdropFilter: 'blur(12px)',
-  border: '1px solid rgba(255, 255, 255, 0.1)',
-  boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
-  transition: 'all 0.3s ease',
-  overflow: 'hidden',
-  position: 'relative'
+import Layout from "../layout/Layout";
+
+// Modern animation variants
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.2
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 30 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.6,
+      ease: "easeOut"
+    }
+  }
 };
 
 const ContactUs = () => {
@@ -27,54 +42,62 @@ const ContactUs = () => {
   const [activeAccordion, setActiveAccordion] = useState(null);
   const [hoveredCard, setHoveredCard] = useState(null);
 
-  const particlesInit = async (main) => {
-    await loadFull(main);
-  };
-
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    const toastId = toast.loading("Sending your message...");
 
-    // EmailJS Configuration
-    const serviceId = "service_dgntc8y";
-    const adminTemplateId = "template_7zskxuh";
-    const autoReplyTemplateId = "template_ycui5a3";
-    const publicKey = "xXLe-IsfnrrGoajcY";
+    try {
+      // EmailJS Configuration
+      const serviceId = "service_dgntc8y";
+      const adminTemplateId = "template_7zskxuh";
+      const autoReplyTemplateId = "template_ycui5a3";
+      const publicKey = "xXLe-IsfnrrGoajcY";
 
-    emailjs
-      .send(serviceId, adminTemplateId, formData, publicKey)
-      .then(() => {
-        return emailjs.send(serviceId, autoReplyTemplateId, formData, publicKey);
-      })
-      .then(() => {
-        toast.update(toastId, {
-          render: "Message sent! Redirecting to dashboard...",
-          type: "success",
-          isLoading: false,
-          autoClose: 3000
-        });
-        setFormData({ name: "", email: "", message: "" });
-        
-        setTimeout(() => {
-          navigate("/user-dashboard");
-        }, 3000);
-      })
-      .catch(() => {
-        toast.update(toastId, {
-          render: "Failed to send message",
-          type: "error",
-          isLoading: false,
-          autoClose: 3000
-        });
-      })
-      .finally(() => {
-        setIsLoading(false);
+      // Send admin notification
+      await emailjs.send(serviceId, adminTemplateId, formData, publicKey);
+
+      // Send auto-reply to user
+      await emailjs.send(serviceId, autoReplyTemplateId, formData, publicKey);
+
+      toast.success("Message sent successfully! We'll get back to you soon.", {
+        duration: 4000,
+        position: 'top-center',
+        style: {
+          background: '#10B981',
+          color: 'white',
+          borderRadius: '12px',
+          padding: '16px',
+          fontSize: '14px',
+          fontWeight: '500'
+        }
       });
+
+      setFormData({ name: "", email: "", message: "" });
+
+      setTimeout(() => {
+        navigate("/user-dashboard");
+      }, 2000);
+
+    } catch (error) {
+      toast.error("Failed to send message. Please try again.", {
+        duration: 4000,
+        position: 'top-center',
+        style: {
+          background: '#EF4444',
+          color: 'white',
+          borderRadius: '12px',
+          padding: '16px',
+          fontSize: '14px',
+          fontWeight: '500'
+        }
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const faqs = [
@@ -128,497 +151,456 @@ const ContactUs = () => {
 
 
   const contactMethods = [
-    { 
-      title: "WhatsApp Support", 
-      description: "Instant messaging support", 
-      icon: <WhatsApp className="text-3xl" />, 
-      btnText: "Message Us", 
-      href: "https://wa.me/9779807677391", 
-      color: "from-emerald-500 to-teal-600",
-      hoverColor: "hover:from-emerald-600 hover:to-teal-700",
-      bgColor: "rgba(16, 185, 129, 0.1)",
-      borderColor: "rgba(16, 185, 129, 0.3)"
+    {
+      title: "WhatsApp Support",
+      description: "Get instant help via WhatsApp",
+      icon: <FaWhatsapp className="text-2xl" />,
+      btnText: "Chat Now",
+      href: "https://wa.me/9779807677391",
+      gradient: "from-green-500 to-emerald-600",
+      bgGradient: "from-green-500/10 to-emerald-600/10",
+      borderColor: "border-green-500/30",
+      stats: "24/7 Available"
     },
-    { 
-      title: "Telegram Support", 
-      description: "Join our community", 
-      icon: <Telegram className="text-3xl" />, 
-      btnText: "Join Group", 
-      href: "https://t.me/netflixnepalseller", 
-      color: "from-blue-500 to-indigo-600",
-      hoverColor: "hover:from-blue-600 hover:to-indigo-700",
-      bgColor: "rgba(59, 130, 246, 0.1)",
-      borderColor: "rgba(59, 130, 246, 0.3)"
+    {
+      title: "Telegram Community",
+      description: "Join our active community",
+      icon: <FaTelegram className="text-2xl" />,
+      btnText: "Join Now",
+      href: "https://t.me/netflixnepalseller",
+      gradient: "from-blue-500 to-cyan-600",
+      bgGradient: "from-blue-500/10 to-cyan-600/10",
+      borderColor: "border-blue-500/30",
+      stats: "10K+ Members"
     },
-    { 
-      title: "Email Support", 
-      description: "For detailed inquiries", 
-      icon: <Email className="text-3xl" />, 
-      btnText: "Send Email", 
-      href: "mailto:digitalshopnepalstore@gmail.com", 
-      color: "from-rose-500 to-pink-600",
-      hoverColor: "hover:from-rose-600 hover:to-pink-700",
-      bgColor: "rgba(244, 63, 94, 0.1)",
-      borderColor: "rgba(244, 63, 94, 0.3)"
+    {
+      title: "Email Support",
+      description: "Send detailed inquiries",
+      icon: <FaEnvelope className="text-2xl" />,
+      btnText: "Send Email",
+      href: "mailto:digitalshopnepalstore@gmail.com",
+      gradient: "from-purple-500 to-pink-600",
+      bgGradient: "from-purple-500/10 to-pink-600/10",
+      borderColor: "border-purple-500/30",
+      stats: "< 2hr Response"
+    },
+    {
+      title: "WhatsApp Group",
+      description: "Connect with other users",
+      icon: <FaComments className="text-2xl" />,
+      btnText: "Join Group",
+      href: "https://chat.whatsapp.com/IXl6YmkAZgEJkveJgbatAP",
+      gradient: "from-teal-500 to-green-600",
+      bgGradient: "from-teal-500/10 to-green-600/10",
+      borderColor: "border-teal-500/30",
+      stats: "Active Community"
     }
   ];
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 overflow-hidden">
-      {/* Animated Background Particles */}
-      <div className="absolute inset-0 z-0 opacity-20">
-        <Particles
-          id="tsparticles"
-          init={particlesInit}
-          options={{
-            fpsLimit: 60,
-            interactivity: {
-              events: {
-                onHover: {
-                  enable: true,
-                  mode: "repulse",
-                },
-              },
-              modes: {
-                repulse: {
-                  distance: 100,
-                  duration: 0.4,
-                },
-              },
-            },
-            particles: {
-              color: {
-                value: "#ffffff",
-              },
-              links: {
-                color: "#ffffff",
-                distance: 150,
-                enable: true,
-                opacity: 0.3,
-                width: 1,
-              },
-              collisions: {
-                enable: true,
-              },
-              move: {
-                direction: "none",
-                enable: true,
-                outModes: {
-                  default: "bounce",
-                },
-                random: false,
-                speed: 1,
-                straight: false,
-              },
-              number: {
-                density: {
-                  enable: true,
-                  area: 800,
-                },
-                value: 60,
-              },
-              opacity: {
-                value: 0.3,
-              },
-              shape: {
-                type: "circle",
-              },
-              size: {
-                value: { min: 1, max: 3 },
-              },
-            },
-            detectRetina: true,
-          }}
-        />
-      </div>
+    <Layout>
+      <div className="relative min-h-screen bg-black overflow-hidden">
+        {/* Subtle Background Pattern */}
+        <div className="absolute inset-0 opacity-3">
+          <div className="absolute inset-0" style={{
+            backgroundImage: `radial-gradient(circle at 25% 25%, #1f2937 0%, transparent 50%),
+                             radial-gradient(circle at 75% 75%, #374151 0%, transparent 50%)`,
+            backgroundSize: '150px 150px'
+          }}></div>
+        </div>
 
-      <div className="relative z-10">
-        {/* Header Section */}
-        <motion.div 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="pt-20 pb-12 px-6 text-center"
-        >
+        {/* Minimal Floating Elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <motion.div
-            initial={{ scale: 0.9 }}
-            animate={{ scale: 1 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="inline-block mb-6"
+            className="absolute top-20 left-10 w-24 h-24 bg-gray-800/20 rounded-full blur-2xl"
+            animate={{ y: [0, -15, 0], x: [0, 8, 0] }}
+            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+          />
+          <motion.div
+            className="absolute top-40 right-20 w-20 h-20 bg-gray-700/20 rounded-full blur-2xl"
+            animate={{ y: [0, 15, 0], x: [0, -10, 0] }}
+            transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+          />
+          <motion.div
+            className="absolute bottom-32 left-1/4 w-32 h-32 bg-gray-600/20 rounded-full blur-2xl"
+            animate={{ y: [0, -20, 0], x: [0, 15, 0] }}
+            transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+          />
+        </div>
+
+        <div className="relative z-10">
+          {/* Enhanced Header Section */}
+          <motion.div
+            initial={{ opacity: 0, y: -30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="pt-24 pb-16 px-6 text-center"
           >
-            <div className="relative">
-              <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-blue-500 rounded-lg blur opacity-75"></div>
-              <h1 className="relative text-4xl md:text-5xl lg:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-300">
-                Contact Us
+
+
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="relative z-10 mb-8"
+            >
+              <h1 className="text-6xl md:text-7xl lg:text-8xl font-black mb-6">
+                <span className="bg-gradient-to-r from-blue-400 via-cyan-400 to-teal-300 bg-clip-text text-transparent">
+                  Get in
+                </span>
+                <br />
+                <span className="text-white">Touch</span>
               </h1>
-            </div>
-          </motion.div>
-          
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-            className="text-xl text-gray-300 max-w-3xl mx-auto"
-          >
-            We're here to help with any questions about our services. Reach out through any channel below.
-          </motion.p>
-        </motion.div>
 
-        {/* Main Content */}
-        <div className="container mx-auto px-6 pb-20">
-          <div className="flex flex-col lg:flex-row gap-10">
-            {/* Left Column - Contact Options */}
-            <div className="lg:w-1/2 space-y-8">
-              {/* Improved Quick Contact Cards */}
-              <motion.div 
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6, delay: 0.6 }}
-                className="grid grid-cols-1 gap-6"
-              >
-                {contactMethods.map((method, index) => (
-                  <motion.div
-                    key={index}
-                    whileHover={{ y: -5 }}
-                    whileTap={{ scale: 0.98 }}
-                    onHoverStart={() => setHoveredCard(index)}
-                    onHoverEnd={() => setHoveredCard(null)}
-                    className={`relative rounded-2xl overflow-hidden transition-all duration-300 ${glassStyle}`}
-                    style={{
-                      borderColor: method.borderColor,
-                      background: method.bgColor
-                    }}
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-br opacity-0 hover:opacity-20 transition-opacity duration-300"
-                      style={{
-                        background: `linear-gradient(45deg, ${method.color.replace('from-', '').replace('to-', '').replace(' ', ', ')})`
-                      }}
-                    />
-                    
-                    <div className="p-6 flex items-center relative z-10">
-                      <div className={`flex-shrink-0 w-16 h-16 rounded-xl flex items-center justify-center bg-gradient-to-br ${method.color} shadow-lg`}>
-                        {method.icon}
-                      </div>
-                      <div className="ml-6 flex-1">
-                        <h3 className="text-xl font-bold text-white">{method.title}</h3>
-                        <p className="text-gray-300 mt-1">{method.description}</p>
-                      </div>
-                      <motion.a
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        href={method.href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={`ml-4 px-6 py-3 rounded-lg font-medium text-white bg-gradient-to-br ${method.color} ${method.hoverColor} transition-all shadow-md`}
-                      >
-                        {method.btnText}
-                      </motion.a>
-                    </div>
-                  </motion.div>
-                ))}
-              </motion.div>
-
-              {/* Social Links */}
               <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6, delay: 0.8 }}
-                className={`p-6 rounded-2xl ${glassStyle}`}
-              >
-                <h3 className="text-xl font-bold text-white mb-4">Join Our Communities</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <motion.a
-                    whileHover={{ y: -3 }}
-                    href="https://wa.me/9779807677391"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-medium transition-all"
-                  >
-                    <WhatsApp />
-                    WhatsApp
-                  </motion.a>
-                  <motion.a
-                    whileHover={{ y: -3 }}
-                    href="https://t.me/netflixnepalseller"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium transition-all"
-                  >
-                    <Telegram />
-                    Telegram
-                  </motion.a>
-                  <motion.a
-                    whileHover={{ y: -3 }}
-                    href="https://chat.whatsapp.com/IXl6YmkAZgEJkveJgbatAP"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-green-500 hover:bg-green-600 text-white font-medium transition-all"
-                  >
-                    <Chat />
-                    WhatsApp Group
-                  </motion.a>
-                  <motion.a
-                    whileHover={{ y: -3 }}
-                    href="mailto:digitalshopnepalstore@gmail.com"
-                    className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-medium transition-all"
-                  >
-                    <Email />
-                    Email
-                  </motion.a>
-                </div>
-              </motion.div>
-            </div>
+                initial={{ width: 0 }}
+                animate={{ width: "100px" }}
+                transition={{ duration: 0.8, delay: 0.6 }}
+                className="h-1 bg-gradient-to-r from-blue-500 to-cyan-500 mx-auto rounded-full"
+              />
+            </motion.div>
 
-            {/* Right Column - Contact Form */}
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.8 }}
+              className="text-xl md:text-2xl text-gray-300 max-w-4xl mx-auto leading-relaxed mb-8"
+            >
+              Have questions about our digital products? Need support?
+              <span className="text-cyan-400 font-semibold"> We're here to help 24/7</span>
+            </motion.p>
+
+            {/* Stats */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-              className="lg:w-1/2"
+              transition={{ duration: 0.8, delay: 1 }}
+              className="flex flex-wrap justify-center gap-8 text-sm text-gray-400"
             >
-              <div className={`p-8 rounded-2xl ${glassStyle}`}>
-                <div className="mb-8">
-                  <h3 className="text-2xl font-bold text-white mb-2">Send Us a Message</h3>
-                  <p className="text-gray-300">
-                    Fill out the form below and we'll get back to you as soon as possible.
-                  </p>
-                </div>
-                
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.6 }}
-                  >
-                    <TextField
-                      fullWidth
-                      label="Your Name"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleInputChange}
-                      variant="outlined"
-                      required
-                      InputProps={{
-                        sx: {
-                          color: 'white',
-                          borderRadius: '12px',
-                          backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                          '& .MuiOutlinedInput-notchedOutline': {
-                            borderColor: 'rgba(255, 255, 255, 0.1)',
-                          },
-                          '&:hover .MuiOutlinedInput-notchedOutline': {
-                            borderColor: 'rgba(255, 255, 255, 0.3)',
-                          },
-                        },
-                      }}
-                      InputLabelProps={{
-                        sx: {
-                          color: 'rgba(255, 255, 255, 0.7)',
-                        },
-                      }}
-                    />
-                  </motion.div>
+              <div className="flex items-center gap-2">
+                <FaCheckCircle className="text-green-400" />
+                <span>10K+ Happy Customers</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <FaRocket className="text-blue-400" />
+                <span>Fast Response Time</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <FaShieldAlt className="text-purple-400" />
+                <span>Secure & Trusted</span>
+              </div>
+            </motion.div>
+          </motion.div>
 
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.7 }}
-                  >
-                    <TextField
-                      fullWidth
-                      label="Email Address"
-                      name="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      variant="outlined"
-                      required
-                      InputProps={{
-                        sx: {
-                          color: 'white',
-                          borderRadius: '12px',
-                          backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                          '& .MuiOutlinedInput-notchedOutline': {
-                            borderColor: 'rgba(255, 255, 255, 0.1)',
-                          },
-                          '&:hover .MuiOutlinedInput-notchedOutline': {
-                            borderColor: 'rgba(255, 255, 255, 0.3)',
-                          },
-                        },
-                      }}
-                      InputLabelProps={{
-                        sx: {
-                          color: 'rgba(255, 255, 255, 0.7)',
-                        },
-                      }}
-                    />
-                  </motion.div>
-
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.8 }}
-                  >
-                    <TextField
-                      fullWidth
-                      label="Your Message"
-                      name="message"
-                      value={formData.message}
-                      onChange={handleInputChange}
-                      variant="outlined"
-                      multiline
-                      rows={4}
-                      required
-                      InputProps={{
-                        sx: {
-                          color: 'white',
-                          borderRadius: '12px',
-                          backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                          '& .MuiOutlinedInput-notchedOutline': {
-                            borderColor: 'rgba(255, 255, 255, 0.1)',
-                          },
-                          '&:hover .MuiOutlinedInput-notchedOutline': {
-                            borderColor: 'rgba(255, 255, 255, 0.3)',
-                          },
-                        },
-                      }}
-                      InputLabelProps={{
-                        sx: {
-                          color: 'rgba(255, 255, 255, 0.7)',
-                        },
-                      }}
-                    />
-                  </motion.div>
-
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.9 }}
-                  >
-                    <Button
-                      variant="contained"
-                      type="submit"
-                      size="large"
-                      fullWidth
-                      startIcon={isLoading ? <CircularProgress size={24} color="inherit" /> : <SendIcon />}
-                      disabled={isLoading}
-                      sx={{
-                        background: 'linear-gradient(135deg, #7B61FF 0%, #9B4DFF 100%)',
-                        borderRadius: '12px',
-                        padding: '14px',
-                        fontSize: '16px',
-                        fontWeight: '600',
-                        textTransform: 'none',
-                        boxShadow: '0 4px 6px rgba(123, 97, 255, 0.3)',
-                        '&:hover': {
-                          background: 'linear-gradient(135deg, #6B51EE 0%, #8B3DEE 100%)',
-                          boxShadow: '0 6px 8px rgba(123, 97, 255, 0.4)',
-                        },
-                      }}
+          {/* Main Content */}
+          <div className="container mx-auto px-6 pb-20">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-16">
+              {/* Left Column - Contact Methods */}
+              <motion.div
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+                className="space-y-8"
+              >
+                {/* Contact Methods Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-1 gap-6">
+                  {contactMethods.map((method, index) => (
+                    <motion.div
+                      key={index}
+                      variants={itemVariants}
+                      whileHover={{ y: -8, scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onHoverStart={() => setHoveredCard(index)}
+                      onHoverEnd={() => setHoveredCard(null)}
+                      className={`group relative bg-gradient-to-br from-gray-900/80 to-black/90 backdrop-blur-xl rounded-2xl overflow-hidden border ${method.borderColor} hover:border-opacity-60 transition-all duration-500 shadow-xl hover:shadow-2xl`}
                     >
-                      {isLoading ? "Sending..." : "Send Message"}
-                    </Button>
+                      {/* Background Gradient */}
+                      <div className={`absolute inset-0 bg-gradient-to-br ${method.bgGradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+
+                      {/* Glow Effect */}
+                      <div className="absolute -inset-0.5 bg-gradient-to-r opacity-0 group-hover:opacity-20 blur transition-opacity duration-500"
+                           style={{ background: `linear-gradient(45deg, ${method.gradient.replace('from-', '').replace('to-', '').replace(' ', ', ')})` }} />
+
+                      <div className="relative p-8">
+                        {/* Icon and Stats */}
+                        <div className="flex items-start justify-between mb-6">
+                          <div className={`p-4 rounded-2xl bg-gradient-to-br ${method.gradient} shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                            {method.icon}
+                          </div>
+                          <div className="text-right">
+                            <span className="text-xs font-semibold text-gray-400 bg-gray-800/50 px-3 py-1 rounded-full">
+                              {method.stats}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Content */}
+                        <div className="mb-6">
+                          <h3 className="text-2xl font-bold text-white mb-2 group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:bg-clip-text transition-all duration-300"
+                              style={{ backgroundImage: `linear-gradient(45deg, ${method.gradient.replace('from-', '').replace('to-', '').replace(' ', ', ')})` }}>
+                            {method.title}
+                          </h3>
+                          <p className="text-gray-300 text-lg leading-relaxed">{method.description}</p>
+                        </div>
+
+                        {/* Action Button */}
+                        <motion.a
+                          href={method.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          className={`inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r ${method.gradient} text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 group-hover:shadow-2xl`}
+                        >
+                          <span>{method.btnText}</span>
+                          <motion.div
+                            animate={{ x: hoveredCard === index ? 5 : 0 }}
+                            transition={{ duration: 0.2 }}
+                          >
+                            →
+                          </motion.div>
+                        </motion.a>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+
+                {/* Quick Stats */}
+                <motion.div
+                  variants={itemVariants}
+                  className="bg-gradient-to-br from-gray-900/80 to-black/90 backdrop-blur-xl rounded-2xl p-8 border border-gray-700/30"
+                >
+                  <h3 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+                    <FaStar className="text-yellow-400" />
+                    Why Choose Us?
+                  </h3>
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-blue-400 mb-2">10K+</div>
+                      <div className="text-gray-300 text-sm">Happy Customers</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-green-400 mb-2">24/7</div>
+                      <div className="text-gray-300 text-sm">Support Available</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-purple-400 mb-2">&lt; 2hr</div>
+                      <div className="text-gray-300 text-sm">Response Time</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-cyan-400 mb-2">100%</div>
+                      <div className="text-gray-300 text-sm">Satisfaction</div>
+                    </div>
+                  </div>
+                </motion.div>
+              </motion.div>
+
+              {/* Right Column - Contact Form */}
+              <motion.div
+                variants={itemVariants}
+                className="space-y-8"
+              >
+                <div className="bg-gradient-to-br from-gray-900/80 to-black/90 backdrop-blur-xl rounded-2xl p-8 border border-gray-700/30 shadow-2xl">
+                  {/* Form Header */}
+                  <div className="mb-8 text-center">
+                    <motion.div
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ duration: 0.6 }}
+                      className="inline-flex items-center gap-3 mb-4"
+                    >
+                      <div className="p-3 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-xl">
+                        <FaPaperPlane className="text-white text-xl" />
+                      </div>
+                      <h3 className="text-3xl font-bold text-white">Send Message</h3>
+                    </motion.div>
+                    <p className="text-gray-300 text-lg">
+                      Have a question? We'd love to hear from you. Send us a message and we'll respond as soon as possible.
+                    </p>
+                  </div>
+
+                  {/* Contact Form */}
+                  <form onSubmit={handleSubmit} className="space-y-6">
+                    {/* Name Field */}
+                    <motion.div
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.2 }}
+                      className="space-y-2"
+                    >
+                      <label className="block text-sm font-semibold text-gray-300 mb-2">
+                        Full Name *
+                      </label>
+                      <input
+                        type="text"
+                        name="name"
+                        value={formData.name}
+                        onChange={handleInputChange}
+                        required
+                        placeholder="Enter your full name"
+                        className="w-full px-4 py-4 bg-gray-900/60 border border-gray-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-300 backdrop-blur-sm"
+                      />
+                    </motion.div>
+
+                    {/* Email Field */}
+                    <motion.div
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.4 }}
+                      className="space-y-2"
+                    >
+                      <label className="block text-sm font-semibold text-gray-300 mb-2">
+                        Email Address *
+                      </label>
+                      <input
+                        type="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        required
+                        placeholder="Enter your email address"
+                        className="w-full px-4 py-4 bg-gray-900/60 border border-gray-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-300 backdrop-blur-sm"
+                      />
+                    </motion.div>
+
+                    {/* Message Field */}
+                    <motion.div
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.6 }}
+                      className="space-y-2"
+                    >
+                      <label className="block text-sm font-semibold text-gray-300 mb-2">
+                        Your Message *
+                      </label>
+                      <textarea
+                        name="message"
+                        value={formData.message}
+                        onChange={handleInputChange}
+                        required
+                        rows={6}
+                        placeholder="Tell us how we can help you..."
+                        className="w-full px-4 py-4 bg-gray-900/60 border border-gray-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-300 backdrop-blur-sm resize-none"
+                      />
+                    </motion.div>
+
+                    {/* Submit Button */}
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.8 }}
+                    >
+                      <motion.button
+                        type="submit"
+                        disabled={isLoading}
+                        whileHover={{ scale: 1.02, y: -2 }}
+                        whileTap={{ scale: 0.98 }}
+                        className="w-full py-4 px-6 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white font-bold rounded-xl shadow-xl hover:shadow-2xl transition-all duration-300 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isLoading ? (
+                          <>
+                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            <span>Sending Message...</span>
+                          </>
+                        ) : (
+                          <>
+                            <FaPaperPlane className="text-lg" />
+                            <span>Send Message</span>
+                          </>
+                        )}
+                      </motion.button>
+                    </motion.div>
+                  </form>
+                </div>
+              </motion.div>
+            </div>
+
+            {/* Enhanced FAQ Section */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 1.2 }}
+              className="mt-20 bg-gradient-to-br from-gray-900/80 to-black/90 backdrop-blur-xl rounded-2xl p-8 border border-gray-700/30 shadow-2xl"
+            >
+              {/* FAQ Header */}
+              <div className="text-center mb-12">
+                <motion.div
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ duration: 0.6, delay: 1.4 }}
+                  className="inline-flex items-center gap-3 mb-6"
+                >
+                  <div className="p-3 bg-gradient-to-r from-purple-600 to-pink-500 rounded-xl">
+                    <FaQuestionCircle className="text-white text-2xl" />
+                  </div>
+                  <h2 className="text-4xl md:text-5xl font-bold text-white">
+                    FAQ
+                  </h2>
+                </motion.div>
+                <p className="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
+                  Get instant answers to the most common questions about our digital products and services
+                </p>
+              </div>
+
+              {/* FAQ Items */}
+              <div className="space-y-4 max-w-4xl mx-auto">
+                {faqs.map((faq, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 1.6 + index * 0.1 }}
+                    className="group"
+                  >
+                    <div className="bg-gray-900/60 backdrop-blur-sm rounded-xl border border-gray-700/50 overflow-hidden hover:border-gray-600/70 transition-all duration-300">
+                      <motion.button
+                        onClick={() => setActiveAccordion(activeAccordion === index ? null : index)}
+                        className="w-full p-6 text-left flex items-center justify-between hover:bg-gray-700/30 transition-all duration-300"
+                        whileHover={{ x: 5 }}
+                      >
+                        <h3 className="text-lg font-bold text-white pr-4 group-hover:text-blue-300 transition-colors">
+                          {faq.question}
+                        </h3>
+                        <motion.div
+                          animate={{ rotate: activeAccordion === index ? 180 : 0 }}
+                          transition={{ duration: 0.3 }}
+                          className="flex-shrink-0"
+                        >
+                          <FaChevronDown className="text-gray-400 group-hover:text-blue-400 transition-colors" />
+                        </motion.div>
+                      </motion.button>
+
+                      <AnimatePresence>
+                        {activeAccordion === index && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.3, ease: "easeInOut" }}
+                            className="overflow-hidden"
+                          >
+                            <div className="p-6 pt-0 border-t border-gray-700/50">
+                              <div className="text-gray-300 leading-relaxed">
+                                {typeof faq.answer === 'string' ? (
+                                  <p>{faq.answer}</p>
+                                ) : (
+                                  faq.answer
+                                )}
+                              </div>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
                   </motion.div>
-                </form>
+                ))}
               </div>
             </motion.div>
           </div>
-
-          
-            {/* FAQ content remains the same */}
-            <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 1 }}
-            className={`mt-20 rounded-2xl p-8 ${glassStyle}`}
-          >
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-                Frequently Asked Questions
-              </h2>
-              <p className="text-lg text-gray-300 max-w-2xl mx-auto">
-                Find answers to common questions about our services
-              </p>
-            </div>
-
-            <div className="space-y-4">
-              {faqs.map((faq, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: 1.2 + index * 0.1 }}
-                >
-                  <Accordion 
-                    expanded={activeAccordion === index}
-                    onChange={() => setActiveAccordion(activeAccordion === index ? null : index)}
-                    className="bg-gray-800 rounded-xl overflow-hidden transition-all"
-                    sx={{
-                      '&:before': { display: 'none' },
-                      background: 'rgba(39, 39, 42, 0.5)',
-                      border: '1px solid rgba(255, 255, 255, 0.1)',
-                    }}
-                  >
-                    <AccordionSummary
-                      expandIcon={
-                        <motion.div
-                          animate={{ rotate: activeAccordion === index ? 180 : 0 }}
-                        >
-                          <ExpandMore className="text-white" />
-                        </motion.div>
-                      }
-                      aria-controls={`panel${index}-content`}
-                      id={`panel${index}-header`}
-                      className="hover:bg-gray-700 transition-all min-h-[72px]"
-                    >
-                      <Typography className="font-bold text-white text-lg">
-                        {faq.question}
-                      </Typography>
-                    </AccordionSummary>
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <AccordionDetails className="bg-gray-700 p-6">
-                        {typeof faq.answer === 'string' ? (
-                          <Typography className="text-gray-200">
-                            {faq.answer}
-                          </Typography>
-                        ) : (
-                          <div className="text-gray-200">
-                            {faq.answer}
-                          </div>
-                        )}
-                      </AccordionDetails>
-                    </motion.div>
-                  </Accordion>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
         </div>
-      </div>
 
-      <ToastContainer 
-        position="bottom-right"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="dark"
-        toastStyle={{
-          background: '#1F2937',
-          color: '#F3F4F6',
-          borderRadius: '12px',
-          border: '1px solid rgba(255, 255, 255, 0.1)'
-        }}
-      />
-    </div>
+      </div>
+    </Layout>
   );
 };
 

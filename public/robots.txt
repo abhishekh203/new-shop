@@ -1,0 +1,42 @@
+User-agent: *
+Allow: /
+
+# Digital Shop Nepal - Premium Subscriptions for Nepal
+# Serving Kathmandu, Pokhara, and all major cities in Nepal
+
+# Disallow admin and user dashboard pages
+Disallow: /admin-dashboard
+Disallow: /user-dashboard
+Disallow: /addproduct
+Disallow: /updateproduct
+Disallow: /login
+Disallow: /signup
+
+# Allow important pages
+Allow: /NetflixNepal
+Allow: /SpotifyNepal
+Allow: /PrimeVideoNepal
+Allow: /YouTubePremiumNepal
+Allow: /CanvaNepal
+Allow: /Zee5Nepal
+Allow: /VpnNepal
+Allow: /JioCinemaNepal
+Allow: /DisneyPlusHotstarNepal
+Allow: /UlluNepal
+Allow: /AltBalajiNepal
+Allow: /GoogleOneNepal
+Allow: /SoftwareNepal
+Allow: /AntivirusNepal
+Allow: /GrammarlyNepal
+Allow: /TinderNepal
+Allow: /How-to-buy-netflix-in-nepal
+Allow: /allproduct
+Allow: /subscription
+Allow: /Contactus
+Allow: /reviews
+
+# Sitemap location
+Sitemap: https://digitalshopnepal.com/sitemap.xml
+
+# Crawl delay (optional)
+Crawl-delay: 1

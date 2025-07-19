@@ -10,7 +10,7 @@ import NoPage from "./pages/noPage/NoPage";
 import ProductInfo from "./pages/productInfo/ProductInfo";
 import ScrollTop from "./components/scrollTop/ScrollTop";
 import CartPage from "./pages/cart/CartPage";
-import AllProduct from "./pages/allProduct/AllProduct";
+import AllProduct from "./pages/allproduct/AllProduct";
 import Signup from "./pages/registration/Signup";
 import Login from "./pages/registration/Login";
 import UserDashboard from "./pages/user/UserDashboard";
@@ -25,7 +25,7 @@ import PerformanceOptimizer from "./components/SEO/PerformanceOptimizer";
 import CategoryPage from "./pages/category/CategoryPage";
 import ContactUs from "./components/Contactus/ContactUs";
 import PurchasePage from "./components/Purchasepage/PurchasePage"; // Import PurchasePage
-import SubscriptionPage from "./pages/subscription/SubscriptionPage"; // Import SubscriptionPage
+import SubscriptionPage from "./pages/Subscription/SubscriptionPage"; // Import SubscriptionPage
 import NetflixNepal from "./pages/NetflixNepal"; // Import NetflixNepal
 import SpotifyNepal from "./pages/SpotifyNepal"; // Import SpotifyNepal
 import PrimeVideoNepal from "./pages/PrimeVideoNepal"; // Import PrimeVideoNepal
@@ -44,13 +44,54 @@ import GrammarlyNepal from "./pages/GrammarlyNepal"; // Import GrammarlyNepal
 import TinderNepal from "./pages/TinderNepal"; // Import TinderNepal
 import HowToBuyNetflixNepal from "./pages/How-to-buy-netflix-in-nepal"; // Import the new page
 import ReviewsPage from "./pages/reviews/ReviewsPage"; // Import ReviewsPage
+import ErrorBoundary from "./components/ErrorBoundary"; // Import ErrorBoundary
+import NetworkStatus from "./components/NetworkStatus"; // Import NetworkStatus
+
+// Custom Responsive Toaster Component
+const ResponsiveToaster = () => {
+  return (
+    <div className="hidden md:block">
+      <Toaster 
+        position="top-right"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: '#1f2937',
+            color: '#fff',
+            border: '1px solid #374151',
+            borderRadius: '8px',
+            padding: '12px 16px',
+            fontSize: '14px',
+            fontWeight: '500'
+          },
+          success: {
+            style: {
+              background: '#10b981',
+              color: '#fff',
+              border: '1px solid #059669'
+            }
+          },
+          error: {
+            style: {
+              background: '#ef4444',
+              color: '#fff',
+              border: '1px solid #dc2626'
+            }
+          }
+        }}
+      />
+    </div>
+  );
+};
 
 const App = () => {
   return (
+    <ErrorBoundary>
     <MyState>
       <Router>
         <PerformanceOptimizer />
         <ScrollTop />
+          <NetworkStatus />
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/subscription" element={<SubscriptionPage />} /> {/* Subscription page route */}
@@ -103,9 +144,10 @@ const App = () => {
           <Route path="/TinderNepal" element={<TinderNepal />} />
           <Route path="/How-to-buy-netflix-in-nepal" element={<HowToBuyNetflixNepal />} /> {/* New route for Netflix guide */}
         </Routes>
-        <Toaster />
+        <ResponsiveToaster />
       </Router>
     </MyState>
+    </ErrorBoundary>
   );
 }
 

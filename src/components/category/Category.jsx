@@ -98,6 +98,7 @@ const Category = () => {
     const [showRightArrow, setShowRightArrow] = useState(true);
 
     const handleNavigation = (category) => {
+        console.log("Navigating to category:", category.id);
         navigate(`/category/${category.id}`);
     };
 
@@ -133,7 +134,7 @@ const Category = () => {
 
     return (
         <div className="mt-12 px-4 lg:px-8 max-w-7xl mx-auto">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6">Browse Categories</h2>
+            <h2 className="text-2xl font-bold text-white mb-6">Browse Categories</h2>
             
             <div className="relative">
                 {/* Left Arrow */}
@@ -178,7 +179,7 @@ const Category = () => {
                             </div>
                             
                             {/* Category Name */}
-                            <span className="text-sm font-medium text-gray-700 text-center px-2">
+                            <span className="text-sm font-medium text-white text-center px-2">
                                 {category.name}
                             </span>
                         </motion.div>

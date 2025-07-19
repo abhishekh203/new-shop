@@ -2,25 +2,30 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Copy, CheckCircle, Download, ArrowLeft, Upload, X, MessageCircle, Smartphone, Mail, Send, HelpCircle, Image as ImageIcon, Info } from "lucide-react"; // Added Info
+import { FiCamera } from "react-icons/fi"; // Added FiCamera for mobile upload
 // Using Material UI components for form elements
 import { TextField, Button as MuiButton, CircularProgress } from "@mui/material";
 import { createTheme, ThemeProvider } from '@mui/material/styles'; // For theming MUI components
 import emailjs from "@emailjs/browser";
 import { toast, ToastContainer } from "react-toastify"; // Using react-toastify
 import 'react-toastify/dist/ReactToastify.css'; // Import toastify CSS
+import { doc, updateDoc, collection, query, where, orderBy, getDocs, getDoc, addDoc } from "firebase/firestore";
+import { fireDB } from "../../firebase/FirebaseConfig";
 
 // --- Payment Methods Configuration ---
 // Ensure image paths are correct relative to the public folder or served correctly
 const paymentMethods = {
   esewa: {
-    qr: "/img/esewa.jpg", // Assuming images are in public/img
+    qr: "/img/esewa.jpg",
     number: "9807677391",
     color: "#5e35b1", // Purple
     name: "eSewa",
-    icon: "🇳🇵", // Using emoji for simplicity
+    icon: "🇳🇵",
     bgColor: "bg-[#5e35b1]",
     textColor: "text-white",
-    borderColor: "border-[#5e35b1]"
+    borderColor: "border-[#5e35b1]",
+    description: "Most popular digital wallet in Nepal",
+    features: ["Instant transfer", "No fees", "24/7 support"]
   },
   khalti: {
     qr: "/img/khalti.jpg",
@@ -30,7 +35,9 @@ const paymentMethods = {
     icon: "🇳🇵",
     bgColor: "bg-[#5c2d91]",
     textColor: "text-white",
-    borderColor: "border-[#5c2d91]"
+    borderColor: "border-[#5c2d91]",
+    description: "Fast and secure digital payments",
+    features: ["Quick payments", "Secure", "Widely accepted"]
   },
   ime: {
     qr: "/img/imepay.jpg",
@@ -40,7 +47,21 @@ const paymentMethods = {
     icon: "🇳🇵",
     bgColor: "bg-[#0066cc]",
     textColor: "text-white",
-    borderColor: "border-[#0066cc]"
+    borderColor: "border-[#0066cc]",
+    description: "Reliable payment solution",
+    features: ["Bank integration", "Safe", "Easy to use"]
+  },
+  banktransfer: {
+    qr: "/img/banktransfer.jpg", // You'll need to add your bank QR image here
+    number: "9807677391",
+    color: "#059669", // Green
+    name: "Bank Transfer",
+    icon: "🏦",
+    bgColor: "bg-[#059669]",
+    textColor: "text-white",
+    borderColor: "border-[#059669]",
+    description: "Direct bank transfer with QR code",
+    features: ["Direct transfer", "Secure", "Bank QR code"]
   },
 };
 
@@ -222,6 +243,40 @@ const PurchasePage = () => {
       setFormData(prev => ({...prev, paymentMethod: paymentMethods[selectedMethod].name}));
   }, [selectedMethod]);
 
+  // Test Firebase connection on mount
+  useEffect(() => {
+    const testFirebaseConnection = async () => {
+      try {
+        console.log("Testing Firebase connection...");
+        
+        // Test 1: Basic connection
+        const testRef = doc(fireDB, "order", "test");
+        await getDoc(testRef);
+        console.log("✅ Firebase connection successful");
+        
+        // Test 2: Check if we can read orders
+        const ordersRef = collection(fireDB, "order");
+        const q = query(ordersRef, orderBy("time", "desc"));
+        const querySnapshot = await getDocs(q);
+        console.log("✅ Can read orders collection, found", querySnapshot.size, "orders");
+        
+        // Test 3: Check if we can write to orders (if user is authenticated)
+        if (user?.uid) {
+          console.log("✅ User is authenticated:", user.uid);
+        } else {
+          console.log("❌ User not authenticated");
+        }
+        
+      } catch (error) {
+        console.error("❌ Firebase connection test failed:", error);
+        console.error("Error code:", error.code);
+        console.error("Error message:", error.message);
+      }
+    };
+    
+    testFirebaseConnection();
+  }, [user?.uid]);
+
   // --- Helper Functions ---
 
   // Copy payment number to clipboard
@@ -289,6 +344,59 @@ const PurchasePage = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  // Function to update order with payment screenshot and method
+  const updateOrderWithPayment = async () => {
+    try {
+      console.log("Updating order with payment info...");
+      console.log("Order ID:", orderId);
+      console.log("User ID:", user?.uid);
+      console.log("Payment Method:", paymentMethods[selectedMethod].name);
+      console.log("Screenshot available:", !!previewImage);
+      
+      // Use the specific order ID passed from CartPage
+      if (orderId) {
+        const orderRef = doc(fireDB, "order", orderId);
+        
+        // First check if the order exists
+        const orderDoc = await getDoc(orderRef);
+        if (!orderDoc.exists()) {
+          console.error("Order not found:", orderId);
+          toast.error("Order not found - cannot save payment information");
+          return;
+        }
+        
+        console.log("Order found, updating with payment info...");
+        
+        const updateData = {
+          paymentScreenshot: previewImage, // Base64 image data
+          paymentMethod: paymentMethods[selectedMethod].name,
+          paymentStatus: "completed",
+          paymentDate: new Date().toISOString()
+        };
+        
+        console.log("Update data:", updateData);
+        
+        // Update the order with payment information
+        await updateDoc(orderRef, updateData);
+        
+        console.log("Order updated with payment information successfully");
+        toast.success("Payment information saved successfully!");
+      } else {
+        console.error("No order ID available");
+        toast.error("Could not save payment information - order ID missing");
+      }
+    } catch (error) {
+      console.error("Error updating order with payment:", error);
+      console.error("Error details:", {
+        code: error.code,
+        message: error.message,
+        orderId: orderId,
+        userUid: user?.uid
+      });
+      toast.error("Failed to save payment information: " + error.message);
+    }
+  };
+
   // --- EmailJS Form Submission ---
   const handleFormSubmit = (e) => {
     e.preventDefault(); // Prevent default form submission
@@ -317,11 +425,11 @@ const PurchasePage = () => {
     // Send email to Admin, then send auto-reply to User
     emailjs.send(serviceId, adminTemplateId, templateParams, publicKey)
       .then(() => {
-        console.log('Admin email SUCCESS!');
+                        // Admin email sent successfully
         return emailjs.send(serviceId, autoReplyTemplateId, templateParams, publicKey); // Chain the auto-reply
       })
       .then(() => {
-        console.log('Auto-reply email SUCCESS!');
+                        // Auto-reply email sent successfully
         toast.success("Details submitted! Proceeding to WhatsApp confirmation.");
         setShowForm(false); // Close the form modal
         sendViaWhatsApp(); // Trigger WhatsApp confirmation
@@ -336,17 +444,23 @@ const PurchasePage = () => {
   };
 
   // --- WhatsApp Confirmation ---
-  const sendViaWhatsApp = () => {
+  const sendViaWhatsApp = async () => {
     // Prerequisite checks
     if (!paymentConfirmed) {
       toast.error("Please confirm you've completed the payment first.");
       setError("Please confirm you've completed the payment.");
       return;
     }
+    // Remove the screenshot requirement for mobile since it's now optional
     if (!isMobile && !screenshot) {
       toast.error("Please upload your payment screenshot before confirming.");
       setError("Please upload your payment screenshot.");
       return;
+    }
+
+    // Update order with payment information (if screenshot is uploaded)
+    if (previewImage) {
+      await updateOrderWithPayment();
     }
 
     // Construct the WhatsApp message body
@@ -360,7 +474,7 @@ const PurchasePage = () => {
       `*Purchased Items:* ${formData.message}\n` + // Items description from form
       (userMessage ? `*Additional Message:* ${userMessage}\n` : '') +
       `\n` +
-      `Please verify this payment. ${!isMobile ? 'Screenshot has been uploaded.' : 'Screenshot will be sent directly.'}`;
+      `Please verify this payment. ${previewImage ? 'Screenshot has been uploaded to the system.' : 'Screenshot will be sent directly via WhatsApp.'}`;
 
     const whatsappNumber = "+9779807677391"; // Replace with your actual WhatsApp number
     const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
@@ -602,13 +716,13 @@ const PurchasePage = () => {
 
                     <div className="relative z-10">
                       <h3 className="text-lg font-bold bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent mb-5">Select Payment Method</h3>
-                      <div className="flex justify-center gap-4 flex-wrap">
+                      <div className="grid grid-cols-2 gap-3">
                           {/* Map through payment methods to create modern buttons */}
                           {Object.keys(paymentMethods).map((method) => (
                               <motion.button
                                   key={method}
                                   onClick={() => setSelectedMethod(method)}
-                                  className={`px-5 py-3 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center gap-3 border backdrop-blur-sm relative overflow-hidden ${
+                                  className={`p-4 rounded-xl text-sm font-semibold transition-all duration-300 flex flex-col items-center gap-2 border backdrop-blur-sm relative overflow-hidden ${
                                     selectedMethod === method
                                       ? `${paymentMethods[method].bgColor} ${paymentMethods[method].textColor} border-transparent shadow-xl scale-105`
                                       : "bg-gray-700/50 text-gray-300 border-gray-600/50 hover:bg-gray-600/50 hover:border-gray-500/50 hover:text-white"
@@ -623,11 +737,33 @@ const PurchasePage = () => {
                                 {selectedMethod === method && (
                                   <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent rounded-xl"></div>
                                 )}
-                                <span className="text-lg relative z-10">{paymentMethods[method].icon}</span>
-                                <span className="relative z-10">{paymentMethods[method].name}</span>
+                                <span className="text-2xl relative z-10">{paymentMethods[method].icon}</span>
+                                <span className="relative z-10 font-bold">{paymentMethods[method].name}</span>
+                                <span className="text-xs relative z-10 opacity-80">{paymentMethods[method].description}</span>
                               </motion.button>
                           ))}
                       </div>
+                      
+                      {/* Payment Method Features */}
+                      {selectedMethod && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="mt-4 p-3 bg-gray-700/30 rounded-lg border border-gray-600/30"
+                        >
+                          <h4 className="text-sm font-semibold text-gray-300 mb-2">Features:</h4>
+                          <div className="flex flex-wrap gap-2">
+                            {paymentMethods[selectedMethod].features.map((feature, index) => (
+                              <span
+                                key={index}
+                                className="text-xs bg-gray-600/50 text-gray-300 px-2 py-1 rounded-full"
+                              >
+                                {feature}
+                              </span>
+                            ))}
+                          </div>
+                        </motion.div>
+                      )}
                     </div>
                 </motion.div>
 
@@ -683,12 +819,27 @@ const PurchasePage = () => {
                             />
                             {/* QR Code Glow Effect */}
                             <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-cyan-500/20 rounded-xl blur-xl -z-10"></div>
+                            
+                            {/* Scanning Animation */}
+                            <motion.div
+                              className="absolute inset-0 bg-gradient-to-b from-transparent via-cyan-400/30 to-transparent h-1 rounded-xl"
+                              animate={{ y: [0, 176, 0] }}
+                              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                            />
                           </div>
                       </motion.div>
 
                       <p className="text-sm text-gray-400 bg-gray-700/30 px-3 py-2 rounded-lg">
                         Scan using your <span className="text-white font-semibold">{currentMethod.name}</span> app
                       </p>
+                      
+                      {/* Payment Instructions */}
+                      <div className="mt-3 text-xs text-gray-500 space-y-1">
+                        <p>• Open {currentMethod.name} app</p>
+                        <p>• Tap "Scan QR" or "Pay"</p>
+                        <p>• Scan this QR code</p>
+                        <p>• Enter amount: <span className="text-emerald-400 font-bold">₹{formattedAmount}</span></p>
+                      </div>
                     </div>
                 </motion.div>
 
@@ -706,9 +857,12 @@ const PurchasePage = () => {
                       <h3 className="text-base font-semibold bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent mb-3">Or send payment to:</h3>
                       <div className="flex items-center justify-between bg-gradient-to-r from-gray-700/60 to-gray-800/60 p-4 rounded-xl border border-gray-600/30 backdrop-blur-sm">
                           {/* Display Payment Number with enhanced styling */}
-                          <span className="font-mono text-lg sm:text-xl font-bold text-white tracking-wider bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
-                            {currentMethod.number}
-                          </span>
+                          <div className="flex flex-col">
+                            <span className="font-mono text-lg sm:text-xl font-bold text-white tracking-wider bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
+                              {currentMethod.number}
+                            </span>
+                            <span className="text-xs text-gray-400 mt-1">{currentMethod.name} Number</span>
+                          </div>
 
                           {/* Enhanced Copy Button */}
                           <motion.button
@@ -729,6 +883,15 @@ const PurchasePage = () => {
                             </motion.div>
                             {copied ? "Copied!" : "Copy"}
                           </motion.button>
+                      </div>
+                      
+                      {/* Manual Transfer Instructions */}
+                      <div className="mt-3 text-xs text-gray-500 space-y-1">
+                        <p>• Open {currentMethod.name} app</p>
+                        <p>• Go to "Send Money" or "Transfer"</p>
+                        <p>• Enter number: <span className="text-white font-mono">{currentMethod.number}</span></p>
+                        <p>• Enter amount: <span className="text-emerald-400 font-bold">₹{formattedAmount}</span></p>
+                        <p>• Add note: "Digital Services Payment"</p>
                       </div>
                     </div>
                 </motion.div>
@@ -772,15 +935,15 @@ const PurchasePage = () => {
                           <span className="text-emerald-400 font-bold ml-1">₹{formattedAmount}</span>
                         </span>
                         <span className="text-xs text-gray-400 bg-gray-700/30 px-2 py-1 rounded-lg inline-block">
-                          {isMobile ? "Confirm via WhatsApp (send screenshot there)." : "Upload screenshot below before confirming."}
+                          {isMobile ? "Upload screenshot below or send via WhatsApp." : "Upload screenshot below before confirming."}
                         </span>
                      </label>
                    </div>
                 </motion.div>
 
-                {/* Screenshot Upload Section (Desktop Only, Conditional) */}
+                {/* Screenshot Upload Section (Available on Both Mobile and Desktop) */}
                 <AnimatePresence>
-                    {!isMobile && paymentConfirmed && (
+                    {paymentConfirmed && (
                         <motion.div
                             variants={itemVariants} // Use item variant for animation
                             className="space-y-3"
@@ -789,15 +952,24 @@ const PurchasePage = () => {
                             exit={{ opacity: 0, height: 0, marginTop: 0, marginBottom: 0, overflow: 'hidden' }} // Add overflow hidden on exit
                             transition={{ duration: 0.3 }}
                         >
-                            <label className="block text-sm font-medium text-blue-300"> Upload Payment Screenshot (Required) </label>
+                            <label className="block text-sm font-medium text-blue-300"> 
+                                Upload Payment Screenshot {isMobile ? "(Optional - can also send via WhatsApp)" : "(Required)"}
+                            </label>
                             {/* Upload Box or Preview */}
                             {!previewImage ? (
                                 <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}>
                                     <label className="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-gray-600 rounded-lg cursor-pointer bg-gray-800/50 hover:bg-gray-700/50 transition-colors">
                                         <div className="flex flex-col items-center justify-center pt-5 pb-6 text-center">
-                                            <motion.div animate={{ y: [0, -3, 0] }} transition={{ repeat: Infinity, duration: 1.8 }}> <Upload className="mb-2 text-gray-500" size={28} /> </motion.div>
-                                            <p className="text-sm text-gray-400"><span className="font-semibold">Click to upload</span> or drag & drop</p>
+                                            <motion.div animate={{ y: [0, -3, 0] }} transition={{ repeat: Infinity, duration: 1.8 }}> 
+                                                {isMobile ? <FiCamera className="mb-2 text-gray-500" size={28} /> : <Upload className="mb-2 text-gray-500" size={28} />}
+                                            </motion.div>
+                                            <p className="text-sm text-gray-400">
+                                                <span className="font-semibold">Click to upload</span> or drag & drop
+                                            </p>
                                             <p className="text-xs text-gray-500 mt-1">PNG, JPG, GIF (Max 5MB)</p>
+                                            {isMobile && (
+                                                <p className="text-xs text-gray-600 mt-1">Or send screenshot via WhatsApp</p>
+                                            )}
                                         </div>
                                         <input id="screenshot-upload" type="file" className="hidden" accept="image/jpeg, image/png, image/gif" onChange={handleFileChange} />
                                     </label>
@@ -805,11 +977,17 @@ const PurchasePage = () => {
                             ) : (
                                 <motion.div className="relative border border-gray-600 rounded-lg overflow-hidden" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}>
                                     <img src={previewImage} alt="Screenshot Preview" className="w-full h-auto max-h-48 object-contain bg-black/20" />
-                                    <motion.button onClick={removeScreenshot} className="absolute top-1.5 right-1.5 p-1 bg-black/60 rounded-full text-white hover:bg-red-600/80 transition-colors" aria-label="Remove screenshot" whileHover={{ scale: 1.1, rotate: 90 }} whileTap={{ scale: 0.9 }}> <X size={16} /> </motion.button>
+                                    <motion.button onClick={removeScreenshot} className="absolute top-1.5 right-1.5 p-1 bg-black/60 rounded-full text-white hover:bg-red-600/80 transition-colors" aria-label="Remove screenshot" whileHover={{ scale: 1.1, rotate: 90 }} whileTap={{ scale: 0.9 }}> 
+                                        <X size={16} /> 
+                                    </motion.button>
                                 </motion.div>
                             )}
                              {/* Error Message Display */}
-                             {error && ( <motion.p className="mt-2 text-xs text-red-400 flex items-center gap-1.5" initial={{ opacity: 0 }} animate={{ opacity: 1 }}> <Info size={14}/> {error} </motion.p> )}
+                             {error && ( 
+                                 <motion.p className="mt-2 text-xs text-red-400 flex items-center gap-1.5" initial={{ opacity: 0 }} animate={{ opacity: 1 }}> 
+                                     <Info size={14}/> {error} 
+                                 </motion.p> 
+                             )}
                         </motion.div>
                     )}
                 </AnimatePresence>

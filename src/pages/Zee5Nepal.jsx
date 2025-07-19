@@ -8,12 +8,17 @@ import Layout from "../components/layout/Layout";
 import SEOHelmet from "../components/SEO/SEOHelmet";
 import OptimizedImage from "../components/SEO/OptimizedImage";
 import Nepal from "./nepal";
+import { nepalSEOKeywords, generateNepalMetaDescription, generateNepalTitle, generateNepalProductSchema } from "../utils/nepalSEOKeywords";
 
 const Zee5Nepal = () => {
+    // Dynamic Nepal SEO using the utility functions
+    const serviceName = "Zee5";
+    const seoFeatures = ["Indian shows", "Regional content", "Original content", "HD streaming"];
+    
     const meta = {
-        title: "Zee5 Nepal - Watch Zee5 Shows & Movies Online",
-        description: "Dive into the world of Zee5 in Nepal and enjoy your favorite shows, movies, and original content. With a subscription, stream a wide array of regional and international content anytime, anywhere, on your preferred device.",
-        keywords: "Zee5 Nepal, zee5 subscription nepal, Watch Zee5 online Nepal, Zee5 shows, Zee5 movies",
+        title: generateNepalTitle(serviceName, "subscription"),
+        description: generateNepalMetaDescription("zee5", seoFeatures),
+        keywords: nepalSEOKeywords.zee5.join(", "),
         canonical: "https://www.digitalshopnepal.com/Zee5Nepal"
     };
 

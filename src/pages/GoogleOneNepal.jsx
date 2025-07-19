@@ -2,27 +2,46 @@ import React from "react";
 import { Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'; // Importing icons for lists
-import { Helmet, HelmetProvider } from 'react-helmet-async'; // Helmet for SEO metadata
-import Layout from "../components/layout/Layout"; // Import Layout component
-import Nepal from "./nepal"; // Import Nepal component
+import { Helmet, HelmetProvider } from 'react-helmet-async';
+import Layout from "../components/layout/Layout";
+import SEOHelmet from "../components/SEO/SEOHelmet";
+import OptimizedImage from "../components/SEO/OptimizedImage";
+import Nepal from "./nepal";
+import { nepalSEOKeywords, generateNepalMetaDescription, generateNepalTitle, generateNepalProductSchema } from "../utils/nepalSEOKeywords";
 
 const GoogleOneNepal = () => {
+    // Dynamic Nepal SEO using the utility functions
+    const serviceName = "Google One";
+    const seoFeatures = ["Cloud storage", "Backup services", "Google Drive", "Enhanced benefits"];
+    
     const meta = {
-        title: "Google One Nepal - Cloud Storage and Backup Solutions",
-        description: "Get access to Google One's cloud storage, backup services, and enhanced benefits in Nepal. Manage your files, photos, and more with easy access.",
-        keywords: "Google One Nepal, Cloud Storage Nepal, Backup Google Nepal, Google Drive Nepal, Google One Subscription Nepal",
-        canonical: "https://www.digitalshopnepal.com/GoogleOneNepal" // Update this with the actual URL of your page
+        title: generateNepalTitle(serviceName, "subscription"),
+        description: generateNepalMetaDescription("googleOne", seoFeatures),
+        keywords: nepalSEOKeywords.googleOne.join(", "),
+        canonical: "https://www.digitalshopnepal.com/GoogleOneNepal"
     };
+
+    // Generate dynamic structured data using Nepal SEO utilities
+    const googleOneStructuredData = generateNepalProductSchema(serviceName, "250", "NPR");
+
+    const breadcrumbs = [
+        { name: "Home", url: "/" },
+        { name: "Subscriptions", url: "/subscription" },
+        { name: "Google One Nepal", url: "/GoogleOneNepal", isLast: true }
+    ];
 
     return (
         <HelmetProvider>
-            <Layout>
-                <Helmet>
-                    <title>{meta.title}</title>
-                    <meta name="description" content={meta.description} />
-                    <meta name="keywords" content={meta.keywords} />
-                    <link rel="canonical" href={meta.canonical} />
-                </Helmet>
+            <SEOHelmet
+                title={meta.title}
+                description={meta.description}
+                keywords={meta.keywords}
+                canonical={meta.canonical}
+                structuredData={googleOneStructuredData}
+                breadcrumbs={breadcrumbs}
+                ogType="product"
+            />
+            <Layout showBreadcrumb={true} customBreadcrumbs={breadcrumbs}>
 
                 <div className="min-h-screen bg-gradient-to-b from-black via-blue-900 to-black p-8 text-white relative">
                     {/* Content Section */}

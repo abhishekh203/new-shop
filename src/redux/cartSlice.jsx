@@ -1,8 +1,23 @@
 import { createSlice } from '@reduxjs/toolkit'
 
-const initialState = JSON.parse(localStorage.getItem('cart')) ?? [];
-console.log(initialState)
+// Safe localStorage getter with error handling
+const getInitialState = () => {
+    try {
+        const stored = localStorage.getItem('cart');
+        if (stored) {
+            const parsed = JSON.parse(stored);
+            return Array.isArray(parsed) ? parsed : [];
+        }
+        return [];
+    } catch (error) {
+        console.error('Error reading cart from localStorage:', error);
+        // Clear corrupted localStorage data
+        localStorage.removeItem('cart');
+        return [];
+    }
+};
 
+const initialState = getInitialState();
 
 export const cartSlice = createSlice({
     name: 'cart',
@@ -33,10 +48,20 @@ export const cartSlice = createSlice({
 
             })
         },
+        clearCart: (state) => {
+            return [];
+        },
+        updateCartItem: (state, action) => {
+            const { id, updates } = action.payload;
+            const itemIndex = state.findIndex(item => item.id === id);
+            if (itemIndex !== -1) {
+                state[itemIndex] = { ...state[itemIndex], ...updates };
+            }
+        }
     },
 })
 
 // Action creators are generated for each case reducer function
-export const { addToCart, deleteFromCart, incrementQuantity, decrementQuantity } = cartSlice.actions
+export const { addToCart, deleteFromCart, incrementQuantity, decrementQuantity, clearCart, updateCartItem } = cartSlice.actions
 
 export default cartSlice.reducer

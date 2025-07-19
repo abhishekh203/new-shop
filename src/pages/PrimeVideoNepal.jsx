@@ -8,12 +8,17 @@ import Layout from "../components/layout/Layout";
 import SEOHelmet from "../components/SEO/SEOHelmet";
 import OptimizedImage from "../components/SEO/OptimizedImage";
 import Nepal from "./nepal";
+import { nepalSEOKeywords, generateNepalMetaDescription, generateNepalTitle, generateNepalProductSchema } from "../utils/nepalSEOKeywords";
 
 const PrimeVideoNepal = () => {
+    // Dynamic Nepal SEO using the utility functions
+    const serviceName = "Prime Video";
+    const seoFeatures = ["Movies streaming", "TV shows", "Amazon Originals", "Ultra HD"];
+    
     const meta = {
-        title: "Prime Video Nepal - Stream Movies & TV Shows Online",
-        description: "Enjoy unlimited streaming of movies and TV shows with Amazon Prime Video in Nepal. Access thousands of titles, including exclusive Amazon Originals, all in stunning picture quality. Stream anytime, anywhere on multiple devices.",
-        keywords: "Prime Video Nepal, buy Prime Video Nepal, Amazon Prime Nepal, Prime Video subscription Nepal, watch Prime Video Nepal, stream Prime Video Nepal, VPN-free Prime Video Nepal, Ultra HD streaming Prime Video",
+        title: generateNepalTitle(serviceName, "subscription"),
+        description: generateNepalMetaDescription("primeVideo", seoFeatures),
+        keywords: nepalSEOKeywords.primeVideo.join(", "),
         canonical: "https://www.digitalshopnepal.com/PrimeVideoNepal"
     };
 

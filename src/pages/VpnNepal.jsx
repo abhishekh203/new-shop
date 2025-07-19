@@ -9,12 +9,17 @@ import SEOHelmet from "../components/SEO/SEOHelmet";
 import OptimizedImage from "../components/SEO/OptimizedImage";
 import NepalFAQ from "../components/SEO/NepalFAQ";
 import Nepal from "./nepal";
+import { nepalSEOKeywords, generateNepalMetaDescription, generateNepalTitle, generateNepalProductSchema } from "../utils/nepalSEOKeywords";
 
 const VPNNepal = () => {
+    // Dynamic Nepal SEO using the utility functions
+    const serviceName = "VPN";
+    const seoFeatures = ["Secure internet", "Global content access", "Private browsing", "Multiple providers"];
+    
     const meta = {
-        title: "VPN Nepal - Premium VPN Services at Best Prices in NPR",
-        description: "Get premium VPN services in Nepal at best prices. Secure internet, access global content in Kathmandu, Pokhara & all Nepal. NordVPN, Windscribe, IPVanish available. NPR pricing, eSewa/Khalti accepted.",
-        keywords: "VPN Nepal, VPN subscription Nepal, buy VPN Nepal, VPN service Nepal, secure VPN Nepal, NordVPN Nepal, Windscribe Nepal, IPVanish Nepal, VPN price Nepal, VPN NPR, VPN Kathmandu, VPN Pokhara, unblock websites Nepal, private browsing Nepal, secure internet Nepal, VPN account Nepal, cheap VPN Nepal, best VPN Nepal",
+        title: generateNepalTitle(serviceName, "subscription"),
+        description: generateNepalMetaDescription("vpn", seoFeatures),
+        keywords: nepalSEOKeywords.vpn.join(", "),
         canonical: "https://www.digitalshopnepal.com/VpnNepal"
     };
 

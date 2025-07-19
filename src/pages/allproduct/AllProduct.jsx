@@ -119,8 +119,26 @@ const ProductCard = ({ item, isInCart, onAddToCart, onDeleteFromCart, onNavigate
     const { id, title, price, productImageUrl, rating = 4.5, category } = item;
     const [isWishlisted, setIsWishlisted] = useState(false);
 
+    // Get user from localStorage
+    const user = JSON.parse(localStorage.getItem('users'));
+
+    // Load wishlist status on component mount
+    useEffect(() => {
+        if (user?.uid) {
+            const savedFavorites = localStorage.getItem(`favorites_${user.uid}`);
+            if (savedFavorites) {
+                try {
+                    const favorites = JSON.parse(savedFavorites);
+                    setIsWishlisted(favorites.includes(id));
+                } catch (e) {
+                    console.error("Failed to parse favorites from localStorage");
+                }
+            }
+        }
+    }, [user?.uid, id]);
+
     const formatPrice = useCallback((priceValue) => {
-        return `₹${Number(priceValue || 0).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+        return `रु ${Number(priceValue || 0).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
     }, []);
 
     const handleCartClick = (e) => {
@@ -134,7 +152,31 @@ const ProductCard = ({ item, isInCart, onAddToCart, onDeleteFromCart, onNavigate
 
     const handleWishlistClick = (e) => {
         e.stopPropagation();
-        setIsWishlisted(!isWishlisted);
+        
+        if (!user?.uid) {
+            toast.error("Please log in to save items to your wishlist");
+            return;
+        }
+
+        const newWishlisted = !isWishlisted;
+        setIsWishlisted(newWishlisted);
+
+        // Update localStorage
+        try {
+            const savedFavorites = localStorage.getItem(`favorites_${user.uid}`);
+            const favorites = savedFavorites ? JSON.parse(savedFavorites) : [];
+            
+            const newFavorites = newWishlisted
+                ? [...favorites, id]
+                : favorites.filter(favId => favId !== id);
+            
+            localStorage.setItem(`favorites_${user.uid}`, JSON.stringify(newFavorites));
+            
+            toast.success(newWishlisted ? "Added to wishlist" : "Removed from wishlist");
+        } catch (e) {
+            console.error("Failed to update favorites in localStorage");
+            toast.error("Failed to update wishlist");
+        }
     };
 
     const handleQuickView = (e) => {

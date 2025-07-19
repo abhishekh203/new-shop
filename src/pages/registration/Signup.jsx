@@ -1,13 +1,12 @@
 import React, { useContext, useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import myContext from "../../context/myContext"; // Assuming context path is correct
-import { Timestamp, addDoc, collection, query, where, getDocs, doc, setDoc } from "firebase/firestore"; // Added setDoc
-import { auth, fireDB } from "../../firebase/FirebaseConfig"; // Assuming Firebase config path is correct
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import toast, { Toaster } from "react-hot-toast"; // Using react-hot-toast
-import Loader from "../../components/loader/Loader"; // Assuming Loader path is correct
-import { FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash, FaArrowRight, FaCheckSquare, FaRegSquare, FaSpinner } from "react-icons/fa"; // Using react-icons
+import myContext from "../../context/myContext";
+import toast, { Toaster } from "react-hot-toast";
+import Loader from "../../components/loader/Loader";
+import { FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash, FaArrowRight, FaCheckSquare, FaRegSquare, FaSpinner, FaShieldAlt } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "../../hooks/useAuth";
+import { validateEmail, validatePassword, validateConfirmPassword, validateName, validateTerms, getPasswordStrength } from "../../utils/validation";
 
 // --- Animation Variants ---
 const pageVariants = {
@@ -59,8 +58,8 @@ const errorVariants = {
 const Signup = () => {
     const context = useContext(myContext);
     const { loading: pageLoading, setLoading: setPageLoading } = context;
-    const [isProcessing, setIsProcessing] = useState(false);
     const navigate = useNavigate();
+    const { signup, loading: authLoading, progress } = useAuth();
 
     // Form state
     const [userSignup, setUserSignup] = useState({
@@ -72,22 +71,28 @@ const Signup = () => {
     const [formErrors, setFormErrors] = useState({});
     const [isFormValid, setIsFormValid] = useState(false);
     const [focusedField, setFocusedField] = useState(null);
+    const [passwordStrength, setPasswordStrength] = useState({ score: 0, label: "", color: "" });
 
     // --- Form validation ---
     useEffect(() => {
         const errors = {};
-        if (!userSignup.name.trim()) errors.name = "Full Name is required";
-        if (!userSignup.email.trim()) errors.email = "Email is required";
-        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userSignup.email)) errors.email = "Invalid email format";
-        if (!userSignup.password) errors.password = "Password is required";
-        else if (userSignup.password.length < 6) errors.password = "Password must be at least 6 characters";
-        else if (!/[A-Z]/.test(userSignup.password)) errors.password = "Must contain an uppercase letter";
+        errors.name = validateName(userSignup.name);
+        errors.email = validateEmail(userSignup.email);
+        errors.password = validatePassword(userSignup.password);
+        errors.confirmPassword = validateConfirmPassword(userSignup.password, userSignup.confirmPassword);
+        errors.terms = validateTerms(userSignup.termsAccepted);
+
+        // Additional password requirements
+        if (userSignup.password && !errors.password) {
+            if (!/[A-Z]/.test(userSignup.password)) errors.password = "Must contain an uppercase letter";
         else if (!/[0-9]/.test(userSignup.password)) errors.password = "Must contain a number";
-        if (!userSignup.confirmPassword) errors.confirmPassword = "Confirm Password is required";
-        else if (userSignup.password && userSignup.confirmPassword !== userSignup.password) errors.confirmPassword = "Passwords do not match";
-        if (!userSignup.termsAccepted) errors.terms = "You must accept the Terms & Privacy Policy";
+        }
 
         setFormErrors(errors);
+        
+        // Update password strength
+        setPasswordStrength(getPasswordStrength(userSignup.password));
+        
         const allFieldsFilled = Object.entries(userSignup).every(([key, val]) => key === 'role' || (typeof val === 'boolean' ? val === true : !!String(val).trim()));
         setIsFormValid(Object.keys(errors).length === 0 && allFieldsFilled);
 
@@ -113,68 +118,32 @@ const Signup = () => {
     };
 
     const handleKeyPress = (e) => {
-        if (e.key === 'Enter' && isFormValid && !isProcessing) {
+        if (e.key === 'Enter' && isFormValid && !authLoading) {
             userSignupFunction();
         }
     };
 
     // --- Signup Function ---
     const userSignupFunction = async () => {
-        if (!isFormValid || isProcessing) return;
+        if (!isFormValid || authLoading) return;
 
-        setIsProcessing(true);
-        setPageLoading(true);
         setFormErrors({});
+        const result = await signup(userSignup);
 
-        try {
-            if (await checkEmailExists(userSignup.email)) {
-                toast.error("This email address is already registered.");
-                setFormErrors(prev => ({ ...prev, email: "Email already registered" }));
-                setPageLoading(false);
-                setIsProcessing(false);
-                return;
-            }
-
-            const userCredential = await createUserWithEmailAndPassword(auth, userSignup.email, userSignup.password);
-            const firebaseUser = userCredential.user;
-
-            const userData = {
-                name: userSignup.name.trim(),
-                email: firebaseUser.email,
-                uid: firebaseUser.uid,
-                role: userSignup.role,
-                time: Timestamp.now(),
-                date: new Date().toISOString(),
-                emailVerified: firebaseUser.emailVerified || false,
-            };
-
-            const userRef = doc(fireDB, "user", firebaseUser.uid);
-            await setDoc(userRef, userData);
-
+        if (result.success) {
             setUserSignup({ name: "", email: "", password: "", confirmPassword: "", termsAccepted: false, role: "user" });
             setShowPassword(false);
             setShowConfirmPassword(false);
-
-            toast.success("Account created successfully! Redirecting to login...");
             setTimeout(() => navigate('/login'), 1500);
-
-        } catch (error) {
-            console.error("Signup error:", error, error.code);
-            if (error.code === 'auth/email-already-in-use') {
-                toast.error("Email already in use by another account.");
-                setFormErrors(prev => ({ ...prev, email: "Email already in use" }));
-            } else if (error.code === 'auth/weak-password') {
-                toast.error("Password is too weak.");
-                setFormErrors(prev => ({ ...prev, password: "Password is too weak" }));
-            } else if (error.code === 'auth/invalid-email') {
-                toast.error("Invalid email format.");
-                setFormErrors(prev => ({ ...prev, email: "Invalid email format" }));
             } else {
-                toast.error("Signup failed. Please try again.");
+            // Handle specific errors
+            if (result.error === 'auth/email-already-in-use' || result.error === 'email_exists') {
+                setFormErrors(prev => ({ ...prev, email: result.message }));
+            } else if (result.error === 'auth/weak-password') {
+                setFormErrors(prev => ({ ...prev, password: result.message }));
+            } else if (result.error === 'auth/invalid-email') {
+                setFormErrors(prev => ({ ...prev, email: result.message }));
             }
-        } finally {
-            setPageLoading(false);
-            setIsProcessing(false);
         }
     };
 
@@ -184,7 +153,7 @@ const Signup = () => {
             variants={pageVariants} initial="hidden" animate="visible"
             className="flex justify-center items-center min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-950 p-4 font-sans text-gray-200"
         >
-            {pageLoading && !isProcessing && <Loader />}
+            {pageLoading && !authLoading && <Loader />}
             <Toaster position="top-center" reverseOrder={false} toastOptions={{
                  className: '', style: { background: '#333', color: '#fff' },
             }}/>
@@ -217,7 +186,7 @@ const Signup = () => {
                             </motion.div>
                             <input type="text" id="name" placeholder="e.g., John Doe" value={userSignup.name} onChange={handleChange} name="name" onFocus={() => setFocusedField('name')} onBlur={() => setFocusedField(null)} onKeyPress={handleKeyPress}
                                 className={`w-full pl-10 pr-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 transition duration-200 ease-in-out placeholder-gray-500 bg-gray-800/50 text-gray-100 ${ formErrors.name ? 'border-red-500/50 focus:ring-red-500/50 focus:border-red-500/50' : 'border-gray-600/50 focus:ring-blue-500/50 focus:border-blue-500/50' }`}
-                                autoComplete="name" disabled={isProcessing} autoFocus aria-invalid={!!formErrors.name} aria-describedby={formErrors.name ? "name-error" : undefined}
+                                autoComplete="name" disabled={authLoading} autoFocus aria-invalid={!!formErrors.name} aria-describedby={formErrors.name ? "name-error" : undefined}
                             />
                         </div>
                         <AnimatePresence> {formErrors.name && ( <motion.p id="name-error" className="mt-1.5 text-xs text-red-400" variants={errorVariants} initial="hidden" animate="visible" exit="hidden"> {formErrors.name} </motion.p> )} </AnimatePresence>
@@ -232,7 +201,7 @@ const Signup = () => {
                              </motion.div>
                             <input type="email" id="email" placeholder="your@email.com" value={userSignup.email} onChange={handleChange} name="email" onFocus={() => setFocusedField('email')} onBlur={() => setFocusedField(null)} onKeyPress={handleKeyPress}
                                 className={`w-full pl-10 pr-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 transition duration-200 ease-in-out placeholder-gray-500 bg-gray-800/50 text-gray-100 ${ formErrors.email ? 'border-red-500/50 focus:ring-red-500/50 focus:border-red-500/50' : 'border-gray-600/50 focus:ring-blue-500/50 focus:border-blue-500/50' }`}
-                                autoComplete="email" disabled={isProcessing} aria-invalid={!!formErrors.email} aria-describedby={formErrors.email ? "email-error" : undefined}
+                                autoComplete="email" disabled={authLoading} aria-invalid={!!formErrors.email} aria-describedby={formErrors.email ? "email-error" : undefined}
                             />
                         </div>
                         <AnimatePresence> {formErrors.email && ( <motion.p id="email-error" className="mt-1.5 text-xs text-red-400" variants={errorVariants} initial="hidden" animate="visible" exit="hidden"> {formErrors.email} </motion.p> )} </AnimatePresence>
@@ -247,10 +216,43 @@ const Signup = () => {
                              </motion.div>
                             <input type={showPassword ? "text" : "password"} id="password" placeholder="••••••••" value={userSignup.password} onChange={handleChange} name="password" onFocus={() => setFocusedField('password')} onBlur={() => setFocusedField(null)} onKeyPress={handleKeyPress}
                                 className={`w-full pl-10 pr-10 py-2.5 border rounded-lg focus:outline-none focus:ring-2 transition duration-200 ease-in-out placeholder-gray-500 bg-gray-800/50 text-gray-100 ${ formErrors.password ? 'border-red-500/50 focus:ring-red-500/50 focus:border-red-500/50' : 'border-gray-600/50 focus:ring-blue-500/50 focus:border-blue-500/50' }`}
-                                autoComplete="new-password" disabled={isProcessing} aria-invalid={!!formErrors.password} aria-describedby={formErrors.password ? "password-error" : "password-hint"}
+                                autoComplete="new-password" disabled={authLoading} aria-invalid={!!formErrors.password} aria-describedby={formErrors.password ? "password-error" : "password-hint"}
                             />
-                            <button type="button" className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-200 transition" onClick={() => setShowPassword(!showPassword)} disabled={isProcessing} aria-label={showPassword ? "Hide password" : "Show password"}> {showPassword ? <FaEyeSlash /> : <FaEye />} </button>
+                            <button type="button" className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-200 transition" onClick={() => setShowPassword(!showPassword)} disabled={authLoading} aria-label={showPassword ? "Hide password" : "Show password"}> {showPassword ? <FaEyeSlash /> : <FaEye />} </button>
                         </div>
+                        {/* Password Strength Indicator */}
+                        {userSignup.password && (
+                            <motion.div 
+                                initial={{ opacity: 0, y: -5 }} 
+                                animate={{ opacity: 1, y: 0 }}
+                                className="mt-2 space-y-2"
+                            >
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs text-gray-400">Password Strength:</span>
+                                    <span className={`text-xs font-medium ${passwordStrength.color}`}>
+                                        {passwordStrength.label}
+                                    </span>
+                                </div>
+                                <div className="w-full bg-gray-700 rounded-full h-1.5">
+                                    <motion.div 
+                                        className={`h-1.5 rounded-full transition-all duration-300 ${
+                                            passwordStrength.score <= 1 ? 'bg-red-500' :
+                                            passwordStrength.score === 2 ? 'bg-orange-500' :
+                                            passwordStrength.score === 3 ? 'bg-yellow-500' :
+                                            passwordStrength.score === 4 ? 'bg-blue-500' :
+                                            'bg-green-500'
+                                        }`}
+                                        initial={{ width: 0 }}
+                                        animate={{ width: `${(passwordStrength.score / 5) * 100}%` }}
+                                    />
+                                </div>
+                                <div className="flex items-center gap-2 text-xs text-gray-500">
+                                    <FaShieldAlt className="text-xs" />
+                                    <span>Strong passwords include uppercase, lowercase, numbers, and special characters</span>
+                                </div>
+                            </motion.div>
+                        )}
+                        
                         <AnimatePresence>
                             {formErrors.password ? (
                                 <motion.p id="password-error" className="mt-1.5 text-xs text-red-400" variants={errorVariants} initial="hidden" animate="visible" exit="hidden"> {formErrors.password} </motion.p>
@@ -269,9 +271,9 @@ const Signup = () => {
                              </motion.div>
                             <input type={showConfirmPassword ? "text" : "password"} id="confirmPassword" placeholder="••••••••" value={userSignup.confirmPassword} onChange={handleChange} name="confirmPassword" onFocus={() => setFocusedField('confirmPassword')} onBlur={() => setFocusedField(null)} onKeyPress={handleKeyPress}
                                 className={`w-full pl-10 pr-10 py-2.5 border rounded-lg focus:outline-none focus:ring-2 transition duration-200 ease-in-out placeholder-gray-500 bg-gray-800/50 text-gray-100 ${ formErrors.confirmPassword ? 'border-red-500/50 focus:ring-red-500/50 focus:border-red-500/50' : 'border-gray-600/50 focus:ring-blue-500/50 focus:border-blue-500/50' }`}
-                                autoComplete="new-password" disabled={isProcessing} aria-invalid={!!formErrors.confirmPassword} aria-describedby={formErrors.confirmPassword ? "confirmPassword-error" : undefined}
+                                autoComplete="new-password" disabled={authLoading} aria-invalid={!!formErrors.confirmPassword} aria-describedby={formErrors.confirmPassword ? "confirmPassword-error" : undefined}
                             />
-                            <button type="button" className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-200 transition" onClick={() => setShowConfirmPassword(!showConfirmPassword)} disabled={isProcessing} aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}> {showConfirmPassword ? <FaEyeSlash /> : <FaEye />} </button>
+                            <button type="button" className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-200 transition" onClick={() => setShowConfirmPassword(!showConfirmPassword)} disabled={authLoading} aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}> {showConfirmPassword ? <FaEyeSlash /> : <FaEye />} </button>
                         </div>
                         <AnimatePresence> {formErrors.confirmPassword && ( <motion.p id="confirmPassword-error" className="mt-1.5 text-xs text-red-400" variants={errorVariants} initial="hidden" animate="visible" exit="hidden"> {formErrors.confirmPassword} </motion.p> )} </AnimatePresence>
                     </motion.div>
@@ -283,7 +285,7 @@ const Signup = () => {
                                 type="button"
                                 onClick={() => setUserSignup({ ...userSignup, termsAccepted: !userSignup.termsAccepted })}
                                 className={`mr-2.5 mt-0.5 text-xl transition-colors ${userSignup.termsAccepted ? 'text-indigo-500' : 'text-gray-400 hover:text-gray-500'}`}
-                                disabled={isProcessing} aria-pressed={userSignup.termsAccepted} aria-label="Accept Terms of Service"
+                                disabled={authLoading} aria-pressed={userSignup.termsAccepted} aria-label="Accept Terms of Service"
                             > {userSignup.termsAccepted ? <FaCheckSquare /> : <FaRegSquare />} </button>
                             <label htmlFor="terms" className="text-sm text-gray-400">
                                 I agree to the{' '}
@@ -296,17 +298,33 @@ const Signup = () => {
                         <AnimatePresence> {formErrors.terms && ( <motion.p className="mt-1.5 text-xs text-red-400 pl-8" variants={errorVariants} initial="hidden" animate="visible" exit="hidden"> {formErrors.terms} </motion.p> )} </AnimatePresence>
                     </motion.div>
 
+                    {/* Progress Indicator */}
+                    {authLoading && progress > 0 && (
+                        <motion.div 
+                            initial={{ opacity: 0, height: 0 }} 
+                            animate={{ opacity: 1, height: 'auto' }}
+                            className="w-full bg-gray-700 rounded-full h-2 mb-4"
+                        >
+                            <motion.div 
+                                className="bg-gradient-to-r from-indigo-500 to-purple-500 h-2 rounded-full"
+                                initial={{ width: 0 }}
+                                animate={{ width: `${progress}%` }}
+                                transition={{ duration: 0.3 }}
+                            />
+                        </motion.div>
+                    )}
+
                     {/* --- Signup Button --- */}
                     <motion.div variants={itemVariants} className="pt-2">
                         <motion.button
                             onClick={userSignupFunction}
-                            disabled={!isFormValid || isProcessing}
-                            whileHover={isFormValid && !isProcessing ? { scale: 1.03, filter: 'brightness(1.1)' } : {}}
-                            whileTap={isFormValid && !isProcessing ? { scale: 0.98 } : {}}
+                            disabled={!isFormValid || authLoading}
+                            whileHover={isFormValid && !authLoading ? { scale: 1.03, filter: 'brightness(1.1)' } : {}}
+                            whileTap={isFormValid && !authLoading ? { scale: 0.98 } : {}}
                             transition={{ type: "spring", stiffness: 400, damping: 12 }}
-                            className={`w-full flex justify-center items-center py-3 px-4 text-white font-semibold rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 transition-all duration-300 ease-in-out ${ isFormValid && !isProcessing ? 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:ring-indigo-500' : 'bg-gray-600 cursor-not-allowed opacity-70' }`}
+                            className={`w-full flex justify-center items-center py-3 px-4 text-white font-semibold rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 transition-all duration-300 ease-in-out ${ isFormValid && !authLoading ? 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:ring-indigo-500' : 'bg-gray-600 cursor-not-allowed opacity-70' }`}
                         >
-                            {isProcessing ? (
+                            {authLoading ? (
                                 <> <FaSpinner className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" /> Creating Account... </>
                             ) : ( 'Create Account' )}
                         </motion.button>
@@ -323,7 +341,7 @@ const Signup = () => {
                     <motion.div variants={itemVariants} className="text-center">
                         <Link
                             to="/login"
-                            className={`inline-flex items-center justify-center font-semibold text-indigo-400 hover:text-indigo-300 hover:underline transition-colors duration-200 ${isProcessing ? 'pointer-events-none opacity-70' : ''}`}
+                            className={`inline-flex items-center justify-center font-semibold text-indigo-400 hover:text-indigo-300 hover:underline transition-colors duration-200 ${authLoading ? 'pointer-events-none opacity-70' : ''}`}
                         >
                             Sign in Instead <FaArrowRight className="inline ml-1.5 text-xs" />
                         </Link>

@@ -41,10 +41,25 @@ const CategoryPage = () => {
                 id: doc.id,
                 ...doc.data()
             }));
+            
+            console.log("All products:", allProducts.length);
+            console.log("Category name:", categoryname);
+            
             setProducts(allProducts);
-            const filtered = allProducts.filter(product => 
-                product.category.includes(categoryname)
-            );
+            const filtered = allProducts.filter(product => {
+                if (!product.category) return false;
+                
+                // Handle both string and array categories
+                if (Array.isArray(product.category)) {
+                    return product.category.some(cat => 
+                        cat.toLowerCase().includes(categoryname.toLowerCase())
+                    );
+                } else {
+                    return product.category.toLowerCase().includes(categoryname.toLowerCase());
+                }
+            });
+            
+            console.log("Filtered products:", filtered.length);
             setFilteredProducts(filtered);
         } catch (error) {
             console.error("Error fetching products:", error);
@@ -247,7 +262,7 @@ const CategoryPage = () => {
                                     No {categoryname} products found
                                 </Typography>
                                 <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.6)', mb: 3 }}>
-                                    We couldn't find any products in this category
+                                    We couldn't find any products in this category. Try browsing our other categories or check back later!
                                 </Typography>
                                 <Button 
                                     variant="outlined"

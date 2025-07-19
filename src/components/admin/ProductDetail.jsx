@@ -2,10 +2,10 @@ import React, { useContext, useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom"; // Removed Link as navigate is used
 import myContext from "../../context/myContext";
 import Loader from "../loader/Loader"; // Assuming Loader path is correct
-import { deleteDoc, doc } from "firebase/firestore";
+import { deleteDoc, doc, updateDoc } from "firebase/firestore";
 import { fireDB } from "../../firebase/FirebaseConfig"; // Assuming Firebase config path is correct
 import toast from "react-hot-toast"; // Using react-hot-toast
-import { FiEdit, FiTrash2, FiChevronDown, FiChevronUp, FiSearch, FiFilter, FiX, FiPlus, FiImage, FiPackage, FiDollarSign, FiCalendar, FiTag, FiAlertCircle } from "react-icons/fi"; // Added more icons
+import { FiEdit, FiTrash2, FiChevronDown, FiChevronUp, FiSearch, FiFilter, FiX, FiPlus, FiImage, FiPackage, FiDollarSign, FiCalendar, FiTag, FiAlertCircle, FiPlus as FiAdd, FiMinus } from "react-icons/fi"; // Added more icons
 import { motion, AnimatePresence } from "framer-motion";
 
 // --- Animation Variants ---
@@ -54,12 +54,12 @@ const filterVariants = {
 const formatPrice = (price) => {
     // Ensure price is a number, default to 0 if not
     const numericPrice = Number(price || 0);
-    return new Intl.NumberFormat('en-IN', {
+    return new Intl.NumberFormat('en-NP', {
         style: 'currency',
-        currency: 'INR',
+        currency: 'NPR',
         minimumFractionDigits: 0, // Show whole rupees if possible
         maximumFractionDigits: 2
-    }).format(numericPrice).replace('₹', '₹ '); // Add space after symbol
+    }).format(numericPrice).replace('रु', 'रु '); // Add space after symbol
 };
 
 // --- Component ---
@@ -130,6 +130,39 @@ const ProductDetail = () => {
             direction = 'desc';
         }
         setSortConfig({ key, direction });
+    };
+
+    // Stock Management Functions
+    const updateStock = async (productId, change) => {
+        try {
+            const newQuantity = Math.max(0, change);
+            const productRef = doc(fireDB, "products", productId);
+            
+            await updateDoc(productRef, { quantity: newQuantity });
+            toast.success(`Stock updated to ${newQuantity}`);
+            
+            // Refresh product list to show updated data
+            getAllProductFunction();
+        } catch (error) {
+            console.error("Error updating stock:", error);
+            toast.error("Failed to update stock");
+        }
+    };
+
+    const incrementStock = async (productId, currentQuantity, increment) => {
+        try {
+            const newQuantity = Math.max(0, currentQuantity + increment);
+            const productRef = doc(fireDB, "products", productId);
+            
+            await updateDoc(productRef, { quantity: newQuantity });
+            toast.success(`Stock ${increment > 0 ? 'increased' : 'decreased'} by ${Math.abs(increment)}`);
+            
+            // Refresh product list to show updated data
+            getAllProductFunction();
+        } catch (error) {
+            console.error("Error updating stock:", error);
+            toast.error("Failed to update stock");
+        }
     };
 
     // Get appropriate sort icon for table headers
@@ -298,13 +331,13 @@ const ProductDetail = () => {
                                 {/* Price Range Inputs */}
                                 <div className="flex items-center gap-2 col-span-1 sm:col-span-2 md:col-span-1">
                                     <input
-                                        type="number" placeholder="Min ₹" min="0"
+                                        type="number" placeholder="Min रु" min="0"
                                         className="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700/60 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition duration-150 placeholder-gray-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                         value={priceRange.min} onChange={(e) => setPriceRange({...priceRange, min: e.target.value})}
                                     />
                                     <span className="text-gray-500">-</span>
                                     <input
-                                        type="number" placeholder="Max ₹" min={priceRange.min || "0"}
+                                        type="number" placeholder="Max रु" min={priceRange.min || "0"}
                                         className="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700/60 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition duration-150 placeholder-gray-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                         value={priceRange.max} onChange={(e) => setPriceRange({...priceRange, max: e.target.value})}
                                     />
@@ -429,6 +462,58 @@ const ProductDetail = () => {
                                                                                     <div><p className="font-semibold text-gray-400 uppercase">Stock:</p> <p className="text-gray-300">{quantity > 0 ? `${quantity} available` : "Out of Stock"}</p></div>
                                                                                     <div><p className="font-semibold text-gray-400 uppercase">Created:</p> <p className="text-gray-300">{new Date(date).toLocaleString('en-GB')}</p></div>
                                                                                 </div>
+                                                                                
+                                                                                {/* Stock Management Controls */}
+                                                                                <div className="mt-4 p-3 bg-gray-700/30 rounded-lg border border-gray-600/30">
+                                                                                    <div className="flex items-center justify-between mb-2">
+                                                                                        <span className="text-sm font-semibold text-gray-300">Stock Management</span>
+                                                                                        <span className="text-xs text-gray-400">Current: {quantity}</span>
+                                                                                    </div>
+                                                                                    <div className="flex items-center gap-2 mb-2">
+                                                                                        <motion.button
+                                                                                            onClick={(e) => { e.stopPropagation(); incrementStock(id, quantity, -1); }}
+                                                                                            whileHover={{ scale: 1.05 }}
+                                                                                            whileTap={{ scale: 0.95 }}
+                                                                                            className="p-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded border border-red-500/30"
+                                                                                            title="Decrease Stock"
+                                                                                        >
+                                                                                            <FiMinus className="h-3 w-3" />
+                                                                                        </motion.button>
+                                                                                        <motion.button
+                                                                                            onClick={(e) => { e.stopPropagation(); incrementStock(id, quantity, 1); }}
+                                                                                            whileHover={{ scale: 1.05 }}
+                                                                                            whileTap={{ scale: 0.95 }}
+                                                                                            className="p-1.5 bg-green-500/20 hover:bg-green-500/30 text-green-400 rounded border border-green-500/30"
+                                                                                            title="Increase Stock"
+                                                                                        >
+                                                                                            <FiAdd className="h-3 w-3" />
+                                                                                        </motion.button>
+                                                                                        <motion.button
+                                                                                            onClick={(e) => { e.stopPropagation(); incrementStock(id, quantity, 5); }}
+                                                                                            whileHover={{ scale: 1.05 }}
+                                                                                            whileTap={{ scale: 0.95 }}
+                                                                                            className="px-2 py-1 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded text-xs border border-blue-500/30"
+                                                                                        >
+                                                                                            +5
+                                                                                        </motion.button>
+                                                                                        <motion.button
+                                                                                            onClick={(e) => { e.stopPropagation(); incrementStock(id, quantity, 10); }}
+                                                                                            whileHover={{ scale: 1.05 }}
+                                                                                            whileTap={{ scale: 0.95 }}
+                                                                                            className="px-2 py-1 bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 rounded text-xs border border-purple-500/30"
+                                                                                        >
+                                                                                            +10
+                                                                                        </motion.button>
+                                                                                        <motion.button
+                                                                                            onClick={(e) => { e.stopPropagation(); updateStock(id, 0); }}
+                                                                                            whileHover={{ scale: 1.05 }}
+                                                                                            whileTap={{ scale: 0.95 }}
+                                                                                            className="px-2 py-1 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded text-xs border border-red-500/30"
+                                                                                        >
+                                                                                            Set 0
+                                                                                        </motion.button>
+                                                                                    </div>
+                                                                                </div>
                                                                             </div>
                                                                         </div>
                                                                     </motion.div>
@@ -500,6 +585,50 @@ const ProductDetail = () => {
                                                              <div><p className="font-semibold text-gray-500 uppercase text-[10px]">ID:</p> <p className="text-gray-300 font-mono break-all">{id}</p></div>
                                                              <div><p className="font-semibold text-gray-500 uppercase text-[10px]">Stock:</p> <p className="text-gray-300">{quantity}</p></div>
                                                              <div><p className="font-semibold text-gray-500 uppercase text-[10px]">Created:</p> <p className="text-gray-300">{new Date(date).toLocaleDateString('en-GB')}</p></div>
+                                                        </div>
+                                                        
+                                                        {/* Mobile Stock Management Controls */}
+                                                        <div className="mb-3 p-2 bg-gray-700/30 rounded border border-gray-600/30">
+                                                            <div className="flex items-center justify-between mb-2">
+                                                                <span className="text-xs font-semibold text-gray-300">Stock Control</span>
+                                                                <span className="text-xs text-gray-400">Current: {quantity}</span>
+                                                            </div>
+                                                            <div className="flex items-center gap-1">
+                                                                <motion.button
+                                                                    onClick={(e) => { e.stopPropagation(); incrementStock(id, quantity, -1); }}
+                                                                    whileHover={{ scale: 1.05 }}
+                                                                    whileTap={{ scale: 0.95 }}
+                                                                    className="p-1 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded border border-red-500/30"
+                                                                    title="Decrease"
+                                                                >
+                                                                    <FiMinus className="h-3 w-3" />
+                                                                </motion.button>
+                                                                <motion.button
+                                                                    onClick={(e) => { e.stopPropagation(); incrementStock(id, quantity, 1); }}
+                                                                    whileHover={{ scale: 1.05 }}
+                                                                    whileTap={{ scale: 0.95 }}
+                                                                    className="p-1 bg-green-500/20 hover:bg-green-500/30 text-green-400 rounded border border-green-500/30"
+                                                                    title="Increase"
+                                                                >
+                                                                    <FiAdd className="h-3 w-3" />
+                                                                </motion.button>
+                                                                <motion.button
+                                                                    onClick={(e) => { e.stopPropagation(); incrementStock(id, quantity, 5); }}
+                                                                    whileHover={{ scale: 1.05 }}
+                                                                    whileTap={{ scale: 0.95 }}
+                                                                    className="px-1.5 py-1 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded text-xs border border-blue-500/30"
+                                                                >
+                                                                    +5
+                                                                </motion.button>
+                                                                <motion.button
+                                                                    onClick={(e) => { e.stopPropagation(); updateStock(id, 0); }}
+                                                                    whileHover={{ scale: 1.05 }}
+                                                                    whileTap={{ scale: 0.95 }}
+                                                                    className="px-1.5 py-1 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded text-xs border border-red-500/30"
+                                                                >
+                                                                    0
+                                                                </motion.button>
+                                                            </div>
                                                         </div>
                                                         <div className="flex justify-end space-x-3">
                                                             <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={(e) => { e.stopPropagation(); navigate(`/updateproduct/${id}`); }} className="text-blue-400 hover:text-blue-300 transition-colors p-1.5 rounded-full hover:bg-blue-500/10" title="Edit"> <FiEdit className="h-4 w-4" /> </motion.button>

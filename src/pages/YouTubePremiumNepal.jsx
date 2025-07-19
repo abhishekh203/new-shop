@@ -8,12 +8,17 @@ import Layout from "../components/layout/Layout";
 import SEOHelmet from "../components/SEO/SEOHelmet";
 import OptimizedImage from "../components/SEO/OptimizedImage";
 import Nepal from "./nepal";
+import { nepalSEOKeywords, generateNepalMetaDescription, generateNepalTitle, generateNepalProductSchema } from "../utils/nepalSEOKeywords";
 
 const YoutubePremiumNepal = () => {
+    // Dynamic Nepal SEO using the utility functions
+    const serviceName = "YouTube Premium";
+    const seoFeatures = ["Ad-free videos", "Offline downloads", "YouTube Music", "No VPN required"];
+    
     const meta = {
-        title: "YouTube Premium Nepal - Stream Ad-Free Videos & Music",
-        description: "Enjoy YouTube Premium in Nepal. Watch ad-free videos, download for offline viewing, and access YouTube Music. No VPN required.",
-        keywords: "YouTube Premium Nepal, youtube nepal, youtube subscription nepal, buy youtube premium nepal, YouTube subscription, Watch ad-free videos Nepal, Stream YouTube Music, VPN Free YouTube Premium Nepal",
+        title: generateNepalTitle(serviceName, "subscription"),
+        description: generateNepalMetaDescription("youtube", seoFeatures),
+        keywords: nepalSEOKeywords.youtube.join(", "),
         canonical: "https://www.digitalshopnepal.com/YouTubePremiumNepal"
     };
 

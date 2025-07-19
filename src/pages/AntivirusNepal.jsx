@@ -18,12 +18,17 @@ import Layout from "../components/layout/Layout";
 import SEOHelmet from "../components/SEO/SEOHelmet";
 import OptimizedImage from "../components/SEO/OptimizedImage";
 import Nepal from "./nepal";
+import { nepalSEOKeywords, generateNepalMetaDescription, generateNepalTitle, generateNepalProductSchema } from "../utils/nepalSEOKeywords";
 
 const AntivirusNepal = () => {
+  // Dynamic Nepal SEO using the utility functions
+  const serviceName = "Antivirus";
+  const seoFeatures = ["Device protection", "Malware protection", "Online security", "Comprehensive security"];
+  
   const meta = {
-    title: "Antivirus Nepal - Protect Your Devices from Online Threats",
-    description: "Get the best antivirus solutions in Nepal to protect your devices from malware and online threats. Enjoy comprehensive security features with our affordable subscription plans.",
-    keywords: "Antivirus Nepal, Best antivirus solutions in Nepal, Protect devices from malware, Online security Nepal, Affordable antivirus subscription Nepal",
+    title: generateNepalTitle(serviceName, "subscription"),
+    description: generateNepalMetaDescription("antivirus", seoFeatures),
+    keywords: nepalSEOKeywords.antivirus.join(", "),
     canonical: "https://www.digitalshopnepal.com/AntivirusNepal"
   };
 

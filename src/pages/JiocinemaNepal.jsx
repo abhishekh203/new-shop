@@ -9,12 +9,17 @@ import SEOHelmet from "../components/SEO/SEOHelmet";
 import OptimizedImage from "../components/SEO/OptimizedImage";
 import NepalFAQ from "../components/SEO/NepalFAQ";
 import Nepal from "./nepal";
+import { nepalSEOKeywords, generateNepalMetaDescription, generateNepalTitle, generateNepalProductSchema } from "../utils/nepalSEOKeywords";
 
 const JioCinemaNepal = () => {
+    // Dynamic Nepal SEO using the utility functions
+    const serviceName = "JioCinema";
+    const seoFeatures = ["Bollywood movies", "Indian content", "Original content", "HD streaming"];
+    
     const meta = {
-        title: "JioCinema Nepal - Premium Streaming at Best Prices in NPR",
-        description: "Get JioCinema premium subscription in Nepal at best prices. Stream Bollywood movies, TV shows & originals in Kathmandu, Pokhara & all Nepal. HD streaming, NPR pricing, eSewa/Khalti accepted.",
-        keywords: "JioCinema Nepal, JioCinema subscription Nepal, buy JioCinema Nepal, JioCinema premium Nepal, JioCinema account Nepal, watch JioCinema Nepal, JioCinema price Nepal, JioCinema NPR, JioCinema Kathmandu, JioCinema Pokhara, Bollywood movies Nepal, Indian content Nepal, streaming service Nepal, JioCinema original Nepal, HD streaming Nepal",
+        title: generateNepalTitle(serviceName, "subscription"),
+        description: generateNepalMetaDescription("jioCinema", seoFeatures),
+        keywords: nepalSEOKeywords.jioCinema.join(", "),
         canonical: "https://www.digitalshopnepal.com/JioCinemaNepal"
     };
 

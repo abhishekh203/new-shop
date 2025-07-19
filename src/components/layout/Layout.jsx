@@ -3,6 +3,7 @@ import React from "react";
 import Footer from "../footer/Footer";
 import Navbar from "../navbar/Navbar";
 import Breadcrumb from "../SEO/Breadcrumb";
+import StickyMobileCart from "../StickyMobileCart/StickyMobileCart";
 
 const Layout = ({ children, showBreadcrumb = false, customBreadcrumbs = null }) => {
     return (
@@ -17,6 +18,8 @@ const Layout = ({ children, showBreadcrumb = false, customBreadcrumbs = null }) 
                 {children}
             </main>
             <Footer />
+            {/* Sticky Mobile Cart - Only shows on mobile when cart has items */}
+            <StickyMobileCart />
         </div>
     );
 }

@@ -1,0 +1,52 @@
+Options -MultiViews
+RewriteEngine On
+
+# SEO-friendly redirects for Nepal-specific product pages
+# These redirects help with local SEO and Nepal-specific searches
+
+# Redirect product pages to include Nepal for better SEO
+RewriteRule ^netflix/?$ /NetflixNepal [R=301,L]
+RewriteRule ^spotify/?$ /SpotifyNepal [R=301,L] 
+RewriteRule ^prime/?$ /PrimeVideoNepal [R=301,L]
+RewriteRule ^primevideo/?$ /PrimeVideoNepal [R=301,L]
+RewriteRule ^youtube/?$ /YouTubePremiumNepal [R=301,L]
+RewriteRule ^youtubepremium/?$ /YouTubePremiumNepal [R=301,L]
+RewriteRule ^canva/?$ /CanvaNepal [R=301,L]
+RewriteRule ^zee5/?$ /Zee5Nepal [R=301,L]
+RewriteRule ^vpn/?$ /VpnNepal [R=301,L]
+RewriteRule ^jio/?$ /JioCinemaNepal [R=301,L]
+RewriteRule ^jiocinema/?$ /JioCinemaNepal [R=301,L]
+RewriteRule ^disney/?$ /DisneyPlusHotstarNepal [R=301,L]
+RewriteRule ^disneyplus/?$ /DisneyPlusHotstarNepal [R=301,L]
+RewriteRule ^hotstar/?$ /DisneyPlusHotstarNepal [R=301,L]
+RewriteRule ^ullu/?$ /UlluNepal [R=301,L]
+RewriteRule ^altbalaji/?$ /AltBalajiNepal [R=301,L]
+RewriteRule ^alt/?$ /AltBalajiNepal [R=301,L]
+RewriteRule ^google/?$ /GoogleOneNepal [R=301,L]
+RewriteRule ^googleone/?$ /GoogleOneNepal [R=301,L]
+RewriteRule ^software/?$ /SoftwareNepal [R=301,L]
+RewriteRule ^antivirus/?$ /AntivirusNepal [R=301,L]
+RewriteRule ^grammarly/?$ /GrammarlyNepal [R=301,L]
+RewriteRule ^tinder/?$ /TinderNepal [R=301,L]
+
+# Alternative spellings and common searches
+RewriteRule ^netflix-nepal/?$ /NetflixNepal [R=301,L]
+RewriteRule ^netflix_nepal/?$ /NetflixNepal [R=301,L]
+RewriteRule ^spotify-nepal/?$ /SpotifyNepal [R=301,L]
+RewriteRule ^spotify_nepal/?$ /SpotifyNepal [R=301,L]
+RewriteRule ^prime-video-nepal/?$ /PrimeVideoNepal [R=301,L]
+RewriteRule ^youtube-premium-nepal/?$ /YouTubePremiumNepal [R=301,L]
+
+# Product category redirects for better SEO
+RewriteRule ^streaming/?$ /subscription [R=301,L]
+RewriteRule ^ott/?$ /subscription [R=301,L]
+RewriteRule ^subscriptions/?$ /subscription [R=301,L]
+
+# Nepal-specific landing page redirects
+RewriteRule ^nepal/?$ / [R=301,L]
+RewriteRule ^kathmandu/?$ / [R=301,L]
+RewriteRule ^pokhara/?$ / [R=301,L]
+
+# Client-side routing fallback (must be last)
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^ index.html [QSA,L] 

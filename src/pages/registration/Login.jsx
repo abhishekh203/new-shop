@@ -1,13 +1,12 @@
 import React, { useContext, useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import myContext from "../../context/myContext"; // Assuming context path is correct
-import toast, { Toaster } from "react-hot-toast"; // Using react-hot-toast
-import { signInWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
-import { auth, fireDB } from "../../firebase/FirebaseConfig"; // Assuming Firebase config path is correct
-import Loader from "../../components/loader/Loader"; // Assuming Loader path is correct
-import { collection, query, where, getDocs } from "firebase/firestore";
-import { FaEnvelope, FaLock, FaEye, FaEyeSlash, FaArrowRight, FaSpinner } from "react-icons/fa"; // Using react-icons
+import myContext from "../../context/myContext";
+import toast, { Toaster } from "react-hot-toast";
+import Loader from "../../components/loader/Loader";
+import { FaEnvelope, FaLock, FaEye, FaEyeSlash, FaArrowRight, FaSpinner, FaShieldAlt } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "../../hooks/useAuth";
+import { validateEmail, validatePassword } from "../../utils/validation";
 
 // --- Animation Variants ---
 const pageVariants = {
@@ -48,38 +47,27 @@ const errorVariants = {
 const Login = () => {
     const context = useContext(myContext);
     const { loading: pageLoading, setLoading: setPageLoading } = context;
-    const [loginLoading, setLoginLoading] = useState(false);
     const navigate = useNavigate();
+    const { login, resetPassword, loading: authLoading, progress, getRemainingAttempts, isLockedOut } = useAuth();
 
     const [userLogin, setUserLogin] = useState({ email: "", password: "" });
     const [showPassword, setShowPassword] = useState(false);
     const [errors, setErrors] = useState({});
     const [isFormValid, setIsFormValid] = useState(false);
-
-    // --- Validation Logic (Memoized) ---
-    const validateField = useCallback((name, value) => {
-        let errorMsg = "";
-        switch (name) {
-            case "email":
-                if (!value) errorMsg = "Email is required";
-                else if (!/\S+@\S+\.\S+/.test(value)) errorMsg = "Email address is invalid";
-                break;
-            case "password":
-                if (!value) errorMsg = "Password is required";
-                else if (value.length < 6) errorMsg = "Password must be at least 6 characters";
-                break;
-            default: break;
-        }
-        return errorMsg;
-    }, []);
+    const [remainingAttempts, setRemainingAttempts] = useState(5);
 
     // --- Form Validation Effect ---
     useEffect(() => {
-        const emailError = validateField("email", userLogin.email);
-        const passwordError = validateField("password", userLogin.password);
+        const emailError = validateEmail(userLogin.email);
+        const passwordError = validatePassword(userLogin.password);
         setErrors({ email: emailError, password: passwordError });
         setIsFormValid(!emailError && !passwordError && !!userLogin.email && !!userLogin.password);
-    }, [userLogin.email, userLogin.password, validateField]);
+        
+        // Update remaining attempts
+        if (userLogin.email) {
+            setRemainingAttempts(getRemainingAttempts(userLogin.email));
+        }
+    }, [userLogin.email, userLogin.password, getRemainingAttempts]);
 
     // --- Event Handlers ---
     const handleChange = (e) => {
@@ -92,92 +80,59 @@ const Login = () => {
 
     const handleBlur = (e) => {
         const { name, value } = e.target;
-        const error = validateField(name, value);
+        let error = "";
+        if (name === "email") error = validateEmail(value);
+        else if (name === "password") error = validatePassword(value);
         setErrors(prev => ({ ...prev, [name]: error }));
     };
 
     const handleKeyPress = (e) => {
-        if (e.key === 'Enter' && isFormValid && !loginLoading) {
+        if (e.key === 'Enter' && isFormValid && !authLoading) {
             userLoginFunction();
         }
     };
 
     // --- Forgot Password ---
     const handleForgotPassword = async () => {
-        const emailError = validateField("email", userLogin.email);
+        const emailError = validateEmail(userLogin.email);
         if (emailError) {
             setErrors(prev => ({ ...prev, email: emailError }));
             toast.error(emailError);
             return;
         }
-        setLoginLoading(true);
-        try {
-            await sendPasswordResetEmail(auth, userLogin.email);
-            toast.success("Password reset email sent! Check your inbox (and spam folder).");
-        } catch (error) {
-            console.error("Password reset error:", error);
-            const msg = error.code === 'auth/user-not-found' ? "No account found with this email." : "Failed to send reset email.";
-            setErrors(prev => ({ ...prev, email: msg }));
-            toast.error(msg);
-        } finally {
-            setLoginLoading(false);
+        
+        const result = await resetPassword(userLogin.email);
+        if (!result.success) {
+            setErrors(prev => ({ ...prev, email: result.message }));
         }
     };
 
     // --- Login Function ---
     const userLoginFunction = async () => {
-        if (!isFormValid || loginLoading) return;
-        setLoginLoading(true);
-        setErrors({});
-
-        try {
-            const userCredential = await signInWithEmailAndPassword(auth, userLogin.email, userLogin.password);
-            const q = query(collection(fireDB, "user"), where('uid', '==', userCredential.user.uid));
-            const querySnapshot = await getDocs(q);
-
-            if (querySnapshot.empty) {
-                toast.error("User data not found. Please contact support.");
-                await auth.signOut();
-                setLoginLoading(false);
+        if (!isFormValid || authLoading) return;
+        
+        // Check if user is locked out
+        if (isLockedOut(userLogin.email)) {
+            const remainingTime = Math.ceil((15 * 60 * 1000) / 60000);
+            toast.error(`Account temporarily locked. Try again in ${remainingTime} minutes.`);
                 return;
             }
 
-            let userData;
-            querySnapshot.forEach((doc) => userData = doc.data());
-            localStorage.setItem("users", JSON.stringify(userData));
+        setErrors({});
+        const result = await login(userLogin.email, userLogin.password);
+        
+        if (result.success) {
             setUserLogin({ email: "", password: "" });
-            toast.success("Login successful! Redirecting...");
-
             setTimeout(() => {
-                 navigate(userData.role === "admin" ? '/admin-dashboard' : '/');
+                navigate(result.redirectTo);
             }, 1000);
-
-        } catch (error) {
-            console.error("Login error:", error);
-            let emailError = "";
-            let passwordError = "";
-            let generalError = "";
-
-            switch (error.code) {
-                case 'auth/user-not-found':
-                case 'auth/invalid-email':
-                    emailError = "Invalid email or user not found."; break;
-                case 'auth/wrong-password':
-                    passwordError = "Incorrect password."; break;
-                case 'auth/too-many-requests':
-                    generalError = "Too many login attempts. Reset password or try later."; break;
-                case 'auth/invalid-credential':
-                     generalError = "Invalid email or password."; break;
-                default:
-                    generalError = "Login failed. Please check credentials.";
+        } else {
+            // Handle specific errors
+            if (result.error === 'auth/user-not-found' || result.error === 'auth/invalid-email') {
+                setErrors(prev => ({ ...prev, email: result.message }));
+            } else if (result.error === 'auth/wrong-password') {
+                setErrors(prev => ({ ...prev, password: result.message }));
             }
-
-            setErrors({ email: emailError, password: passwordError });
-            if(generalError) toast.error(generalError);
-            else if(emailError) toast.error(emailError);
-            else if(passwordError) toast.error(passwordError);
-
-            setLoginLoading(false);
         }
     };
 
@@ -233,8 +188,22 @@ const Login = () => {
                     <motion.div variants={itemVariants} className="relative"> {/* Apply itemVariants here */}
                         <div className="flex justify-between items-center mb-1.5">
                             <label htmlFor="password" className="block text-sm font-medium text-gray-300"> Password </label>
-                            <button type="button" onClick={handleForgotPassword} disabled={loginLoading} className="text-xs font-medium text-blue-400 hover:text-blue-300 hover:underline transition disabled:opacity-50 disabled:cursor-not-allowed"> Forgot password? </button>
+                            <button type="button" onClick={handleForgotPassword} disabled={authLoading} className="text-xs font-medium text-blue-400 hover:text-blue-300 hover:underline transition disabled:opacity-50 disabled:cursor-not-allowed"> Forgot password? </button>
                         </div>
+                        
+                        {/* Security Status */}
+                        {userLogin.email && (
+                            <motion.div 
+                                initial={{ opacity: 0, y: -5 }} 
+                                animate={{ opacity: 1, y: 0 }} 
+                                className="flex items-center gap-2 mb-2"
+                            >
+                                <FaShieldAlt className={`text-xs ${remainingAttempts <= 2 ? 'text-red-400' : remainingAttempts <= 3 ? 'text-yellow-400' : 'text-green-400'}`} />
+                                <span className={`text-xs ${remainingAttempts <= 2 ? 'text-red-400' : remainingAttempts <= 3 ? 'text-yellow-400' : 'text-green-400'}`}>
+                                    {remainingAttempts} login attempts remaining
+                                </span>
+                            </motion.div>
+                        )}
                         <div className="relative">
                             <FaLock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
                             <input
@@ -253,17 +222,33 @@ const Login = () => {
                         <AnimatePresence> {errors.password && ( <motion.p id="password-error" className="mt-1.5 text-xs text-red-400" variants={errorVariants} initial="hidden" animate="visible" exit="exit"> {errors.password} </motion.p> )} </AnimatePresence>
                     </motion.div>
 
+                    {/* Progress Indicator */}
+                    {authLoading && progress > 0 && (
+                        <motion.div 
+                            initial={{ opacity: 0, height: 0 }} 
+                            animate={{ opacity: 1, height: 'auto' }}
+                            className="w-full bg-gray-700 rounded-full h-2 mb-4"
+                        >
+                            <motion.div 
+                                className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full"
+                                initial={{ width: 0 }}
+                                animate={{ width: `${progress}%` }}
+                                transition={{ duration: 0.3 }}
+                            />
+                        </motion.div>
+                    )}
+
                     {/* Login Button */}
                     <motion.div variants={itemVariants}> {/* Apply itemVariants here */}
                         <motion.button
                             onClick={userLoginFunction}
-                            disabled={!isFormValid || loginLoading}
-                            whileHover={isFormValid && !loginLoading ? { scale: 1.03, filter: 'brightness(1.1)' } : {}}
-                            whileTap={isFormValid && !loginLoading ? { scale: 0.98 } : {}}
+                            disabled={!isFormValid || authLoading}
+                            whileHover={isFormValid && !authLoading ? { scale: 1.03, filter: 'brightness(1.1)' } : {}}
+                            whileTap={isFormValid && !authLoading ? { scale: 0.98 } : {}}
                             transition={{ type: "spring", stiffness: 400, damping: 12 }}
-                            className={`w-full flex justify-center items-center py-3 px-4 text-white font-semibold rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 transition-all duration-300 ease-in-out ${ isFormValid && !loginLoading ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 focus:ring-blue-500' : 'bg-gray-600 cursor-not-allowed opacity-70' }`}
+                            className={`w-full flex justify-center items-center py-3 px-4 text-white font-semibold rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 transition-all duration-300 ease-in-out ${ isFormValid && !authLoading ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 focus:ring-blue-500' : 'bg-gray-600 cursor-not-allowed opacity-70' }`}
                         >
-                            {loginLoading ? (
+                            {authLoading ? (
                                 <> <FaSpinner className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" /> Processing... </>
                             ) : ( 'Sign In' )}
                         </motion.button>

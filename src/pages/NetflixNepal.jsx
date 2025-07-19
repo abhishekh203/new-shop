@@ -18,12 +18,17 @@ import { HelmetProvider } from 'react-helmet-async';
 import Layout from "../components/layout/Layout";
 import SEOHelmet from "../components/SEO/SEOHelmet";
 import Nepal from "./nepal";
+import { nepalSEOKeywords, generateNepalMetaDescription, generateNepalTitle, generateNepalProductSchema } from "../utils/nepalSEOKeywords";
 
 const NetflixNepal = () => {
+    // Dynamic Nepal SEO using the utility functions
+    const serviceName = "Netflix";
+    const seoFeatures = ["Ultra HD streaming", "No VPN required", "Private profile", "Instant delivery"];
+    
     const meta = {
-        title: "Netflix Nepal - Premium Subscription at Best Prices in NPR",
-        description: "Get Netflix premium subscription in Nepal at best prices. Stream unlimited movies & TV shows in Kathmandu, Pokhara & all Nepal. No VPN required, instant delivery, NPR pricing, local support available.",
-        keywords: "Netflix Nepal, Netflix subscription Nepal, buy Netflix Nepal, Netflix premium Nepal, Netflix account Nepal, watch Netflix Nepal, Netflix price Nepal, Netflix NPR, Netflix Kathmandu, Netflix Pokhara, Netflix streaming Nepal, how to get Netflix in Nepal, Netflix without VPN Nepal, Netflix family plan Nepal, cheap Netflix Nepal, affordable Netflix Nepal, best Netflix price Nepal, Netflix subscription service Nepal, digital subscription Nepal",
+        title: generateNepalTitle(serviceName, "subscription"),
+        description: generateNepalMetaDescription("netflix", seoFeatures),
+        keywords: nepalSEOKeywords.netflix.join(", "),
         canonical: "https://www.digitalshopnepal.com/NetflixNepal"
     };
 
@@ -61,73 +66,8 @@ const NetflixNepal = () => {
         "Log out from the current device before logging in on another"
     ];
 
-    const netflixStructuredData = {
-        "@context": "https://schema.org",
-        "@type": "Product",
-        "name": "Netflix Premium Subscription Nepal",
-        "description": "Premium Netflix subscription for Nepal with Ultra HD streaming, no VPN required. Available in Kathmandu, Pokhara and all major cities of Nepal.",
-        "brand": {
-            "@type": "Brand",
-            "name": "Netflix"
-        },
-        "offers": [
-            {
-                "@type": "Offer",
-                "name": "1 Month Netflix Nepal",
-                "price": "399",
-                "priceCurrency": "NPR",
-                "availability": "https://schema.org/InStock",
-                "priceValidUntil": "2024-12-31",
-                "seller": {
-                    "@type": "Organization",
-                    "name": "Digital Shop Nepal",
-                    "address": {
-                        "@type": "PostalAddress",
-                        "addressCountry": "NP",
-                        "addressLocality": "Kathmandu",
-                        "addressRegion": "Bagmati Province"
-                    }
-                },
-                "areaServed": {
-                    "@type": "Country",
-                    "name": "Nepal"
-                },
-                "eligibleRegion": {
-                    "@type": "Country",
-                    "name": "Nepal"
-                }
-            },
-            {
-                "@type": "Offer",
-                "name": "3 Months Netflix Nepal",
-                "price": "1169",
-                "priceCurrency": "NPR",
-                "availability": "https://schema.org/InStock",
-                "priceValidUntil": "2024-12-31"
-            },
-            {
-                "@type": "Offer",
-                "name": "1 Year Netflix Nepal",
-                "price": "4499",
-                "priceCurrency": "NPR",
-                "availability": "https://schema.org/InStock",
-                "priceValidUntil": "2024-12-31"
-            }
-        ],
-        "aggregateRating": {
-            "@type": "AggregateRating",
-            "ratingValue": "4.8",
-            "reviewCount": "150"
-        },
-        "category": "Digital Subscription Services",
-        "audience": {
-            "@type": "Audience",
-            "geographicArea": {
-                "@type": "Country",
-                "name": "Nepal"
-            }
-        }
-    };
+    // Generate dynamic structured data using Nepal SEO utilities
+    const netflixStructuredData = generateNepalProductSchema(serviceName, "399", "NPR");
 
     const breadcrumbs = [
         { name: "Home", url: "/" },

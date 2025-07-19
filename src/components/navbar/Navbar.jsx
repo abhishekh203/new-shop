@@ -15,7 +15,7 @@ import {
     FaShoppingCart, FaPhoneAlt, FaUser, FaUserShield, FaSignInAlt,
     FaUserPlus, FaHome, FaBoxes, FaBars, FaTimes,
     FaQuestionCircle, FaInfoCircle, FaShoppingBag, FaEnvelope,
-    FaChevronRight, FaSpinner, FaStar
+    FaChevronRight, FaSpinner, FaStar, FaSearch
 } from "react-icons/fa";
 
 import { motion, AnimatePresence } from "framer-motion";
@@ -45,27 +45,27 @@ const NavLink = ({ to, icon, text, delay = 0, onClick = () => {} }) => (
     </motion.div>
 );
 
-// Modern Mobile NavLink
+// Enhanced Mobile NavLink with better touch targets
 const MobileNavLink = ({ to, icon, text, onClick }) => (
     <Link
         to={to}
         onClick={onClick} // Close menu on click
-        className="group flex items-center justify-between w-full px-5 py-4 text-left text-gray-200 hover:bg-gradient-to-r hover:from-gray-800/80 hover:to-gray-700/60 rounded-2xl transition-all duration-300 focus:outline-none focus-visible:bg-gray-800 focus-visible:ring-2 focus-visible:ring-teal-500 border border-transparent hover:border-teal-400/10 backdrop-blur-sm"
+        className="group flex items-center justify-between w-full px-6 py-5 text-left text-gray-200 hover:bg-gradient-to-r hover:from-gray-800/90 hover:to-gray-700/70 rounded-2xl transition-all duration-300 focus:outline-none focus-visible:bg-gray-800 focus-visible:ring-2 focus-visible:ring-teal-500 border border-transparent hover:border-teal-400/20 backdrop-blur-sm active:scale-95"
     >
         <div className="flex items-center">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-teal-400/10 group-hover:bg-teal-400/20 transition-colors duration-300 mr-4">
-                <span className="text-teal-400 text-lg group-hover:scale-110 transition-transform duration-200">{icon}</span>
+            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-teal-400/10 group-hover:bg-teal-400/20 transition-colors duration-300 mr-4 shadow-sm">
+                <span className="text-teal-400 text-xl group-hover:scale-110 transition-transform duration-200">{icon}</span>
             </div>
-            <span className="font-medium text-sm group-hover:text-white transition-colors duration-200">{text}</span>
+            <span className="font-medium text-base group-hover:text-white transition-colors duration-200">{text}</span>
         </div>
-        <FaChevronRight className="text-gray-500 text-xs group-hover:text-teal-400 group-hover:translate-x-1 transition-all duration-200" />
+        <FaChevronRight className="text-gray-500 text-sm group-hover:text-teal-400 group-hover:translate-x-1 transition-all duration-200" />
     </Link>
 );
 
-// Cart Link
+// Enhanced Cart Link with better mobile touch targets
 const CartLink = ({ count, delay = 0, isMobile = false }) => {
     const commonClasses = "flex items-center text-gray-200 hover:text-teal-400 transition-colors duration-200 relative focus:outline-none focus-visible:text-teal-400";
-    const mobileWrapperClasses = "flex items-center justify-center w-10 h-10 text-gray-300 hover:text-teal-400 focus:outline-none focus-visible:bg-gray-700 rounded-lg bg-gray-700/60 hover:bg-gray-600/80 border border-gray-600/80 hover:border-teal-500/50 transition-all duration-200";
+    const mobileWrapperClasses = "flex items-center justify-center w-12 h-12 text-gray-300 hover:text-teal-400 focus:outline-none focus-visible:bg-gray-700 rounded-xl bg-gray-700/70 hover:bg-gray-600/90 border border-gray-600/90 hover:border-teal-500/60 transition-all duration-200 shadow-sm active:scale-95";
     const desktopClasses = "text-sm font-medium";
 
     return (
@@ -82,7 +82,7 @@ const CartLink = ({ count, delay = 0, isMobile = false }) => {
                 aria-label={`Cart with ${count} items`}
                 className={`${commonClasses} ${isMobile ? 'p-0' : desktopClasses}`}
             >
-                <FaShoppingCart className={`text-xl ${!isMobile ? 'mr-1.5' : ''}`} />
+                <FaShoppingCart className={`${isMobile ? 'text-xl' : 'text-xl mr-1.5'}`} />
                 {!isMobile && <span>Cart</span>}
                 <AnimatePresence>
                     {count > 0 && (
@@ -92,7 +92,7 @@ const CartLink = ({ count, delay = 0, isMobile = false }) => {
                             animate={{ scale: 1, y: 0 }}
                             exit={{ scale: 0 }}
                             transition={{ type: "spring", stiffness: 500, damping: 20 }}
-                            className={`absolute -top-1.5 ${isMobile ? 'right-0 transform translate-x-1/4 -translate-y-1/4' : '-right-2'} bg-red-600 text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center border-2 border-gray-800`}
+                            className={`absolute ${isMobile ? '-top-1 -right-1' : '-top-1.5 -right-2'} bg-red-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center border-2 border-gray-800 shadow-lg`}
                         >
                             {count > 9 ? '9+' : count}
                         </motion.span>
@@ -176,48 +176,60 @@ const ComplaintFormSection = ({ user, isVisible, onSubmit, isSubmitting, onClose
                                 <FaTimes />
                             </button>
                         </div>
-
                         <form onSubmit={handleSubmit} className="space-y-3">
-                            {[
-                                { id: 'name', label: 'Full Name', type: 'text', required: true, value: complaintData.name },
-                                { id: 'email', label: 'Email Address', type: 'email', required: true, value: complaintData.email },
-                                { id: 'whatsappNumber', label: 'WhatsApp Number', type: 'tel', placeholder: '+977 98XXXXXXXX', required: true, value: complaintData.whatsappNumber },
-                                { id: 'productPurchased', label: 'Product Name / Order ID', type: 'text', required: true, value: complaintData.productPurchased },
-                                { id: 'dateOfPurchase', label: 'Approx. Purchase Date', type: 'date', required: true, value: complaintData.dateOfPurchase },
-                            ].map(field => (
-                                <div key={field.id}>
-                                    <label htmlFor={field.id} className="block text-xs font-medium text-gray-300 mb-1">
-                                        {field.label} {field.required && '*'}
-                                    </label>
-                                    <input
-                                        type={field.type}
-                                        id={field.id}
-                                        name={field.id}
-                                        value={complaintData.value}
-                                        onChange={handleChange}
-                                        required={field.required}
-                                        placeholder={field.placeholder || ''}
-                                        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all duration-200"
-                                    />
-                                </div>
-                            ))}
-
-                            <div>
-                                <label htmlFor="problemDescription" className="block text-xs font-medium text-gray-300 mb-1">
-                                    Describe Your Issue *
-                                </label>
+                            <div className="grid grid-cols-1 gap-3">
+                                <input
+                                    type="text"
+                                    name="name"
+                                    placeholder="Your Name"
+                                    value={complaintData.name}
+                                    onChange={handleChange}
+                                    required
+                                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                                />
+                                <input
+                                    type="email"
+                                    name="email"
+                                    placeholder="Your Email"
+                                    value={complaintData.email}
+                                    onChange={handleChange}
+                                    required
+                                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                                />
+                                <input
+                                    type="tel"
+                                    name="whatsappNumber"
+                                    placeholder="WhatsApp Number"
+                                    value={complaintData.whatsappNumber}
+                                    onChange={handleChange}
+                                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                                />
+                                <input
+                                    type="text"
+                                    name="productPurchased"
+                                    placeholder="Product Purchased"
+                                    value={complaintData.productPurchased}
+                                    onChange={handleChange}
+                                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                                />
+                                <input
+                                    type="date"
+                                    name="dateOfPurchase"
+                                    placeholder="Date of Purchase"
+                                    value={complaintData.dateOfPurchase}
+                                    onChange={handleChange}
+                                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                                />
                                 <textarea
-                                    id="problemDescription"
                                     name="problemDescription"
+                                    placeholder="Describe your problem..."
                                     value={complaintData.problemDescription}
                                     onChange={handleChange}
                                     required
-                                    rows={3}
-                                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all duration-200"
-                                    placeholder="Please describe your problem in detail..."
+                                    rows="3"
+                                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none"
                                 />
                             </div>
-
                             <div className="pt-2">
                                 <motion.button
                                     type="submit"
@@ -341,75 +353,94 @@ const Navbar = () => {
     const toggleComplaintFormVisibility = () => {
         const willBeVisible = !showComplaintForm;
         setShowComplaintForm(willBeVisible);
-
+        
         if (willBeVisible && menuRef.current) {
-            // Scroll to the bottom of the menu to reveal the form
+            // Scroll the menu to the bottom to show the form
             setTimeout(() => {
                 menuRef.current.scrollTo({
                     top: menuRef.current.scrollHeight,
                     behavior: 'smooth'
                 });
-            }, 350); // Delay matches animation duration
+            }, 300); // Wait for form animation
         }
     };
 
     // Handle complaint form submission
-    const handleComplaintSubmit = async (formData) => {
+    const handleComplaintSubmit = useCallback((complaintData) => {
         setIsSubmittingComplaint(true);
-        const FORM_ENDPOINT = "https://getform.io/f/bejrwvna"; // User's actual endpoint
-
-        try {
-            const response = await fetch(FORM_ENDPOINT, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Accept": "application/json",
-                },
-                body: JSON.stringify({
-                    ...formData,
-                    userRole: user?.role || "guest", // Add user role to form data
-                    submittedAt: new Date().toISOString() // Add submission timestamp
-                }),
-            });
-
-            if (response.ok) {
-                console.log("Success! Complaint received.");
-                setShowComplaintForm(false); // Close form on success
-            } else {
-                throw new Error(`Failed to submit complaint. Status: ${response.status}`);
-            }
-        } catch (error) {
-            console.error("Error submitting complaint:", error);
-            console.error(`Oops! Something went wrong. Error: ${error.message}`);
-        } finally {
-            setIsSubmittingComplaint(false); // Reset submitting state
-        }
-    };
+        
+        // Prepare WhatsApp message
+        const message = `*COMPLAINT REPORT*\n\n` +
+                       `*Name:* ${complaintData.name}\n` +
+                       `*Email:* ${complaintData.email}\n` +
+                       `*WhatsApp:* ${complaintData.whatsappNumber || 'Not provided'}\n` +
+                       `*Product:* ${complaintData.productPurchased || 'Not specified'}\n` +
+                       `*Purchase Date:* ${complaintData.dateOfPurchase || 'Not specified'}\n\n` +
+                       `*Problem Description:*\n${complaintData.problemDescription}`;
+        
+        const encodedMessage = encodeURIComponent(message);
+        const whatsappURL = `https://wa.me/9779860637648?text=${encodedMessage}`;
+        
+        // Simulate form processing delay
+        setTimeout(() => {
+            window.open(whatsappURL, '_blank');
+            setIsSubmittingComplaint(false);
+            setShowComplaintForm(false);
+            // Optional: Show success message
+        }, 1000);
+    }, []);
 
     // Animation variants for a partial-screen menu drawer
     const menuVariants = {
         open: {
             y: 0,
             opacity: 1,
-            transition: { type: "tween", ease: "circOut", duration: 0.5, staggerChildren: 0.07, delayChildren: 0.2 }
+            scale: 1,
+            transition: { 
+                type: "spring", 
+                stiffness: 300, 
+                damping: 30, 
+                duration: 0.5, 
+                staggerChildren: 0.08, 
+                delayChildren: 0.15 
+            }
         },
         closed: {
-            y: "-120%", // Animate further up to be fully hidden
-            opacity: 0.5,
-            transition: { type: "tween", ease: "circIn", duration: 0.4, when: "afterChildren", staggerChildren: 0.05, staggerDirection: -1 }
+            y: "-100%",
+            opacity: 0,
+            scale: 0.95,
+            transition: { 
+                type: "spring", 
+                stiffness: 400, 
+                damping: 30, 
+                duration: 0.3, 
+                when: "afterChildren", 
+                staggerChildren: 0.04, 
+                staggerDirection: -1 
+            }
         }
     };
 
     // Backdrop variant for overlay effect
     const backdropVariants = {
-        open: { opacity: 1 },
-        closed: { opacity: 0 }
+        open: { opacity: 1, transition: { duration: 0.3 } },
+        closed: { opacity: 0, transition: { duration: 0.2 } }
     };
 
     // Animation variants for individual mobile menu items
     const mobileNavMenuItemVariants = {
-        open: { opacity: 1, x: 0, transition: { type: "spring", stiffness: 300, damping: 20 } },
-        closed: { opacity: 0, x: 40, transition: { duration: 0.2 } }
+        open: { 
+            opacity: 1, 
+            x: 0, 
+            y: 0,
+            transition: { type: "spring", stiffness: 300, damping: 25 } 
+        },
+        closed: { 
+            opacity: 0, 
+            x: 30, 
+            y: -10,
+            transition: { duration: 0.2 } 
+        }
     };
 
     // Determine account link props based on user role
@@ -516,78 +547,104 @@ const Navbar = () => {
                         </div>
                     </div>
 
-                    {/* --- Mobile Navigation (Visible on small screens) --- */}
-                    <div className="md:hidden flex items-center justify-between h-12">
-                        {/* Left: Mobile Menu Button */}
+                    {/* --- Enhanced Mobile Navigation (Visible on small screens) --- */}
+                    <div className="md:hidden flex items-center justify-between h-16 sm:h-18">
+                        {/* Left: Enhanced Mobile Menu Button */}
                         <div className="flex-shrink-0">
                             <motion.button
                                 id="mobile-menu-button"
                                 onClick={toggleMenu}
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
-                                className="relative flex items-center justify-center w-10 h-10 text-gray-300 hover:text-teal-400 focus:outline-none focus-visible:bg-gray-700 rounded-lg bg-gray-700/60 hover:bg-gray-600/80 border border-gray-600/80 hover:border-teal-500/50 transition-all duration-200 z-[60]"
+                                className="relative flex items-center justify-center w-12 h-12 sm:w-13 sm:h-13 text-gray-300 hover:text-teal-400 focus:outline-none focus-visible:bg-gray-700 rounded-xl bg-gray-700/80 hover:bg-gray-600/90 border border-gray-600/90 hover:border-teal-500/70 transition-all duration-300 z-[60] shadow-lg active:scale-90"
                                 aria-label="Toggle menu"
                                 aria-controls="mobile-menu-drawer"
                                 aria-expanded={isMenuOpen}
                             >
-                                <motion.div animate={isMenuOpen ? { rotate: 45 } : { rotate: 0 }} transition={{ duration: 0.2 }}>
-                                    {isMenuOpen ? <FaTimes className="text-xl" /> : <FaBars className="text-xl" />}
+                                <motion.div 
+                                    animate={isMenuOpen ? { rotate: 180 } : { rotate: 0 }} 
+                                    transition={{ duration: 0.3, type: "spring", stiffness: 200 }}
+                                >
+                                    {isMenuOpen ? <FaTimes className="text-xl sm:text-2xl" /> : <FaBars className="text-xl sm:text-2xl" />}
                                 </motion.div>
+                                {/* Menu button glow effect */}
+                                <motion.div
+                                    className="absolute inset-0 rounded-xl bg-teal-400/20 opacity-0"
+                                    animate={isMenuOpen ? { opacity: 1, scale: 1.1 } : { opacity: 0, scale: 1 }}
+                                    transition={{ duration: 0.3 }}
+                                />
                             </motion.button>
                         </div>
 
-                        {/* Center: Mobile Logo */}
-                        <div className="flex-grow flex justify-center items-center overflow-hidden mx-1">
+                        {/* Center: Enhanced Mobile Logo */}
+                        <div className="flex-grow flex justify-center items-center overflow-hidden mx-3">
                             <Link
                                 to="/"
                                 onClick={handleHomeClick}
-                                className="group flex items-center space-x-1.5 p-1 rounded-md hover:bg-gray-700/40 focus:outline-none focus-visible:ring-1 focus-visible:ring-teal-500 transition-colors"
+                                className="group flex items-center space-x-2 sm:space-x-3 p-2 rounded-xl hover:bg-gray-700/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 transition-all duration-200 active:scale-95"
                             >
-                                <img
-                                    src="/img/digital.jpg"
-                                    onError={(e) => { e.target.onerror = null; e.target.src="https://placehold.co/28x28/1A202C/A0AEC0?text=D"; }}
-                                    alt="Logo"
-                                    className="h-7 w-7 rounded-md object-cover border border-teal-600/50 shadow-sm group-hover:border-teal-500 transition-colors flex-shrink-0"
-                                />
+                                <div className="relative">
+                                    <img
+                                        src="/img/digital.jpg"
+                                        onError={(e) => { e.target.onerror = null; e.target.src="https://placehold.co/36x36/1A202C/A0AEC0?text=D"; }}
+                                        alt="Logo"
+                                        className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl object-cover border-2 border-teal-600/60 shadow-lg group-hover:border-teal-500/80 transition-all duration-300 flex-shrink-0"
+                                    />
+                                    <div className="absolute inset-0 rounded-xl bg-gradient-to-tr from-teal-400/20 to-blue-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                </div>
                                 <div className="flex flex-col items-start leading-tight">
-                                    <span className="font-bold text-[10px] sm:text-xs text-teal-400 group-hover:text-teal-300 transition-colors whitespace-nowrap">DIGITAL SHOP</span>
-                                    <span className="text-[8px] sm:text-[10px] text-gray-400 group-hover:text-gray-300 transition-colors whitespace-nowrap">NEPAL</span>
+                                    <span className="font-bold text-xs sm:text-sm text-teal-400 group-hover:text-teal-300 transition-colors whitespace-nowrap">DIGITAL SHOP</span>
+                                    <span className="text-[10px] sm:text-xs text-gray-400 group-hover:text-gray-300 transition-colors whitespace-nowrap">NEPAL</span>
                                 </div>
                             </Link>
                         </div>
 
-                        {/* Right: Account and Cart Icons */}
-                        <div className="flex-shrink-0 flex items-center space-x-1 sm:space-x-2">
+                        {/* Right: Enhanced Account and Cart Icons */}
+                        <div className="flex-shrink-0 flex items-center space-x-2 sm:space-x-3">
+                            {/* Search icon for mobile */}
+                            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                                <Link
+                                    to="/allproduct"
+                                    onClick={closeMobileElements}
+                                    className="flex items-center justify-center w-12 h-12 sm:w-13 sm:h-13 text-gray-300 hover:text-teal-400 focus:outline-none focus-visible:bg-gray-700 rounded-xl bg-gray-700/80 hover:bg-gray-600/90 border border-gray-600/90 hover:border-teal-500/70 transition-all duration-300 shadow-lg active:scale-90"
+                                    aria-label="Search products"
+                                >
+                                    <FaSearch className="text-lg sm:text-xl" />
+                                </Link>
+                            </motion.div>
+                            
                             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                                 <Link
                                     to={accountLinkProps.to}
                                     onClick={closeMobileElements}
-                                    className="flex items-center justify-center w-10 h-10 text-gray-300 hover:text-teal-400 focus:outline-none focus-visible:bg-gray-700 rounded-lg bg-gray-700/60 hover:bg-gray-600/80 border border-gray-600/80 hover:border-teal-500/50 transition-all duration-200"
+                                    className="flex items-center justify-center w-12 h-12 sm:w-13 sm:h-13 text-gray-300 hover:text-teal-400 focus:outline-none focus-visible:bg-gray-700 rounded-xl bg-gray-700/80 hover:bg-gray-600/90 border border-gray-600/90 hover:border-teal-500/70 transition-all duration-300 shadow-lg active:scale-90"
                                     aria-label={accountLinkProps.label}
                                 >
-                                    {accountLinkProps.icon}
+                                    {React.cloneElement(accountLinkProps.icon, { className: "text-lg sm:text-xl" })}
                                 </Link>
                             </motion.div>
-                            <CartLink count={cartItems.length} isMobile={true} />
+                            <div className="relative">
+                                <CartLink count={cartItems.length} isMobile={true} />
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Mobile Menu Drawer */}
+                {/* Enhanced Mobile Menu Drawer */}
                 <AnimatePresence>
                     {isMenuOpen && (
                         <>
-                            {/* Backdrop Overlay */}
+                            {/* Enhanced Backdrop Overlay */}
                             <motion.div
                                 variants={backdropVariants}
                                 initial="closed"
                                 animate="open"
                                 exit="closed"
                                 onClick={toggleMenu}
-                                className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden"
+                                className="fixed inset-0 bg-black/60 backdrop-blur-md z-40 md:hidden"
                             />
 
-                            {/* Menu Drawer */}
+                            {/* Enhanced Menu Drawer */}
                             <motion.div
                                 id="mobile-menu-drawer"
                                 ref={menuRef}
@@ -595,30 +652,44 @@ const Navbar = () => {
                                 initial="closed"
                                 animate="open"
                                 exit="closed"
-                                className="fixed top-20 left-5 right-5 max-h-[80vh] bg-gray-900/90 backdrop-blur-lg border border-teal-400/20 shadow-2xl rounded-2xl z-50 flex flex-col md:hidden"
+                                className="fixed top-24 sm:top-28 left-4 right-4 max-h-[82vh] bg-gray-900/95 backdrop-blur-xl border border-teal-400/30 shadow-2xl rounded-3xl z-50 flex flex-col md:hidden overflow-hidden"
+                                style={{
+                                    boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(20, 184, 166, 0.1)"
+                                }}
                             >
-                                {/* Grab Handle */}
-                                <div className="p-2 flex-shrink-0">
-                                    <div className="w-10 h-1.5 bg-gray-700 rounded-full mx-auto"></div>
+                                {/* Enhanced Grab Handle */}
+                                <div className="p-3 flex-shrink-0">
+                                    <motion.div 
+                                        className="w-12 h-2 bg-gray-600 rounded-full mx-auto"
+                                        initial={{ scaleX: 0.5, opacity: 0.5 }}
+                                        animate={{ scaleX: 1, opacity: 1 }}
+                                        transition={{ delay: 0.2, duration: 0.3 }}
+                                    />
                                 </div>
 
-                                {/* User Profile Section (if user is logged in) */}
+                                {/* Enhanced User Profile Section (if user is logged in) */}
                                 {user && (
-                                    <motion.div variants={mobileNavMenuItemVariants} className="px-4 pt-2 pb-4 border-b border-gray-700 bg-gradient-to-r from-gray-800/20 to-gray-800/10 flex-shrink-0">
+                                    <motion.div 
+                                        variants={mobileNavMenuItemVariants} 
+                                        className="px-6 pt-3 pb-5 border-b border-gray-700/50 bg-gradient-to-r from-gray-800/30 to-gray-800/20 flex-shrink-0 mx-4 rounded-2xl mb-2"
+                                    >
                                         <div className="flex items-center">
-                                            <div className="bg-teal-600 rounded-full p-2.5 mr-3 shadow-md">
-                                                {user.role === 'admin' ? <FaUserShield className="text-white text-lg" /> : <FaUser className="text-white text-lg" />}
+                                            <div className="bg-gradient-to-r from-teal-600 to-blue-600 rounded-2xl p-3 mr-4 shadow-lg">
+                                                {user.role === 'admin' ? <FaUserShield className="text-white text-xl" /> : <FaUser className="text-white text-xl" />}
                                             </div>
-                                            <div>
-                                                <h4 className="text-white font-semibold text-sm truncate">{user.name}</h4>
-                                                <p className="text-gray-300 text-xs truncate">{user.email}</p>
+                                            <div className="flex-1 min-w-0">
+                                                <h4 className="text-white font-bold text-base truncate">{user.name}</h4>
+                                                <p className="text-gray-300 text-sm truncate">{user.email}</p>
+                                                <span className="inline-block px-2 py-1 mt-1 text-xs font-medium text-teal-400 bg-teal-400/10 rounded-lg border border-teal-400/20">
+                                                    {user.role === 'admin' ? 'Administrator' : 'Member'}
+                                                </span>
                                             </div>
                                         </div>
                                     </motion.div>
                                 )}
 
-                                {/* Scrollable Content Area */}
-                                <div className="flex-1 overflow-y-auto py-3 space-y-1 px-2">
+                                {/* Enhanced Scrollable Content Area */}
+                                <div className="flex-1 overflow-y-auto py-4 space-y-2 px-4">
                                     {/* Main Links */}
                                     <motion.div variants={mobileNavMenuItemVariants}>
                                         <MobileNavLink to="/" icon={<FaHome />} text="Home" onClick={toggleMenu} />
@@ -633,14 +704,22 @@ const Navbar = () => {
                                         <MobileNavLink to="/ContactUs" icon={<FaEnvelope />} text="Contact Us" onClick={toggleMenu} />
                                     </motion.div>
 
-                                    {/* Divider */}
-                                    <div className="pt-3 pb-1 px-2">
-                                        <hr className="border-t border-gray-700" />
-                                    </div>
+                                    {/* Enhanced Divider */}
+                                    <motion.div 
+                                        variants={mobileNavMenuItemVariants}
+                                        className="pt-4 pb-2 px-3"
+                                    >
+                                        <div className="border-t border-gray-700/60"></div>
+                                    </motion.div>
 
-                                    {/* Account Section */}
-                                    <div className="px-2 pb-2 pt-2">
-                                        <h4 className="text-gray-500 uppercase text-xs font-bold tracking-wider mb-2 ml-2">Account</h4>
+                                    {/* Enhanced Account Section */}
+                                    <div className="px-3 pb-3 pt-2">
+                                        <motion.h4 
+                                            variants={mobileNavMenuItemVariants}
+                                            className="text-gray-400 uppercase text-xs font-bold tracking-wider mb-3 ml-3"
+                                        >
+                                            Account
+                                        </motion.h4>
                                         {!user ? (
                                             <>
                                                 <motion.div variants={mobileNavMenuItemVariants}>
@@ -665,48 +744,61 @@ const Navbar = () => {
                                                 <motion.div variants={mobileNavMenuItemVariants}>
                                                     <button
                                                         onClick={() => { logout(); toggleMenu(); }}
-                                                        className="group flex items-center justify-between w-full px-5 py-4 text-left text-gray-200 hover:bg-gradient-to-r hover:from-gray-800/80 hover:to-gray-700/60 rounded-2xl transition-all duration-300 focus:outline-none focus-visible:bg-gray-800 focus-visible:ring-2 focus:focus-visible:ring-teal-500 border border-transparent hover:border-teal-400/10 backdrop-blur-sm"
+                                                        className="group flex items-center justify-between w-full px-6 py-5 text-left text-gray-200 hover:bg-gradient-to-r hover:from-red-500/20 hover:to-red-600/20 rounded-2xl transition-all duration-300 focus:outline-none focus-visible:bg-red-500/10 focus-visible:ring-2 focus-visible:ring-red-500 border border-transparent hover:border-red-400/20 backdrop-blur-sm active:scale-95"
                                                     >
                                                         <div className="flex items-center">
-                                                            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-red-400/10 group-hover:bg-red-400/20 transition-colors duration-300 mr-4">
-                                                                <span className="text-red-400 text-lg group-hover:scale-110 transition-transform duration-200"><FaSignInAlt className="rotate-180" /></span>
+                                                            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-red-400/10 group-hover:bg-red-400/20 transition-colors duration-300 mr-4 shadow-sm">
+                                                                <span className="text-red-400 text-xl group-hover:scale-110 transition-transform duration-200"><FaSignInAlt className="rotate-180" /></span>
                                                             </div>
-                                                            <span className="font-medium text-sm group-hover:text-white transition-colors duration-200">Logout</span>
+                                                            <span className="font-medium text-base group-hover:text-white transition-colors duration-200">Logout</span>
                                                         </div>
-                                                        <FaChevronRight className="text-gray-500 text-xs group-hover:text-red-400 group-hover:translate-x-1 transition-all duration-200" />
+                                                        <FaChevronRight className="text-gray-500 text-sm group-hover:text-red-400 group-hover:translate-x-1 transition-all duration-200" />
                                                     </button>
                                                 </motion.div>
                                             </>
                                         )}
                                     </div>
 
-                                    {/* Divider */}
-                                    <div className="pt-3 pb-1 px-2">
-                                        <hr className="border-t border-gray-700" />
-                                    </div>
+                                    {/* Enhanced Divider */}
+                                    <motion.div 
+                                        variants={mobileNavMenuItemVariants}
+                                        className="pt-4 pb-2 px-3"
+                                    >
+                                        <div className="border-t border-gray-700/60"></div>
+                                    </motion.div>
 
-                                    {/* Help Section */}
-                                    <div className="px-2 pt-2 pb-4">
-                                        <h4 className="text-gray-500 uppercase text-xs font-bold tracking-wider mb-3 ml-2">Help & Support</h4>
-                                        <motion.div variants={mobileNavMenuItemVariants} className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
-                                            <div className="flex items-start mb-3">
-                                                <FaQuestionCircle className="text-teal-400 mr-2.5 mt-0.5 text-lg flex-shrink-0" />
-                                                <div>
-                                                    <h3 className="text-white font-medium text-sm">Need Help?</h3>
-                                                    <p className="text-gray-300 text-xs mt-1">
-                                                        Having issues with a product or order? Report it here.
+                                    {/* Enhanced Help Section */}
+                                    <div className="px-3 pt-2 pb-6">
+                                        <motion.h4 
+                                            variants={mobileNavMenuItemVariants}
+                                            className="text-gray-400 uppercase text-xs font-bold tracking-wider mb-4 ml-3"
+                                        >
+                                            Help & Support
+                                        </motion.h4>
+                                        <motion.div 
+                                            variants={mobileNavMenuItemVariants} 
+                                            className="bg-gradient-to-br from-gray-800/60 to-gray-800/40 rounded-2xl p-5 border border-gray-700/50 shadow-lg"
+                                        >
+                                            <div className="flex items-start mb-4">
+                                                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-teal-400/10 mr-3 flex-shrink-0">
+                                                    <FaQuestionCircle className="text-teal-400 text-lg" />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <h3 className="text-white font-semibold text-base mb-1">Need Help?</h3>
+                                                    <p className="text-gray-300 text-sm leading-relaxed">
+                                                        Having issues with a product or order? Report it here and we'll help you.
                                                     </p>
                                                 </div>
-                                            </div >
+                                            </div>
                                             <motion.button
                                                 onClick={toggleComplaintFormVisibility}
-                                                whileHover={{ scale: 1.03 }}
-                                                whileTap={{ scale: 0.97 }}
-                                                className="w-full bg-gradient-to-r from-teal-600 to-blue-700 hover:from-teal-700 hover:to-blue-800 text-white py-2 px-4 rounded-lg text-xs font-semibold transition-all shadow-md flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-800 focus-visible:ring-teal-500"
+                                                whileHover={{ scale: 1.02 }}
+                                                whileTap={{ scale: 0.98 }}
+                                                className="w-full bg-gradient-to-r from-teal-600 to-blue-700 hover:from-teal-700 hover:to-blue-800 text-white py-3 px-5 rounded-xl text-sm font-bold transition-all shadow-lg flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-800 focus-visible:ring-teal-500 active:scale-95"
                                                 aria-expanded={showComplaintForm}
                                                 aria-controls="complaint-form-section"
                                             >
-                                                <FaInfoCircle className="mr-1.5" />
+                                                <FaInfoCircle className="mr-2" />
                                                 {showComplaintForm ? 'Close Support Form' : 'Report an Issue'}
                                             </motion.button>
 
@@ -724,10 +816,17 @@ const Navbar = () => {
                                     </div>
                                 </div>
 
-                                {/* Menu Footer */}
-                                <div className="px-4 py-3 border-t border-gray-700 text-center text-gray-500 text-xs flex-shrink-0">
-                                    © {new Date().getFullYear()} Digital Shop Nepal
-                                </div>
+                                {/* Enhanced Menu Footer */}
+                                <motion.div 
+                                    variants={mobileNavMenuItemVariants}
+                                    className="px-6 py-4 border-t border-gray-700/50 text-center text-gray-400 text-xs flex-shrink-0 bg-gray-800/20"
+                                >
+                                    <div className="flex items-center justify-center space-x-2">
+                                        <span>© {new Date().getFullYear()}</span>
+                                        <span className="w-1 h-1 bg-gray-600 rounded-full"></span>
+                                        <span className="font-medium text-teal-400">Digital Shop Nepal</span>
+                                    </div>
+                                </motion.div>
                             </motion.div>
                         </>
                     )}

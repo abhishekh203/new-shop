@@ -78,9 +78,7 @@ const PerformanceOptimizer = () => {
             const loadTime = perfData.loadEventEnd - perfData.loadEventStart;
             
             // Log performance metrics (in production, send to analytics)
-            console.log('Page Load Time:', loadTime);
-            console.log('DOM Content Loaded:', perfData.domContentLoadedEventEnd - perfData.domContentLoadedEventStart);
-            console.log('First Paint:', performance.getEntriesByType('paint')[0]?.startTime);
+            // Performance metrics can be sent to analytics service here
           }, 0);
         });
       }
@@ -92,10 +90,10 @@ const PerformanceOptimizer = () => {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('/sw.js')
             .then(registration => {
-              console.log('SW registered: ', registration);
+              // Service worker registered successfully
             })
             .catch(registrationError => {
-              console.log('SW registration failed: ', registrationError);
+                              // Service worker registration failed
             });
         });
       }

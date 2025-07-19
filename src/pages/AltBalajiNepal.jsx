@@ -18,13 +18,20 @@ import {
 } from '@mui/icons-material';
 import { Helmet, HelmetProvider } from 'react-helmet-async';
 import Layout from "../components/layout/Layout";
+import SEOHelmet from "../components/SEO/SEOHelmet";
+import OptimizedImage from "../components/SEO/OptimizedImage";
 import Nepal from "./nepal";
+import { nepalSEOKeywords, generateNepalMetaDescription, generateNepalTitle, generateNepalProductSchema } from "../utils/nepalSEOKeywords";
 
 const AltBalajiNepal = () => {
+    // Dynamic Nepal SEO using the utility functions
+    const serviceName = "AltBalaji";
+    const seoFeatures = ["Indian web series", "Original content", "HD streaming", "No VPN required"];
+    
     const meta = {
-        title: "AltBalaji Nepal - Watch Indian Web Series & Movies Online",
-        description: "Stream AltBalaji original web series and movies in Nepal. Enjoy exclusive Indian content without VPN. Available on all devices with premium quality.",
-        keywords: "AltBalaji Nepal, altbalaji premium nepal, AltBalaji subscription nepal, buy altbalaji premium nepal, how to buy altbalaji in nepal, Watch AltBalaji Nepal, Stream AltBalaji Nepal, Indian web series Nepal, VPN Free AltBalaji, Purchase AltBalaji in Nepal, AltBalaji Nepal subscription, Streaming Indian content in Nepal",
+        title: generateNepalTitle(serviceName, "subscription"),
+        description: generateNepalMetaDescription("altBalaji", seoFeatures),
+        keywords: nepalSEOKeywords.altBalaji.join(", "),
         canonical: "https://www.digitalshopnepal.com/AltBalajiNepal"
     };
 
@@ -62,15 +69,27 @@ const AltBalajiNepal = () => {
         "Contact support for any account-related issues"
     ];
 
+    // Generate dynamic structured data using Nepal SEO utilities
+    const altBalajiStructuredData = generateNepalProductSchema(serviceName, "199", "NPR");
+
+    const breadcrumbs = [
+        { name: "Home", url: "/" },
+        { name: "Subscriptions", url: "/subscription" },
+        { name: "AltBalaji Nepal", url: "/AltBalajiNepal", isLast: true }
+    ];
+
     return (
         <HelmetProvider>
-            <Layout>
-                <Helmet>
-                    <title>{meta.title}</title>
-                    <meta name="description" content={meta.description} />
-                    <meta name="keywords" content={meta.keywords} />
-                    <link rel="canonical" href={meta.canonical} />
-                </Helmet>
+            <SEOHelmet
+                title={meta.title}
+                description={meta.description}
+                keywords={meta.keywords}
+                canonical={meta.canonical}
+                structuredData={altBalajiStructuredData}
+                breadcrumbs={breadcrumbs}
+                ogType="product"
+            />
+            <Layout showBreadcrumb={true} customBreadcrumbs={breadcrumbs}>
 
                 <motion.div 
                     initial={{ opacity: 0 }}

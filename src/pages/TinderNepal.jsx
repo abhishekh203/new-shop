@@ -2,27 +2,46 @@ import React from "react";
 import { Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'; // Importing icons for lists
-import { Helmet, HelmetProvider } from 'react-helmet-async'; // Import HelmetProvider and Helmet
-import Layout from "../components/layout/Layout"; // Import Layout component
+import { Helmet, HelmetProvider } from 'react-helmet-async';
+import Layout from "../components/layout/Layout";
+import SEOHelmet from "../components/SEO/SEOHelmet";
+import OptimizedImage from "../components/SEO/OptimizedImage";
 import Nepal from "./nepal";
+import { nepalSEOKeywords, generateNepalMetaDescription, generateNepalTitle, generateNepalProductSchema } from "../utils/nepalSEOKeywords";
 
 const TinderNepal = () => {
+    // Dynamic Nepal SEO using the utility functions
+    const serviceName = "Tinder";
+    const seoFeatures = ["Dating app", "Meet people", "Online dating", "Find matches"];
+    
     const meta = {
-        title: "Tinder Nepal - Meet New People & Make Connections",
-        description: "Meet new people nearby or around Nepal with Tinder. Chat, connect, and date with ease. Sign up today and start swiping in Nepal.",
-        keywords: "Tinder Nepal, Meet People in Nepal, Dating Nepal, Online Dating Nepal, Tinder in Nepal, Swipe Right Nepal, Meet Singles Nepal, Tinder Subscription Nepal, Tinder Premium Nepal, Find Matches in Nepal",
-        canonical: "https://www.digitalshopnepal.com/TinderNepal" // Update this with the actual URL of your page
+        title: generateNepalTitle(serviceName, "subscription"),
+        description: generateNepalMetaDescription("tinder", seoFeatures),
+        keywords: nepalSEOKeywords.tinder.join(", "),
+        canonical: "https://www.digitalshopnepal.com/TinderNepal"
     };
+
+    // Generate dynamic structured data using Nepal SEO utilities
+    const tinderStructuredData = generateNepalProductSchema(serviceName, "999", "NPR");
+
+    const breadcrumbs = [
+        { name: "Home", url: "/" },
+        { name: "Subscriptions", url: "/subscription" },
+        { name: "Tinder Nepal", url: "/TinderNepal", isLast: true }
+    ];
 
     return (
         <HelmetProvider>
-            <Layout>
-                <Helmet>
-                    <title>{meta.title}</title>
-                    <meta name="description" content={meta.description} />
-                    <meta name="keywords" content={meta.keywords} />
-                    <link rel="canonical" href={meta.canonical} /> {/* Add canonical link */}
-                </Helmet>
+            <SEOHelmet
+                title={meta.title}
+                description={meta.description}
+                keywords={meta.keywords}
+                canonical={meta.canonical}
+                structuredData={tinderStructuredData}
+                breadcrumbs={breadcrumbs}
+                ogType="product"
+            />
+            <Layout showBreadcrumb={true} customBreadcrumbs={breadcrumbs}>
 
                 <div className="min-h-screen bg-gradient-to-b from-black via-red-900 to-black p-8 text-white relative">
                     {/* Content Section */}

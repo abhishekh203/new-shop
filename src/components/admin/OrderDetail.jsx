@@ -1,10 +1,10 @@
 import React, { useContext, useState, useEffect, useMemo } from "react";
 import myContext from "../../context/myContext"; // Assuming context path is correct
 import Loader from "../loader/Loader"; // Assuming Loader path is correct
-import { deleteDoc, doc } from "firebase/firestore";
+import { deleteDoc, doc, updateDoc } from "firebase/firestore";
 import { fireDB } from "../../firebase/FirebaseConfig"; // Assuming Firebase config path is correct
 import toast from "react-hot-toast"; // Using react-hot-toast
-import { FiTrash2, FiEdit, FiSearch, FiFilter, FiChevronDown, FiChevronUp, FiX, FiPackage, FiUser, FiMapPin, FiCalendar, FiHash, FiDollarSign, FiAlertCircle, FiInfo } from "react-icons/fi"; // Added relevant icons
+import { FiTrash2, FiEdit, FiSearch, FiFilter, FiChevronDown, FiChevronUp, FiX, FiPackage, FiUser, FiMapPin, FiCalendar, FiHash, FiDollarSign, FiAlertCircle, FiInfo, FiMaximize2, FiUpload, FiCamera } from "react-icons/fi"; // Added FiUpload, FiCamera
 import { format } from "date-fns"; // For date formatting
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -58,9 +58,9 @@ const formatDate = (dateInput) => {
 
 const formatPrice = (price) => {
     const numericPrice = Number(price || 0);
-    return new Intl.NumberFormat('en-IN', {
-        style: 'currency', currency: 'INR', minimumFractionDigits: 0, maximumFractionDigits: 2
-    }).format(numericPrice).replace('₹', '₹ ');
+    return new Intl.NumberFormat('en-NP', {
+        style: 'currency', currency: 'NPR', minimumFractionDigits: 0, maximumFractionDigits: 2
+    }).format(numericPrice).replace('रु', 'रु ');
 };
 
 const getStatusColorClasses = (status) => {
@@ -87,18 +87,47 @@ const OrderDetail = () => {
     const [dateFilter, setDateFilter] = useState({ startDate: "", endDate: "" });
     const [searchQuery, setSearchQuery] = useState("");
     const [showFilters, setShowFilters] = useState(false); // Unified filter toggle
+    const [imageViewer, setImageViewer] = useState({ isOpen: false, imageSrc: null, imageAlt: "" }); // Image viewer modal
 
     // Toggle order details expansion
     const toggleExpand = (orderId) => {
         setExpandedOrder(expandedOrder === orderId ? null : orderId);
     };
 
-    // Handle status change (UI update only, add API call if needed)
-    const handleStatusChange = (orderId, status) => {
-        setSelectedStatus(prev => ({ ...prev, [orderId]: status }));
-        // Placeholder: Add API call here to update order status in Firestore
-        // e.g., updateOrderStatus(orderId, status).then(() => toast.success(...)).catch(() => toast.error(...))
-        toast.info(`Status for order ${orderId.slice(0, 6)} changed to ${status} (UI only)`);
+    // Handle image enlargement
+    const handleImageEnlarge = (imageSrc, imageAlt) => {
+        setImageViewer({ isOpen: true, imageSrc, imageAlt });
+    };
+
+    // Close image viewer
+    const closeImageViewer = () => {
+        setImageViewer({ isOpen: false, imageSrc: null, imageAlt: "" });
+    };
+
+    // Handle status change with Firebase update
+    const handleStatusChange = async (orderId, status) => {
+        try {
+            setLoading(true);
+            
+            // Update in Firebase
+            const orderRef = doc(fireDB, "order", orderId);
+            await updateDoc(orderRef, { status: status });
+            
+            // Update local state
+            setSelectedStatus(prev => ({ ...prev, [orderId]: status }));
+            
+            // Show success message
+            toast.success(`Order status updated to ${status}`);
+            
+            // Refresh orders from context (if needed)
+            // You might need to call a refresh function from context here
+            
+        } catch (error) {
+            console.error("Error updating order status:", error);
+            toast.error("Failed to update order status");
+        } finally {
+            setLoading(false);
+        }
     };
 
     // Delete order function with confirmation toast
@@ -342,8 +371,9 @@ const OrderDetail = () => {
                                                                                 <p className="text-gray-300">{order.addressInfo.name}</p>
                                                                                 <p className="text-gray-300">{order.email}</p>
                                                                                 <p className="text-gray-300">{order.addressInfo.mobileNumber}</p>
+                                                                                <p className="text-gray-300">{order.addressInfo.whatsappNumber}</p>
                                                                                 <p className="font-semibold text-gray-400 uppercase tracking-wider mt-2 flex items-center gap-1.5"><FiMapPin size={12}/>Address</p>
-                                                                                <p className="text-gray-300">{order.addressInfo.address}, {order.addressInfo.pincode}, {order.addressInfo.country}</p>
+                                                                                <p className="text-gray-300">{order.addressInfo.address}, {order.addressInfo.country}</p>
                                                                             </div>
                                                                             {/* Order Items */}
                                                                             <div className="space-y-2 md:col-span-2">
@@ -360,7 +390,57 @@ const OrderDetail = () => {
                                                                                         </div>
                                                                                     ))}
                                                                                 </div>
-                                                                                 {/* Status Update Dropdown */}
+                                                                                
+                                                                                {/* Payment Information */}
+                                                                                {(order.paymentMethod || order.paymentStatus || order.paymentScreenshot) ? (
+                                                                                    <div className="mt-3 p-3 bg-gray-700/30 rounded-lg border border-gray-600/50">
+                                                                                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Payment Information</p>
+                                                                                        <div className="space-y-2">
+                                                                                            {order.paymentMethod && (
+                                                                                                <div className="flex justify-between items-center text-xs">
+                                                                                                    <span className="text-gray-400">Method:</span>
+                                                                                                    <span className="text-gray-300 font-medium">{order.paymentMethod}</span>
+                                                                                                </div>
+                                                                                            )}
+                                                                                            {order.paymentStatus && (
+                                                                                                <div className="flex justify-between items-center text-xs">
+                                                                                                    <span className="text-gray-400">Status:</span>
+                                                                                                    <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                                                                                        order.paymentStatus === 'completed' 
+                                                                                                            ? 'bg-green-500/20 text-green-400' 
+                                                                                                            : 'bg-yellow-500/20 text-yellow-400'
+                                                                                                    }`}>
+                                                                                                        {order.paymentStatus}
+                                                                                                    </span>
+                                                                                                </div>
+                                                                                            )}
+                                                                                            {order.paymentScreenshot && (
+                                                                                                <div className="mt-3">
+                                                                                                    <p className="text-xs text-gray-400 mb-2">Payment Screenshot:</p>
+                                                                                                    <div className="relative">
+                                                                                                        <img 
+                                                                                                            src={order.paymentScreenshot} 
+                                                                                                            alt="Payment Screenshot" 
+                                                                                                            className="max-w-full h-auto max-h-32 rounded border border-gray-600 cursor-pointer hover:opacity-90 transition-opacity"
+                                                                                                            onClick={() => handleImageEnlarge(order.paymentScreenshot, "Payment Screenshot")}
+                                                                                                        />
+                                                                                                        <div className="absolute top-1 right-1 bg-black/50 text-white text-xs px-1 py-0.5 rounded text-[10px] flex items-center gap-1">
+                                                                                                            <FiMaximize2 size={10} />
+                                                                                                            Click to enlarge
+                                                                                                        </div>
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                            )}
+                                                                                        </div>
+                                                                                    </div>
+                                                                                ) : (
+                                                                                    <div className="mt-3 p-3 bg-gray-700/20 rounded-lg border border-gray-600/30">
+                                                                                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Payment Information</p>
+                                                                                        <p className="text-xs text-gray-500 italic">No payment information available</p>
+                                                                                    </div>
+                                                                                )}
+                                                                                
+                                                                                {/* Status Update Dropdown */}
                                                                                 <div className="pt-2 border-t border-gray-700/50">
                                                                                     <label htmlFor={`status-${order.id}`} className="block text-[10px] font-semibold text-gray-400 uppercase mb-1">Update Status</label>
                                                                                     <select
@@ -452,7 +532,55 @@ const OrderDetail = () => {
                                                         <div className="grid grid-cols-2 gap-x-3 gap-y-1 mb-3">
                                                             <div><p className="font-semibold text-gray-500 uppercase text-[10px]">Customer</p> <p className="text-gray-300 truncate">{order.addressInfo.name}</p></div>
                                                             <div><p className="font-semibold text-gray-500 uppercase text-[10px]">Phone</p> <p className="text-gray-300">{order.addressInfo.mobileNumber}</p></div>
-                                                            <div className="col-span-2"><p className="font-semibold text-gray-500 uppercase text-[10px]">Address</p> <p className="text-gray-300">{order.addressInfo.address}, {order.addressInfo.pincode}</p></div>
+                                                            <div><p className="font-semibold text-gray-500 uppercase text-[10px]">WhatsApp</p> <p className="text-gray-300">{order.addressInfo.whatsappNumber}</p></div>
+                                                            <div className="col-span-2"><p className="font-semibold text-gray-500 uppercase text-[10px]">Address</p> <p className="text-gray-300">{order.addressInfo.address}, {order.addressInfo.country}</p></div>
+                                                        </div>
+                                                        
+                                                        {/* Payment Information - Mobile */}
+                                                        <div className="mb-3">
+                                                            <p className="font-semibold text-gray-500 uppercase text-[10px] mb-1">Payment</p>
+                                                            <div className="bg-gray-700/50 p-2 rounded space-y-1">
+                                                                <div className="flex justify-between items-center text-xs">
+                                                                    <span className="text-gray-400">Method:</span>
+                                                                    <span className="text-gray-300 font-medium">
+                                                                        {order.paymentMethod || 'Not specified'}
+                                                                    </span>
+                                                                </div>
+                                                                <div className="flex justify-between items-center text-xs">
+                                                                    <span className="text-gray-400">Status:</span>
+                                                                    <span className={`px-1 py-0.5 rounded text-xs font-medium ${
+                                                                        order.paymentStatus === 'completed' 
+                                                                            ? 'bg-green-500/20 text-green-400' 
+                                                                            : order.paymentStatus
+                                                                                ? 'bg-yellow-500/20 text-yellow-400'
+                                                                                : 'bg-gray-500/20 text-gray-400'
+                                                                    }`}>
+                                                                        {order.paymentStatus || 'Not specified'}
+                                                                    </span>
+                                                                </div>
+                                                                {order.paymentScreenshot ? (
+                                                                    <div className="mt-2">
+                                                                        <p className="text-xs text-gray-400 mb-1">Screenshot:</p>
+                                                                        <div className="relative">
+                                                                            <img 
+                                                                                src={order.paymentScreenshot} 
+                                                                                alt="Payment Screenshot" 
+                                                                                className="max-w-full h-auto max-h-24 rounded border border-gray-600 cursor-pointer hover:opacity-90 transition-opacity"
+                                                                                onClick={() => handleImageEnlarge(order.paymentScreenshot, "Payment Screenshot")}
+                                                                            />
+                                                                            <div className="absolute top-1 right-1 bg-black/50 text-white text-xs px-1 py-0.5 rounded text-[10px] flex items-center gap-1">
+                                                                                <FiMaximize2 size={10} />
+                                                                                Tap to enlarge
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                ) : (
+                                                                    <div className="mt-2">
+                                                                        <p className="text-xs text-gray-400 mb-1">Screenshot:</p>
+                                                                        <p className="text-xs text-gray-500 italic">No screenshot uploaded</p>
+                                                                    </div>
+                                                                )}
+                                                            </div>
                                                         </div>
                                                         {/* Status Update */}
                                                          <div>
@@ -495,6 +623,26 @@ const OrderDetail = () => {
                     </div>
                 </div>
             </motion.div>
+
+            {/* Image Viewer Modal */}
+            <AnimatePresence>
+                {imageViewer.isOpen && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/90"
+                        onClick={closeImageViewer}
+                    >
+                        <motion.img
+                            src={imageViewer.imageSrc}
+                            alt={imageViewer.imageAlt}
+                            className="max-w-full max-h-full object-contain"
+                            onClick={(e) => e.stopPropagation()}
+                        />
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };

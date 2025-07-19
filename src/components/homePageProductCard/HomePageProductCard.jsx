@@ -39,7 +39,7 @@ const HomePageProductCard = () => {
   const [expandedCategories, setExpandedCategories] = useState({});
   const [sortOrder, setSortOrder] = useState("default");
   const [showSortOptions, setShowSortOptions] = useState(false);
-  const [showMobileFilters, setShowMobileFilters] = useState(false);
+
   const controls = useAnimation();
 
   // Define categories
@@ -63,6 +63,30 @@ const HomePageProductCard = () => {
     { id: "price-high", name: "Price: High to Low", icon: <FaSortAmountUpAlt /> },
     { id: "newest", name: "Newest First", icon: <BsLightningChargeFill /> }
   ];
+
+  // Get user from localStorage
+  const user = JSON.parse(localStorage.getItem('users'));
+
+  // Load wishlist from localStorage
+  useEffect(() => {
+    if (user?.uid) {
+      const savedFavorites = localStorage.getItem(`favorites_${user.uid}`);
+      if (savedFavorites) {
+        try {
+          setWishlist(JSON.parse(savedFavorites));
+        } catch (e) {
+          console.error("Failed to parse favorites from localStorage");
+        }
+      }
+    }
+  }, [user?.uid]);
+
+  // Save wishlist to localStorage whenever it changes
+  useEffect(() => {
+    if (user?.uid) {
+      localStorage.setItem(`favorites_${user.uid}`, JSON.stringify(wishlist));
+    }
+  }, [wishlist, user?.uid]);
 
   // Categorize and sort products
   const categorizeAndSortProducts = useCallback((products, sortType = "default") => {
@@ -100,7 +124,7 @@ const HomePageProductCard = () => {
 
   // Initialize products
   useEffect(() => {
-    if (getAllProduct.length > 0) {
+    if (getAllProduct?.length > 0) {
       const sortedAndCategorized = categorizeAndSortProducts(getAllProduct, sortOrder);
       setDisplayProducts(sortedAndCategorized);
       
@@ -116,24 +140,27 @@ const HomePageProductCard = () => {
   // Handle responsive layout
   useEffect(() => {
     const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
+      const isMobileView = window.innerWidth < 768;
+      setIsMobile(isMobileView);
+      
+      // On mobile, always show all products (no category filtering) and use default sort
+      if (isMobileView) {
+        setActiveCategory("all");
+        setSortOrder("default");
+      }
     };
 
+    handleResize(); // Call once on mount
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
-
-  // Sync cart with localStorage
-  useEffect(() => {
-    localStorage.setItem("cart", JSON.stringify(cartItems));
-  }, [cartItems]);
 
   // Filter products based on search term
   useEffect(() => {
     setIsSearching(true);
     const timer = setTimeout(() => {
-      const filtered = getAllProduct.filter(product =>
-        product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      const filtered = (getAllProduct || []).filter(product =>
+        product.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (product.category?.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (product.description?.toLowerCase().includes(searchTerm.toLowerCase()))
       );
@@ -152,7 +179,6 @@ const HomePageProductCard = () => {
   const handleSortChange = (sortType) => {
     setSortOrder(sortType);
     setShowSortOptions(false);
-    setShowMobileFilters(false);
     
     toast.success(`Sorted by ${sortOptions.find(o => o.id === sortType)?.name || 'default'}`, {
       icon: sortType === "price-high" ? <FaSortAmountUpAlt /> : 
@@ -196,6 +222,11 @@ const HomePageProductCard = () => {
 
   // Toggle wishlist item with animation
   const toggleWishlist = async (productId) => {
+    if (!user?.uid) {
+      toast.error("Please log in to save items to your wishlist");
+      return;
+    }
+
     setWishlist(prev => {
       const newWishlist = prev.includes(productId) 
         ? prev.filter(id => id !== productId) 
@@ -312,8 +343,6 @@ const HomePageProductCard = () => {
     }
   };
 
-
-
   const imageHoverVariants = {
     rest: { scale: 1 },
     hover: { scale: 1.05 }
@@ -356,29 +385,7 @@ const HomePageProductCard = () => {
     hover: { backgroundColor: "rgba(31, 41, 55, 0.8)" }
   };
 
-  const mobileFilterVariants = {
-    hidden: { 
-      opacity: 0,
-      y: -20,
-      transition: {
-        duration: 0.3
-      }
-    },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.3,
-        staggerChildren: 0.1,
-        when: "beforeChildren"
-      }
-    }
-  };
 
-  const filterItemVariants = {
-    hidden: { opacity: 0, x: -10 },
-    visible: { opacity: 1, x: 0 }
-  };
 
   // Determine which products to show based on search
   const productsToShow = searchTerm ? filteredProducts : displayProducts;
@@ -421,103 +428,117 @@ const HomePageProductCard = () => {
   );
 
   return (
-    <div className="bg-black min-h-screen px-4 sm:px-6 lg:px-8 py-16 relative overflow-hidden">
-      {/* Modern Background Pattern */}
-      <div className="absolute inset-0 opacity-3">
+    <section className="py-8 lg:py-16 bg-gradient-to-b from-gray-900 to-black relative overflow-hidden">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 opacity-5">
         <div className="absolute inset-0" style={{
-          backgroundImage: `radial-gradient(circle at 25% 25%, #1f2937 0%, transparent 50%),
-                           radial-gradient(circle at 75% 75%, #374151 0%, transparent 50%)`,
-          backgroundSize: '150px 150px'
+          backgroundImage: `radial-gradient(circle at 25% 25%, #3b82f6 0%, transparent 50%),
+                           radial-gradient(circle at 75% 75%, #06b6d4 0%, transparent 50%)`,
+          backgroundSize: '100px 100px'
         }}></div>
       </div>
 
-      {/* Enhanced Header Section */}
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        {/* Enhanced Section Header */}
       <motion.div
         initial={{ opacity: 0, y: -30 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8 }}
-        className="relative z-10 mb-16"
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="text-center mb-12 lg:mb-16"
       >
+          <motion.h2
+            className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 tracking-tight"
+            initial={{ scale: 0.9 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+          >
+            Featured{" "}
+            <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+              Products
+            </span>
+          </motion.h2>
+          <motion.p
+            className="text-gray-400 text-lg md:text-xl max-w-3xl mx-auto leading-relaxed"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+          >
+            Discover our premium collection of digital products and subscriptions
+          </motion.p>
+        </motion.div>
 
-
-        {/* Search and Controls Bar */}
+        {/* Enhanced Search and Filter Bar */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 1 }}
-          className="bg-gradient-to-r from-gray-900/80 via-gray-800/80 to-gray-900/80 backdrop-blur-xl rounded-2xl p-6 border border-gray-700/30 shadow-2xl"
+          transition={{ delay: 0.6, duration: 0.6 }}
+          className="mb-8 lg:mb-12"
         >
-          <div className="flex flex-col lg:flex-row gap-6 items-center">
-            {/* Enhanced Search Bar */}
-            <div className="relative flex-1 max-w-lg">
-              <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                <FaSearch className="h-5 w-5 text-gray-400" />
-                <div className="h-4 w-px bg-gray-600"></div>
-              </div>
+          <div className="bg-gray-900/80 backdrop-blur-xl rounded-2xl p-6 border border-gray-700/30 shadow-2xl">
+            <div className="flex flex-col lg:flex-row gap-4 items-center">
+              {/* Enhanced Search Input */}
+              <div className={`relative flex-1 w-full ${isMobile ? '' : 'lg:max-w-md'}`}>
+                <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
               <input
                 type="text"
-                placeholder="Search products, categories, or keywords..."
-                className="w-full pl-12 pr-12 py-4 border border-gray-600/50 rounded-xl bg-gray-800/50 text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-300 text-sm backdrop-blur-sm"
+                  placeholder="Search products..."
+                  className="w-full pl-12 pr-4 py-3 border border-gray-600/50 rounded-xl bg-gray-800/50 text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-300"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setIsSearching(e.target.value.length > 0);
+                  }}
               />
               {searchTerm && (
-                <motion.button
-                  onClick={clearSearch}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-gray-700/50 transition-colors"
+                  <button
+                    onClick={() => {
+                      setSearchTerm("");
+                      setIsSearching(false);
+                    }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-gray-700/50 transition-colors"
                 >
                   <FaTimes className="text-gray-400 hover:text-gray-200 h-4 w-4" />
-                </motion.button>
+                  </button>
               )}
             </div>
-            {/* Filter and Sort Controls */}
-            <div className="flex items-center gap-4 w-full lg:w-auto">
-              {/* Mobile Filter Button */}
-              {isMobile && (
+
+              {/* Enhanced Category Filter - Hidden on Mobile */}
+              {!isMobile && (
+                <div className="flex flex-wrap gap-2 lg:gap-3">
+                  {categories.slice(0, 8).map((category, index) => (
                 <motion.button
-                  onClick={() => setShowMobileFilters(!showMobileFilters)}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="flex items-center gap-2.5 px-5 py-3 rounded-xl text-sm font-medium bg-gray-700/50 hover:bg-gray-700/70 border border-gray-600/50 text-gray-300 hover:text-white transition-all duration-300"
+                      key={`category-${category.id}-${index}`}
+                      onClick={() => setActiveCategory(category.id)}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
+                        activeCategory === category.id
+                          ? 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg'
+                          : 'bg-gray-800/50 text-gray-300 hover:bg-gray-700/70 border border-gray-600/50'
+                      }`}
                 >
-                  <FiFilter className="h-4 w-4" />
-                  <span>Filters</span>
+                      {category.name}
                 </motion.button>
+                  ))}
+                </div>
               )}
 
-              {/* Enhanced Sort Dropdown */}
+                            {/* Enhanced Sort Dropdown - Hidden on Mobile */}
               {!isMobile && (
-                <div className="sort-container relative">
+                <div className="relative sort-container">
                   <motion.button
                     onClick={toggleSortOptions}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="flex items-center gap-3 px-5 py-3 border border-gray-600/50 rounded-xl bg-gray-700/50 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-300 cursor-pointer backdrop-blur-sm min-w-[200px]"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="flex items-center gap-2 px-4 py-2 bg-gray-800/50 hover:bg-gray-700/70 border border-gray-600/50 rounded-xl text-gray-300 transition-all duration-300"
                   >
-                    {sortOrder === "price-high" ? (
-                      <FaSortAmountUpAlt className="text-blue-400" />
-                    ) : sortOrder === "price-low" ? (
-                      <FaSortAmountDown className="text-green-400" />
-                    ) : sortOrder === "newest" ? (
-                      <BsLightningChargeFill className="text-yellow-400" />
-                    ) : (
-                      <BsGrid3X3Gap className="text-purple-400" />
-                    )}
-                    <span className="flex-1 text-left">
-                      {sortOrder === "price-high" ? "💎 Price: High to Low" :
-                       sortOrder === "price-low" ? "💰 Price: Low to High" :
-                       sortOrder === "newest" ? "🆕 Newest First" : "🌟 Recommended"}
-                    </span>
+                    <FiFilter className="h-4 w-4" />
+                    <span className="text-sm font-medium">Sort</span>
                     <motion.div
                       animate={{ rotate: showSortOptions ? 180 : 0 }}
                       transition={{ duration: 0.3 }}
                     >
-                      <FaChevronDown className="h-4 w-4 text-gray-400" />
+                      <FaChevronDown className="h-3 w-3" />
                     </motion.div>
                   </motion.button>
 
@@ -528,23 +549,24 @@ const HomePageProductCard = () => {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -10, scale: 0.95 }}
                         transition={{ duration: 0.2 }}
-                        className="absolute right-0 mt-2 w-full bg-gray-800/90 backdrop-blur-xl rounded-xl shadow-2xl z-20 overflow-hidden border border-gray-700/50"
+                        className="absolute top-full mt-2 right-0 w-48 bg-gray-900/95 backdrop-blur-xl rounded-xl border border-gray-700/50 shadow-2xl z-20 overflow-hidden"
                       >
-                        {sortOptions.map(option => (
+                        {[
+                          { key: "default", label: "Default", icon: <BsGrid3X3Gap /> },
+                          { key: "newest", label: "Newest First", icon: <BsLightningChargeFill /> },
+                          { key: "price-low", label: "Price: Low to High", icon: <FaSortAmountDown /> },
+                          { key: "price-high", label: "Price: High to Low", icon: <FaSortAmountUpAlt /> }
+                        ].map((option) => (
                           <motion.button
-                            key={option.id}
-                            onClick={() => handleSortChange(option.id)}
-                            whileHover={{ backgroundColor: "rgba(55, 65, 81, 0.8)" }}
-                            className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-all duration-200 ${
-                              sortOrder === option.id
-                                ? "bg-blue-600/20 text-blue-300 border-l-2 border-blue-500"
-                                : "text-gray-300 hover:bg-gray-700/50 hover:text-white"
+                            key={option.key}
+                            onClick={() => handleSortChange(option.key)}
+                            whileHover={{ backgroundColor: "rgba(55, 65, 81, 0.7)" }}
+                            className={`w-full px-4 py-3 text-left flex items-center gap-3 transition-colors duration-200 ${
+                              sortOrder === option.key ? 'bg-blue-600/20 text-blue-400' : 'text-gray-300 hover:text-white'
                             }`}
                           >
-                            <span className={sortOrder === option.id ? "text-blue-400" : "text-gray-400"}>
-                              {option.icon}
-                            </span>
-                            {option.name}
+                            <span className="text-sm">{option.icon}</span>
+                            <span className="text-sm font-medium">{option.label}</span>
                           </motion.button>
                         ))}
                       </motion.div>
@@ -554,247 +576,189 @@ const HomePageProductCard = () => {
               )}
             </div>
           </div>
-        </motion.div>
       </motion.div>
 
-      {/* Enhanced Mobile Filters Panel */}
-      <AnimatePresence>
-        {isMobile && showMobileFilters && (
+        {/* Products Display */}
           <motion.div
+          variants={containerVariants}
             initial="hidden"
             animate="visible"
-            exit="hidden"
-            variants={mobileFilterVariants}
-            className="relative z-10 bg-gradient-to-br from-gray-900/90 to-gray-800/70 backdrop-blur-xl rounded-2xl p-6 mb-8 shadow-2xl border border-gray-700/30"
+          className="space-y-12"
           >
-            <div className="flex justify-between items-center mb-6">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-lg">
-                  <FiFilter className="text-white text-lg" />
-                </div>
-                <h3 className="text-xl font-bold text-white">Filters</h3>
-              </div>
-              <motion.button
-                onClick={() => setShowMobileFilters(false)}
-                whileHover={{ scale: 1.1, rotate: 90 }}
-                whileTap={{ scale: 0.9 }}
-                className="p-2 rounded-full bg-gray-800/50 hover:bg-gray-700/50 text-gray-400 hover:text-white transition-all duration-200"
+          <AnimatePresence mode="wait">
+            {contextLoading ? (
+              // Loading State
+              <motion.div
+                key="loading"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
               >
-                <FaTimes className="text-lg" />
-              </motion.button>
-            </div>
-
-            <div className="space-y-6">
-              {/* Categories Section */}
-              <div>
-                <h4 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                  <BsGrid3X3Gap className="text-blue-400" />
-                  Categories
-                </h4>
-                <div className="grid grid-cols-2 gap-3">
-                  {categories.map(category => (
-                    <motion.button
-                      key={category.id}
-                      onClick={() => {
-                        setActiveCategory(category.id);
-                        setShowMobileFilters(false);
-                      }}
-                      variants={filterItemVariants}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      className={`flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${
-                        activeCategory === category.id
-                          ? "bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg"
-                          : "bg-gray-800/50 text-gray-300 hover:bg-gray-700/70 hover:text-white"
-                      }`}
-                    >
-                      <span className="text-lg">{category.icon}</span>
-                      <span className="truncate">{category.name}</span>
-                    </motion.button>
-                  ))}
+                {Array.from({ length: 8 }).map((_, index) => (
+                  <div
+                    key={index}
+                    className="bg-gray-900/50 border border-gray-700/30 rounded-2xl overflow-hidden animate-pulse"
+                  >
+                    <div className="h-48 bg-gray-800/50"></div>
+                    <div className="p-4 space-y-3">
+                      <div className="h-4 bg-gray-800/50 rounded w-3/4"></div>
+                      <div className="h-4 bg-gray-800/50 rounded w-1/2"></div>
+                      <div className="h-10 bg-gray-800/50 rounded"></div>
                 </div>
               </div>
-
-              {/* Sort Section */}
-              <div>
-                <h4 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                  <FaSortAmountDown className="text-green-400" />
-                  Sort By
-                </h4>
-                <div className="space-y-3">
-                  {sortOptions.map(option => (
-                    <motion.button
-                      key={option.id}
-                      onClick={() => handleSortChange(option.id)}
-                      variants={filterItemVariants}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      className={`w-full text-left px-4 py-3 text-sm rounded-xl flex items-center gap-3 transition-all duration-300 ${
-                        sortOrder === option.id
-                          ? "bg-gradient-to-r from-green-600 to-emerald-500 text-white shadow-lg"
-                          : "bg-gray-800/50 text-gray-300 hover:bg-gray-700/70 hover:text-white"
-                      }`}
-                    >
-                      <span className={`text-lg ${sortOrder === option.id ? "text-white" : "text-gray-400"}`}>
-                        {option.icon}
-                      </span>
-                      <span className="font-medium">{option.name}</span>
-                    </motion.button>
-                  ))}
-                </div>
-              </div>
-            </div>
+                ))}
           </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Enhanced Category Tabs - Desktop */}
-      {!isMobile && (
+            ) : visibleCategories.length === 0 ? (
+              // Empty State
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+                key="empty"
+                initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 1.2 }}
-          className="relative z-10 mb-12"
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.6 }}
+                className="text-center py-24"
         >
-          <div className="bg-gradient-to-r from-gray-900/80 via-gray-800/80 to-gray-900/80 backdrop-blur-xl rounded-2xl p-6 border border-gray-700/30 shadow-xl">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="p-2 bg-gradient-to-r from-purple-600 to-pink-500 rounded-lg">
-                <BsGrid3X3Gap className="text-white text-lg" />
-              </div>
-              <h3 className="text-xl font-bold text-white">Browse Categories</h3>
-            </div>
-
-            <div className="flex flex-wrap gap-3">
-              {categories.map((category, index) => (
-                <motion.button
-                  key={category.id}
-                  onClick={() => setActiveCategory(category.id)}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 1.4 + index * 0.1 }}
-                  whileHover={{ scale: 1.05, y: -2 }}
-                  whileTap={{ scale: 0.98 }}
-                  className={`group relative flex items-center gap-3 px-5 py-3 rounded-xl text-sm font-semibold transition-all duration-300 ${
-                    activeCategory === category.id
-                      ? "bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg shadow-blue-500/25"
-                      : "bg-gray-800/50 text-gray-300 hover:bg-gray-700/70 hover:text-white hover:shadow-md"
-                  }`}
-                >
-                  {/* Background Glow Effect */}
-                  {activeCategory === category.id && (
-                    <motion.div
-                      layoutId="activeCategory"
-                      className="absolute inset-0 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-xl"
-                      transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                    />
-                  )}
-
-                  <span className={`relative z-10 text-lg ${
-                    activeCategory === category.id ? "text-white" : "text-gray-400 group-hover:text-white"
-                  }`}>
-                    {category.icon}
-                  </span>
-                  <span className="relative z-10">{category.name}</span>
-
-                  {/* Hover Effect */}
+                <div className="bg-gradient-to-br from-gray-900/80 to-gray-800/60 backdrop-blur-xl rounded-2xl p-12 border border-gray-700/30 shadow-2xl max-w-2xl mx-auto">
                   <motion.div
-                    className="absolute inset-0 bg-gradient-to-r from-blue-600/0 to-cyan-600/0 group-hover:from-blue-600/10 group-hover:to-cyan-600/10 rounded-xl transition-all duration-300"
-                  />
+                    animate={{
+                      scale: [1, 1.1, 1],
+                      rotate: [0, 5, -5, 0]
+                    }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      ease: "easeInOut"
+                    }}
+                    className="relative mb-8"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-cyan-600/20 rounded-full blur-xl"></div>
+                    <div className="relative bg-gradient-to-r from-gray-800 to-gray-700 p-8 rounded-full border border-gray-600/50">
+                      <FaSearch className="text-gray-400 text-6xl" />
+              </div>
+                  </motion.div>
+
+                  <h3 className="text-2xl md:text-3xl font-bold text-white mb-4">
+                    {isSearching ? "No products found" : "No products available"}
+                  </h3>
+                  <p className="text-gray-400 text-lg mb-8">
+                    {isSearching 
+                      ? `Try adjusting your search for "${searchTerm}" or browse our categories`
+                      : "Check back soon for new arrivals and exciting deals"
+                    }
+                  </p>
+                  {isSearching && (
+                <motion.button
+                      onClick={() => {
+                        setSearchTerm("");
+                        setIsSearching(false);
+                        setActiveCategory("all");
+                      }}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white rounded-xl font-medium transition-all duration-300 shadow-lg"
+                    >
+                      Clear Search
                 </motion.button>
-              ))}
-            </div>
+                  )}
           </div>
         </motion.div>
-      )}
-
-      {contextLoading ? (
-        <LoadingSkeleton />
-      ) : (
-        <>
-          <motion.div 
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-            className="space-y-8"
-          >
-            <AnimatePresence>
-              {visibleCategories.map(category => {
+            ) : (
+              // Products Grid
+              visibleCategories.map((category) => {
                 const categoryProducts = productsToShow[category] || [];
                 const isExpanded = expandedCategories[category] !== false;
-                const categoryData = categories.find(c => c.id === category) || categories[0];
+                const maxProducts = isMobile ? 4 : 8;
+                const visibleProducts = isExpanded 
+                  ? categoryProducts 
+                  : categoryProducts.slice(0, maxProducts);
+                const hasMoreProducts = categoryProducts.length > maxProducts;
 
                 return (
                   <motion.div 
-                    key={category}
+                    key={`category-section-${category}`}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5 }}
-                    className="bg-gray-900/50 rounded-xl overflow-hidden"
+                    className="space-y-6"
                   >
-                    {/* Enhanced Category Header */}
-                    <motion.div
-                      variants={categoryHeaderVariants}
-                      initial="rest"
-                      whileHover="hover"
-                      className="p-6 cursor-pointer flex justify-between items-center bg-gradient-to-r from-gray-800/50 to-gray-900/50 backdrop-blur-sm"
-                      onClick={() => toggleCategory(category)}
-                    >
-                      <div className="flex items-center gap-4">
-                        <motion.div
-                          className="bg-gradient-to-br from-gray-700 to-gray-800 p-3 rounded-xl shadow-lg"
-                          whileHover={{ rotate: 10, scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
+                    {/* Category Header */}
+                    <div className="flex items-center justify-between">
+                      <motion.h3
+                        className="text-2xl md:text-3xl font-bold text-white"
+                        whileHover={{ x: 5 }}
                         >
-                          <span className="text-xl">{categoryData.icon}</span>
-                        </motion.div>
-                        <div>
-                          <h3 className="text-xl font-bold text-white capitalize mb-1">
-                            {category.replace(/-/g, " ")}
-                          </h3>
-                          <motion.span
-                            className="inline-flex items-center gap-2 text-sm bg-gradient-to-r from-blue-600/20 to-cyan-600/20 text-blue-300 px-3 py-1 rounded-full border border-blue-500/30"
+                        {category}
+                        <span className="ml-3 text-sm font-normal text-gray-400">
+                          ({categoryProducts.length} items)
+                        </span>
+                      </motion.h3>
+                      
+                      {hasMoreProducts && (
+                        <motion.button
+                          onClick={() => toggleCategory(category)}
                             whileHover={{ scale: 1.05 }}
-                          >
-                            <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
-                            {categoryProducts.length} {categoryProducts.length === 1 ? "product" : "products"}
-                          </motion.span>
-                        </div>
-                      </div>
-                      <motion.div
-                        animate={{ rotate: isExpanded ? 0 : 180 }}
-                        transition={{ duration: 0.3 }}
-                        className="p-2 rounded-full bg-gray-700/50 hover:bg-gray-600/50 transition-colors"
-                      >
-                        <FaChevronDown className="text-gray-300 text-lg" />
-                      </motion.div>
-                    </motion.div>
-
-                    {/* Category Products */}
-                    <AnimatePresence>
-                      {isExpanded && (
-                        <motion.div
-                          variants={categoryVariants}
-                          initial="hidden"
-                          animate="visible"
-                          exit="exit"
-                          className={isMobile ? "flex flex-wrap gap-4 p-4" : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 p-6"}
+                          whileTap={{ scale: 0.95 }}
+                          className="flex items-center gap-2 px-4 py-2 bg-gray-800/50 hover:bg-gray-700/70 rounded-xl text-gray-300 hover:text-white transition-all duration-300 border border-gray-600/50"
                         >
-                          {categoryProducts.map((item) => {
-                            const { id, title, price, productImageUrl, discount, isNew } = item;
-                            const isInCart = cartItems.some(p => p?.id === id);
+                          <span className="text-sm font-medium">
+                            {isExpanded ? 'Show Less' : `Show All (${categoryProducts.length})`}
+                          </span>
+                      <motion.div
+                            animate={{ rotate: isExpanded ? 180 : 0 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                            <FaChevronDown className="h-3 w-3" />
+                      </motion.div>
+                        </motion.button>
+                      )}
+                    </div>
+
+                    {/* Products Grid */}
+                        <motion.div
+                      layout
+                      className={`grid gap-6 ${
+                        isMobile 
+                          ? "grid-cols-2" 
+                          : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                      }`}
+                        >
+                      <AnimatePresence mode="sync">
+                        {visibleProducts.map((item) => {
+                          const {
+                            id,
+                            title,
+                            price,
+                            productImageUrl,
+                            category: itemCategory,
+                            description,
+                            time,
+                            date
+                          } = item;
+
+                          const isInCart = cartItems.some((p) => p.id === id);
                             const isInWishlist = wishlist.includes(id);
+
+                          // Calculate badges
+                          const isNew = (() => {
+                            const createdTime = time?.seconds ? time.seconds * 1000 : new Date(date).getTime();
+                            const now = Date.now();
+                            const daysDifference = (now - createdTime) / (1000 * 60 * 60 * 24);
+                            return daysDifference <= 7;
+                          })();
+
+                          const discount = Math.floor(Math.random() * 30) + 10; // Random discount for demo
 
                             return (
                               <motion.div
-                                key={id}
+                              key={`product-${id}-${category}`}
                                 variants={cardVariants}
                                 initial="hidden"
                                 animate="visible"
                                 whileHover="hover"
                                 exit="exit"
                                 layout
-                                className={`group relative ${isMobile ? "w-[calc(50%-8px)]" : "w-full"}`}
+                              className="group relative"
                               >
                                 <div className="h-full bg-gradient-to-br from-gray-900/90 to-gray-800/70 border border-gray-700/30 rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-500 hover:border-blue-400/40 hover:-translate-y-2 backdrop-blur-sm relative">
                                   {/* Enhanced Badges */}
@@ -840,18 +804,13 @@ const HomePageProductCard = () => {
                                       >
                                         <FaHeart className="text-red-500 text-lg" />
                                         <motion.div
-                                          className="absolute inset-0 bg-red-500/20 rounded-full"
-                                          animate={{ scale: [1, 1.5, 1] }}
-                                          transition={{ duration: 0.6, repeat: Infinity }}
+                                        className="absolute inset-0 bg-red-500 rounded-full opacity-30"
+                                        animate={{ scale: [1, 1.5, 1], opacity: [0.3, 0, 0.3] }}
+                                        transition={{ duration: 0.6 }}
                                         />
                                       </motion.div>
                                     ) : (
-                                      <motion.div
-                                        whileHover={{ scale: 1.2 }}
-                                        transition={{ duration: 0.2 }}
-                                      >
-                                        <FaRegHeart className="text-gray-300 hover:text-red-400 text-lg" />
-                                      </motion.div>
+                                    <FaRegHeart className="text-gray-400 text-lg hover:text-red-400 transition-colors" />
                                     )}
                                   </motion.button>
 
@@ -897,7 +856,8 @@ const HomePageProductCard = () => {
                                       <span className="text-xs font-semibold text-gray-400 bg-gray-800/50 px-2 py-1 rounded-full">
                                         Digital Shop Nepal
                                       </span>
-                                      {isInCart && (
+                                    {/* Show "In Cart" badge only on desktop */}
+                                    {isInCart && !isMobile && (
                                         <motion.span
                                           initial={{ scale: 0, opacity: 0 }}
                                           animate={{ scale: 1, opacity: 1 }}
@@ -926,13 +886,8 @@ const HomePageProductCard = () => {
                                           className={`${isMobile ? "text-lg" : "text-2xl"} font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent mb-1`}
                                           whileHover={{ scale: 1.05 }}
                                         >
-                                          रु {price.toLocaleString()}
+                                        रु {price?.toLocaleString() || 0}
                                         </motion.p>
-                                        {discount && (
-                                          <p className={`${isMobile ? "text-xs" : "text-sm"} text-gray-500 line-through`}>
-                                            रु {Math.round(price * (1 + discount/100)).toLocaleString()}
-                                          </p>
-                                        )}
                                         <p className="text-xs text-gray-400 mt-1">Digital Product</p>
                                       </div>
 
@@ -975,90 +930,16 @@ const HomePageProductCard = () => {
                               </motion.div>
                             );
                           })}
-                        </motion.div>
-                      )}
                     </AnimatePresence>
+                    </motion.div>
                   </motion.div>
                 );
-              })}
+              })
+            )}
             </AnimatePresence>
-
-            {/* Enhanced Empty State */}
-            {!isSearching && visibleCategories.length === 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-                className="text-center py-24 relative z-10"
-              >
-                <div className="bg-gradient-to-br from-gray-900/80 to-gray-800/60 backdrop-blur-xl rounded-2xl p-12 border border-gray-700/30 shadow-2xl max-w-2xl mx-auto">
-                  {/* Animated Icon */}
-                  <motion.div
-                    animate={{
-                      scale: [1, 1.1, 1],
-                      rotate: [0, 5, -5, 0]
-                    }}
-                    transition={{
-                      duration: 2,
-                      repeat: Infinity,
-                      ease: "easeInOut"
-                    }}
-                    className="relative mb-8"
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-cyan-600/20 rounded-full blur-xl"></div>
-                    <div className="relative bg-gradient-to-r from-gray-800 to-gray-700 p-8 rounded-full border border-gray-600/50">
-                      <FaSearch className="text-gray-400 text-6xl" />
-                    </div>
-                  </motion.div>
-
-                  {/* Content */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3, duration: 0.6 }}
-                    className="space-y-4 mb-8"
-                  >
-                    <h3 className="text-3xl font-bold text-white">No Products Found</h3>
-                    <p className="text-lg text-gray-300 max-w-md mx-auto leading-relaxed">
-                      We couldn't find any products matching your criteria.
-                      Try adjusting your search or explore different categories.
-                    </p>
-                  </motion.div>
-
-                  {/* Action Buttons */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5, duration: 0.6 }}
-                    className="flex flex-col sm:flex-row gap-4 justify-center"
-                  >
-                    <motion.button
-                      onClick={clearSearch}
-                      whileHover={{ scale: 1.05, y: -2 }}
-                      whileTap={{ scale: 0.95 }}
-                      className="px-8 py-4 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white font-bold rounded-xl shadow-xl transition-all duration-300 flex items-center justify-center gap-3"
-                    >
-                      <FaTimes size={16} />
-                      <span>Clear Search</span>
-                    </motion.button>
-
-                    <motion.button
-                      onClick={() => setActiveCategory("all")}
-                      whileHover={{ scale: 1.05, y: -2 }}
-                      whileTap={{ scale: 0.95 }}
-                      className="px-8 py-4 bg-gray-700/50 hover:bg-gray-700/70 text-gray-300 hover:text-white font-bold rounded-xl border border-gray-600/50 hover:border-gray-500/70 transition-all duration-300 flex items-center justify-center gap-3"
-                    >
-                      <BsGrid3X3Gap size={16} />
-                      <span>Show All Categories</span>
-                    </motion.button>
                   </motion.div>
                 </div>
-              </motion.div>
-            )}
-          </motion.div>
-        </>
-      )}
-    </div>
+    </section>
   );
 };
 

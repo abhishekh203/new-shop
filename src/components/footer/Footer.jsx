@@ -285,10 +285,10 @@ const Footer = () => {
                     </motion.p> */}
                 </motion.div>
 
-                {/* Back to Top Button */}
+                {/* Back to Top Button - Only visible on large devices */}
                 <motion.button
                     onClick={scrollToTop}
-                    className="fixed bottom-6 right-6 bg-gradient-to-r from-orange-500 to-orange-600 text-white p-3 rounded-full shadow-lg hover:shadow-orange-500/30 z-50"
+                    className="fixed bottom-6 right-6 bg-gradient-to-r from-orange-500 to-orange-600 text-white p-3 rounded-full shadow-lg hover:shadow-orange-500/30 z-50 hidden md:block"
                     whileHover={{ scale: 1.1, y: -5 }}
                     whileTap={{ scale: 0.9 }}
                     initial={{ opacity: 0, y: 20 }}

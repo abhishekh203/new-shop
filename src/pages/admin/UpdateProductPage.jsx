@@ -260,7 +260,7 @@ const UpdateProductPage = () => {
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             {/* Price */}
                             <motion.div variants={itemVariants}>
-                                <label htmlFor="price" className="block text-sm font-medium text-gray-300 mb-1.5"> Price (₹) <span className="text-red-400">*</span> </label>
+                                <label htmlFor="price" className="block text-sm font-medium text-gray-300 mb-1.5"> Price (रु) <span className="text-red-400">*</span> </label>
                                 <div className="relative">
                                     <FiDollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
                                     <input type="number" id="price" name="price" value={product.price} onChange={handleInputChange} placeholder="0.00" min="0" step="0.01" required

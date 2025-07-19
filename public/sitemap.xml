@@ -1,105 +1,212 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
+        xmlns:news="http://www.google.com/schemas/sitemap-news/0.9">
+    <!-- Homepage - Highest Priority -->
     <url>
         <loc>https://digitalshopnepal.com/</loc>
         <priority>1.0</priority>
         <changefreq>daily</changefreq>
         <lastmod>2024-01-15</lastmod>
+        <image:image>
+            <image:loc>https://digitalshopnepal.com/img/digital.jpg</image:loc>
+            <image:title>Digital Shop Nepal - Premium Subscriptions</image:title>
+            <image:caption>Nepal's #1 digital subscription store</image:caption>
+        </image:image>
     </url>
+    
+    <!-- Main Subscription Page - Very High Priority -->
+    <url>
+        <loc>https://digitalshopnepal.com/subscription</loc>
+        <priority>0.9</priority>
+        <changefreq>daily</changefreq>
+        <lastmod>2024-01-15</lastmod>
+    </url>
+    
+    <!-- Premium Streaming Services - High Priority Nepal Pages -->
     <url>
         <loc>https://digitalshopnepal.com/NetflixNepal</loc>
         <priority>0.9</priority>
         <changefreq>weekly</changefreq>
         <lastmod>2024-01-15</lastmod>
+        <image:image>
+            <image:loc>https://digitalshopnepal.com/img/netflix.png</image:loc>
+            <image:title>Netflix Nepal Subscription</image:title>
+            <image:caption>Premium Netflix subscription for Nepal</image:caption>
+        </image:image>
     </url>
+    
     <url>
         <loc>https://digitalshopnepal.com/SpotifyNepal</loc>
-        <priority>0.8</priority>
+        <priority>0.85</priority>
+        <changefreq>weekly</changefreq>
+        <lastmod>2024-01-15</lastmod>
+        <image:image>
+            <image:loc>https://digitalshopnepal.com/img/spotify.png</image:loc>
+            <image:title>Spotify Nepal Subscription</image:title>
+            <image:caption>Premium Spotify music streaming for Nepal</image:caption>
+        </image:image>
     </url>
+    
     <url>
         <loc>https://digitalshopnepal.com/PrimeVideoNepal</loc>
-        <priority>0.8</priority>
+        <priority>0.85</priority>
+        <changefreq>weekly</changefreq>
+        <lastmod>2024-01-15</lastmod>
     </url>
+    
     <url>
         <loc>https://digitalshopnepal.com/YouTubePremiumNepal</loc>
-        <priority>0.8</priority>
+        <priority>0.85</priority>
+        <changefreq>weekly</changefreq>
+        <lastmod>2024-01-15</lastmod>
     </url>
-    <url>
-        <loc>https://digitalshopnepal.com/CanvaNepal</loc>
-        <priority>0.8</priority>
-    </url>
-    <url>
-        <loc>https://digitalshopnepal.com/Zee5Nepal</loc>
-        <priority>0.8</priority>
-    </url>
-    <url>
-        <loc>https://digitalshopnepal.com/VpnNepal</loc>
-        <priority>0.8</priority>
-    </url>
-    <url>
-        <loc>https://digitalshopnepal.com/JioCinemaNepal</loc>
-        <priority>0.8</priority>
-    </url>
+    
     <url>
         <loc>https://digitalshopnepal.com/DisneyPlusHotstarNepal</loc>
         <priority>0.8</priority>
+        <changefreq>weekly</changefreq>
+        <lastmod>2024-01-15</lastmod>
     </url>
+    
+    <!-- Design & Productivity Tools -->
     <url>
-        <loc>https://digitalshopnepal.com/UlluNepal</loc>
+        <loc>https://digitalshopnepal.com/CanvaNepal</loc>
         <priority>0.8</priority>
+        <changefreq>weekly</changefreq>
+        <lastmod>2024-01-15</lastmod>
     </url>
-    <url>
-        <loc>https://digitalshopnepal.com/AltBalajiNepal</loc>
-        <priority>0.8</priority>
-    </url>
-    <url>
-        <loc>https://digitalshopnepal.com/GoogleOneNepal</loc>
-        <priority>0.8</priority>
-    </url>
-    <url>
-        <loc>https://digitalshopnepal.com/SoftwareNepal</loc>
-        <priority>0.8</priority>
-    </url>
-    <url>
-        <loc>https://digitalshopnepal.com/AntivirusNepal</loc>
-        <priority>0.8</priority>
-    </url>
+    
     <url>
         <loc>https://digitalshopnepal.com/GrammarlyNepal</loc>
-        <priority>0.8</priority>
+        <priority>0.75</priority>
+        <changefreq>weekly</changefreq>
+        <lastmod>2024-01-15</lastmod>
     </url>
+    
+    <url>
+        <loc>https://digitalshopnepal.com/GoogleOneNepal</loc>
+        <priority>0.75</priority>
+        <changefreq>weekly</changefreq>
+        <lastmod>2024-01-15</lastmod>
+    </url>
+    
+    <!-- Regional Streaming Services -->
+    <url>
+        <loc>https://digitalshopnepal.com/Zee5Nepal</loc>
+        <priority>0.8</priority>
+        <changefreq>weekly</changefreq>
+        <lastmod>2024-01-15</lastmod>
+    </url>
+    
+    <url>
+        <loc>https://digitalshopnepal.com/JioCinemaNepal</loc>
+        <priority>0.8</priority>
+        <changefreq>weekly</changefreq>
+        <lastmod>2024-01-15</lastmod>
+    </url>
+    
+    <url>
+        <loc>https://digitalshopnepal.com/UlluNepal</loc>
+        <priority>0.75</priority>
+        <changefreq>weekly</changefreq>
+        <lastmod>2024-01-15</lastmod>
+    </url>
+    
+    <url>
+        <loc>https://digitalshopnepal.com/AltBalajiNepal</loc>
+        <priority>0.75</priority>
+        <changefreq>weekly</changefreq>
+        <lastmod>2024-01-15</lastmod>
+    </url>
+    
+    <!-- Software & Security Services -->
+    <url>
+        <loc>https://digitalshopnepal.com/SoftwareNepal</loc>
+        <priority>0.75</priority>
+        <changefreq>weekly</changefreq>
+        <lastmod>2024-01-15</lastmod>
+    </url>
+    
+    <url>
+        <loc>https://digitalshopnepal.com/AntivirusNepal</loc>
+        <priority>0.75</priority>
+        <changefreq>weekly</changefreq>
+        <lastmod>2024-01-15</lastmod>
+    </url>
+    
+    <url>
+        <loc>https://digitalshopnepal.com/VpnNepal</loc>
+        <priority>0.75</priority>
+        <changefreq>weekly</changefreq>
+        <lastmod>2024-01-15</lastmod>
+    </url>
+    
+    <!-- Social & Dating -->
     <url>
         <loc>https://digitalshopnepal.com/TinderNepal</loc>
-        <priority>0.8</priority>
+        <priority>0.7</priority>
+        <changefreq>weekly</changefreq>
+        <lastmod>2024-01-15</lastmod>
     </url>
+    
+    <!-- High-Value Content Pages -->
     <url>
         <loc>https://digitalshopnepal.com/How-to-buy-netflix-in-nepal</loc>
-        <priority>0.7</priority>
+        <priority>0.8</priority>
+        <changefreq>monthly</changefreq>
+        <lastmod>2024-01-15</lastmod>
     </url>
+    
+    <!-- Product & Category Pages -->
     <url>
         <loc>https://digitalshopnepal.com/allproduct</loc>
         <priority>0.7</priority>
-        <changefreq>weekly</changefreq>
+        <changefreq>daily</changefreq>
+        <lastmod>2024-01-15</lastmod>
     </url>
+    
+    <!-- Support & Information Pages -->
     <url>
-        <loc>https://digitalshopnepal.com/subscription</loc>
-        <priority>0.8</priority>
+        <loc>https://digitalshopnepal.com/reviews</loc>
+        <priority>0.7</priority>
         <changefreq>weekly</changefreq>
+        <lastmod>2024-01-15</lastmod>
     </url>
+    
     <url>
         <loc>https://digitalshopnepal.com/Contactus</loc>
         <priority>0.6</priority>
         <changefreq>monthly</changefreq>
+        <lastmod>2024-01-15</lastmod>
     </url>
+    
+    <!-- Category Pages for better organization -->
     <url>
-        <loc>https://digitalshopnepal.com/reviews</loc>
+        <loc>https://digitalshopnepal.com/category/netflix</loc>
         <priority>0.6</priority>
         <changefreq>weekly</changefreq>
+        <lastmod>2024-01-15</lastmod>
     </url>
+    
     <url>
-        <loc>https://digitalshopnepal.com/How-to-buy-netflix-in-nepal</loc>
-        <priority>0.8</priority>
-        <changefreq>monthly</changefreq>
+        <loc>https://digitalshopnepal.com/category/streaming</loc>
+        <priority>0.6</priority>
+        <changefreq>weekly</changefreq>
+        <lastmod>2024-01-15</lastmod>
+    </url>
+    
+    <url>
+        <loc>https://digitalshopnepal.com/category/software</loc>
+        <priority>0.6</priority>
+        <changefreq>weekly</changefreq>
+        <lastmod>2024-01-15</lastmod>
+    </url>
+    
+    <url>
+        <loc>https://digitalshopnepal.com/category/ott</loc>
+        <priority>0.6</priority>
+        <changefreq>weekly</changefreq>
         <lastmod>2024-01-15</lastmod>
     </url>
 </urlset>

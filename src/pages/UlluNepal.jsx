@@ -8,50 +8,22 @@ import Layout from "../components/layout/Layout";
 import SEOHelmet from "../components/SEO/SEOHelmet";
 import OptimizedImage from "../components/SEO/OptimizedImage";
 import Nepal from "./nepal";
+import { nepalSEOKeywords, generateNepalMetaDescription, generateNepalTitle, generateNepalProductSchema } from "../utils/nepalSEOKeywords";
 
 const UlluNepal = () => {
+    // Dynamic Nepal SEO using the utility functions
+    const serviceName = "Ullu";
+    const seoFeatures = ["Bold web series", "Original content", "18+ content", "HD streaming"];
+    
     const meta = {
-        title: "Ullu Nepal - Premium Bold Content Subscription at Best NPR Prices",
-        description: "Get Ullu premium subscription in Nepal at best prices. Stream bold web series & original content in Kathmandu, Pokhara & all Nepal. 18+ content, NPR pricing, eSewa/Khalti accepted.",
-        keywords: "Ullu Nepal, Ullu subscription Nepal, buy Ullu Nepal, Ullu premium Nepal, Ullu account Nepal, watch Ullu Nepal, Ullu price Nepal, Ullu NPR, Ullu Kathmandu, Ullu web series Nepal, bold content Nepal, adult content Nepal, original series Nepal, streaming service Nepal",
+        title: generateNepalTitle(serviceName, "subscription"),
+        description: generateNepalMetaDescription("ullu", seoFeatures),
+        keywords: nepalSEOKeywords.ullu.join(", "),
         canonical: "https://www.digitalshopnepal.com/UlluNepal"
     };
 
-    const ulluStructuredData = {
-        "@context": "https://schema.org",
-        "@type": "Product",
-        "name": "Ullu Premium Subscription Nepal",
-        "description": "Premium Ullu subscription for Nepal with bold web series and original content for mature audiences",
-        "brand": {
-            "@type": "Brand",
-            "name": "Ullu"
-        },
-        "offers": {
-            "@type": "Offer",
-            "price": "999",
-            "priceCurrency": "NPR",
-            "availability": "https://schema.org/InStock",
-            "priceValidUntil": "2024-12-31",
-            "areaServed": {
-                "@type": "Country",
-                "name": "Nepal"
-            }
-        },
-        "aggregateRating": {
-            "@type": "AggregateRating",
-            "ratingValue": "4.2",
-            "reviewCount": "67"
-        },
-        "category": "Adult Entertainment Streaming",
-        "audience": {
-            "@type": "Audience",
-            "geographicArea": {
-                "@type": "Country",
-                "name": "Nepal"
-            },
-            "suggestedMinAge": 18
-        }
-    };
+    // Generate dynamic structured data using Nepal SEO utilities
+    const ulluStructuredData = generateNepalProductSchema(serviceName, "999", "NPR");
 
     const breadcrumbs = [
         { name: "Home", url: "/" },

@@ -8,12 +8,17 @@ import Layout from "../components/layout/Layout";
 import SEOHelmet from "../components/SEO/SEOHelmet";
 import OptimizedImage from "../components/SEO/OptimizedImage";
 import Nepal from "./nepal";
+import { nepalSEOKeywords, generateNepalMetaDescription, generateNepalTitle, generateNepalProductSchema } from "../utils/nepalSEOKeywords";
 
 const SpotifyNepal = () => {
+    // Dynamic Nepal SEO using the utility functions
+    const serviceName = "Spotify";
+    const seoFeatures = ["Music streaming", "Podcasts", "Offline downloads", "No VPN required"];
+    
     const meta = {
-        title: "Spotify Nepal - Stream Music & Podcasts Online",
-        description: "Stream Spotify music & podcasts online or download to listen offline on your smartphone, tablet, PC, or Mac in Nepal. Unlimited streaming, quick delivery, no VPN required.",
-        keywords: "Spotify Nepal, spotify premium nepal, buy spotify premium nepal, spotify subscription nepal, Spotify subscription, Stream Spotify Nepal, Listen to Music Nepal, Unlimited Music Nepal, VPN Free Spotify",
+        title: generateNepalTitle(serviceName, "subscription"),
+        description: generateNepalMetaDescription("spotify", seoFeatures),
+        keywords: nepalSEOKeywords.spotify.join(", "),
         canonical: "https://www.digitalshopnepal.com/SpotifyNepal"
     };
 

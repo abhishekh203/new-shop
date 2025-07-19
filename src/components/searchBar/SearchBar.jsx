@@ -84,7 +84,7 @@ const SearchBar = () => {
     };
 
     return (
-        <div className="relative w-full max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl" ref={searchRef}>
+        <div className="relative w-full max-w-md md:max-w-lg lg:max-w-2xl xl:max-w-4xl 2xl:max-w-5xl" ref={searchRef}>
             {/* Search input */}
             <motion.div 
                 className="relative w-full"
@@ -99,10 +99,11 @@ const SearchBar = () => {
                     onChange={(e) => setSearch(e.target.value)}
                     onFocus={() => setIsFocused(true)}
                     onBlur={() => setTimeout(() => setIsFocused(false), 200)}
-                    className="bg-gray-50 placeholder-gray-400 rounded-full px-4 py-2.5 w-full outline-none text-gray-800
+                    className="bg-gray-50 placeholder-gray-400 rounded-full px-4 py-2 lg:py-2.5 xl:py-2.5 w-full outline-none text-gray-800
                     focus:bg-white focus:ring-2 focus:ring-blue-500 transition duration-200
                     border border-gray-200 hover:border-blue-300 hover:bg-white hover:shadow-sm
-                    text-sm md:text-base lg:text-base pr-10 min-w-0"
+                    text-sm md:text-base lg:text-base xl:text-base pr-10 min-w-0
+                    lg:placeholder:text-base xl:placeholder:text-base"
                 />
                 
                 {/* Search icon (visible on mobile when not focused) */}
@@ -144,7 +145,7 @@ const SearchBar = () => {
                             duration: 0.2
                         }}
                         className={`absolute mt-2 w-full bg-white shadow-xl rounded-xl z-50 overflow-hidden border border-gray-100
-                        ${isMobile ? 'fixed inset-x-4 top-24 max-h-[60vh] backdrop-blur-sm bg-white/95' : 'max-h-80'}`}
+                        ${isMobile ? 'fixed inset-x-4 top-24 max-h-[60vh] backdrop-blur-sm bg-white/95' : 'max-h-80 lg:max-h-96 xl:max-h-[28rem]'}`}
                     >
                         {filterSearchData.length > 0 ? (
                             <motion.div 
@@ -162,11 +163,11 @@ const SearchBar = () => {
                                         transition={{ delay: index * 0.05 }}
                                         whileHover={{ backgroundColor: "#f5f5ff" }}
                                         whileTap={{ scale: 0.98 }}
-                                        className="py-3 px-4 cursor-pointer flex items-center gap-3 transition-colors active:bg-blue-50"
+                                        className="py-3 px-4 lg:py-4 lg:px-5 xl:py-4 xl:px-6 cursor-pointer flex items-center gap-3 transition-colors active:bg-blue-50"
                                         onClick={() => handleResultClick(item.id)}
                                     >
                                         <motion.img 
-                                            className="w-10 h-10 object-cover rounded-lg border border-gray-100"
+                                            className="w-10 h-10 lg:w-12 lg:h-12 xl:w-14 xl:h-14 object-cover rounded-lg border border-gray-100"
                                             src={item.productImageUrl} 
                                             alt={item.title}
                                             loading="lazy"
@@ -175,8 +176,8 @@ const SearchBar = () => {
                                             transition={{ type: "spring", stiffness: 500 }}
                                         />
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-medium text-gray-800 truncate">{item.title}</p>
-                                            <p className="text-xs text-blue-600 font-semibold">रु {item.price}</p>
+                                            <p className="text-sm lg:text-base xl:text-lg font-medium text-gray-800 truncate">{item.title}</p>
+                                            <p className="text-xs lg:text-sm xl:text-base text-blue-600 font-semibold">रु {item.price}</p>
                                         </div>
                                     </motion.div>
                                 ))}

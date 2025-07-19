@@ -39,6 +39,84 @@ export const nepalSEOKeywords = {
     "graphic design Nepal", "Canva templates Nepal", "Canva price Nepal"
   ],
   
+  // Missing service keywords
+  ullu: [
+    "Ullu Nepal", "Ullu subscription Nepal", "buy Ullu Nepal", "Ullu premium Nepal",
+    "Ullu account Nepal", "watch Ullu Nepal", "Ullu price Nepal", "Ullu NPR",
+    "Ullu Kathmandu", "Ullu web series Nepal", "bold content Nepal", "adult content Nepal",
+    "original series Nepal", "streaming service Nepal", "Ullu original Nepal"
+  ],
+  
+  altBalaji: [
+    "AltBalaji Nepal", "AltBalaji subscription Nepal", "buy AltBalaji Nepal",
+    "AltBalaji premium Nepal", "AltBalaji account Nepal", "watch AltBalaji Nepal",
+    "AltBalaji price Nepal", "AltBalaji NPR", "AltBalaji Kathmandu", "Indian web series Nepal",
+    "Bollywood content Nepal", "streaming service Nepal", "AltBalaji original Nepal"
+  ],
+  
+  googleOne: [
+    "Google One Nepal", "Google One subscription Nepal", "buy Google One Nepal",
+    "Google One premium Nepal", "Google One account Nepal", "Google One price Nepal",
+    "Google One NPR", "cloud storage Nepal", "Google Drive Nepal", "backup service Nepal",
+    "Google Photos Nepal", "Google One family Nepal", "Google One storage Nepal"
+  ],
+  
+  grammarly: [
+    "Grammarly Nepal", "Grammarly subscription Nepal", "buy Grammarly Nepal",
+    "Grammarly premium Nepal", "Grammarly account Nepal", "Grammarly price Nepal",
+    "Grammarly NPR", "writing assistant Nepal", "grammar checker Nepal", "English writing Nepal",
+    "improve writing Nepal", "grammar tool Nepal", "writing tool Nepal", "Grammarly business Nepal"
+  ],
+  
+  tinder: [
+    "Tinder Nepal", "Tinder subscription Nepal", "buy Tinder Nepal", "Tinder premium Nepal",
+    "Tinder account Nepal", "Tinder price Nepal", "Tinder NPR", "dating app Nepal",
+    "meet people Nepal", "online dating Nepal", "find dates Nepal", "Tinder gold Nepal",
+    "Tinder plus Nepal", "dating service Nepal", "Tinder Kathmandu", "Tinder Pokhara"
+  ],
+  
+  vpn: [
+    "VPN Nepal", "VPN subscription Nepal", "buy VPN Nepal", "VPN premium Nepal",
+    "VPN account Nepal", "VPN price Nepal", "VPN NPR", "secure VPN Nepal",
+    "NordVPN Nepal", "Windscribe Nepal", "IPVanish Nepal", "unblock websites Nepal",
+    "private browsing Nepal", "secure internet Nepal", "VPN Kathmandu", "VPN Pokhara"
+  ],
+  
+  jioCinema: [
+    "JioCinema Nepal", "JioCinema subscription Nepal", "buy JioCinema Nepal",
+    "JioCinema premium Nepal", "JioCinema account Nepal", "watch JioCinema Nepal",
+    "JioCinema price Nepal", "JioCinema NPR", "JioCinema Kathmandu", "Bollywood movies Nepal",
+    "Indian content Nepal", "streaming service Nepal", "JioCinema original Nepal", "HD streaming Nepal"
+  ],
+  
+  disneyPlus: [
+    "DisneyPlus Hotstar Nepal", "Disney+ Nepal", "DisneyPlus subscription Nepal",
+    "buy DisneyPlus Nepal", "DisneyPlus premium Nepal", "DisneyPlus account Nepal",
+    "watch DisneyPlus Nepal", "DisneyPlus price Nepal", "DisneyPlus NPR", "Marvel movies Nepal",
+    "Star Wars Nepal", "Pixar movies Nepal", "Hotstar original Nepal", "streaming service Nepal"
+  ],
+  
+  zee5: [
+    "Zee5 Nepal", "Zee5 subscription Nepal", "buy Zee5 Nepal", "Zee5 premium Nepal",
+    "Zee5 account Nepal", "watch Zee5 Nepal", "Zee5 price Nepal", "Zee5 NPR",
+    "Zee5 Kathmandu", "Indian shows Nepal", "regional content Nepal", "streaming service Nepal",
+    "Zee5 original Nepal", "Zee5 movies Nepal"
+  ],
+  
+  antivirus: [
+    "Antivirus Nepal", "antivirus subscription Nepal", "buy antivirus Nepal",
+    "antivirus premium Nepal", "antivirus account Nepal", "antivirus price Nepal",
+    "antivirus NPR", "device protection Nepal", "online security Nepal", "malware protection Nepal",
+    "ransomware protection Nepal", "computer security Nepal", "antivirus software Nepal"
+  ],
+  
+  software: [
+    "Software Nepal", "software subscription Nepal", "buy software Nepal",
+    "software license Nepal", "software price Nepal", "software NPR", "Microsoft Office Nepal",
+    "Windows software Nepal", "IDM Nepal", "software keys Nepal", "genuine software Nepal",
+    "software download Nepal", "software installation Nepal"
+  ],
+  
   // Payment methods in Nepal
   payments: [
     "eSewa", "Khalti", "IME Pay", "Connect IPS", "SCT Pay", "Prabhu Pay",

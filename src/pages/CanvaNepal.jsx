@@ -20,12 +20,17 @@ import Layout from "../components/layout/Layout";
 import SEOHelmet from "../components/SEO/SEOHelmet";
 import OptimizedImage from "../components/SEO/OptimizedImage";
 import Nepal from "./nepal";
+import { nepalSEOKeywords, generateNepalMetaDescription, generateNepalTitle, generateNepalProductSchema } from "../utils/nepalSEOKeywords";
 
 const CanvaNepal = () => {
+    // Dynamic Nepal SEO using the utility functions
+    const serviceName = "Canva";
+    const seoFeatures = ["Design templates", "Graphics creation", "Team collaboration", "Real-time editing"];
+    
     const meta = {
-        title: "Canva Nepal - Create Stunning Graphics & Designs",
-        description: "Unlock your creativity with Canva in Nepal. Access thousands of customizable templates and collaborate with your team in real-time. Ideal for all your design needs.",
-        keywords: "Canva Nepal, canva buy nepal, canva subscription nepal, Canva design Nepal, Canva templates, Create designs Nepal, Online design tool Nepal, Create graphics Nepal",
+        title: generateNepalTitle(serviceName, "subscription"),
+        description: generateNepalMetaDescription("canva", seoFeatures),
+        keywords: nepalSEOKeywords.canva.join(", "),
         canonical: "https://www.digitalshopnepal.com/CanvaNepal"
     };
 

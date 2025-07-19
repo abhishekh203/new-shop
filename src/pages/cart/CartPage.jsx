@@ -15,11 +15,12 @@ import { Navigate, useNavigate } from "react-router";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 
-// Enhanced coupon system with better validation
+// Manual coupon system only
 const validCoupons = {
-  "WELCOME": { discount: 1, minAmount: 0, maxUses: 1 },
-  "SAVE20": { discount: 2, minAmount: 1000, maxUses: 3 },
-  "MEGA30": { discount: 3, minAmount: 2000, maxUses: 1 },
+  "WELCOME": { discount: 1, minAmount: 0, maxUses: 1, description: "Welcome discount" },
+  "SAVE20": { discount: 1.5, minAmount: 1000, maxUses: 3, description: "1.5% off on orders above ₹1000" },
+  "MEGA30": { discount: 2, minAmount: 2000, maxUses: 1, description: "2% off on orders above ₹2000" },
+  "FLASH50": { discount: 3, minAmount: 5000, maxUses: 1, description: "3% off on orders above ₹5000" },
 };
 
 const CartPage = () => {
@@ -35,12 +36,20 @@ const CartPage = () => {
   const cartItemTotal = cartItems.reduce((total, item) => total + item.quantity, 0);
   const cartSubtotal = cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
 
+  // Calculate estimated delivery time (1 minute to 1 hour)
+  const getEstimatedDelivery = () => {
+    const now = new Date();
+    const deliveryDate = new Date(now.getTime() + (Math.random() * 59 + 1) * 60 * 1000); // 1-60 minutes
+    const minutes = Math.floor((deliveryDate - now) / (1000 * 60));
+    return `${minutes} minute${minutes !== 1 ? 's' : ''}`;
+  };
+
   const user = JSON.parse(localStorage.getItem("users"));
 
   const [addressInfo, setAddressInfo] = useState({
     name: "",
     address: "",
-    pincode: "",
+    whatsappNumber: "",
     mobileNumber: "",
     time: Timestamp.now(),
     date: new Date().toLocaleString("en-US", { 
@@ -50,12 +59,13 @@ const CartPage = () => {
     }),
   });
 
-  // Enhanced coupon state management
+  // Manual coupon state only
   const [couponState, setCouponState] = useState({
     code: localStorage.getItem("couponCode") || "",
     discount: parseFloat(localStorage.getItem("discount")) || 0,
     applied: Boolean(localStorage.getItem("couponCode")),
-    discountPercentage: 0
+    discountPercentage: 0,
+    description: ""
   });
 
   useEffect(() => {
@@ -100,15 +110,16 @@ const CartPage = () => {
         code,
         discount: discountAmount,
         applied: true,
-        discountPercentage: coupon.discount
+        discountPercentage: coupon.discount,
+        description: coupon.description
       });
       
       toast.success(
         <div className="flex items-center gap-2">
           <Check className="text-green-400" />
-          <span>Coupon applied! {coupon.discount}% OFF</span>
+          <span>Coupon applied! {coupon.discount}% OFF - {coupon.description}</span>
         </div>,
-        { duration: 2000 }
+        { duration: 3000 }
       );
       
       setIsApplyingCoupon(false);
@@ -121,7 +132,8 @@ const CartPage = () => {
       code: "",
       discount: 0,
       applied: false,
-      discountPercentage: 0
+      discountPercentage: 0,
+      description: ""
     });
     toast("Coupon removed", { icon: "🗑️" });
   };
@@ -139,7 +151,7 @@ const CartPage = () => {
 
   // Updated buyNowFunction to navigate to purchase page with state
   const buyNowFunction = async () => {
-    if (!addressInfo.name || !addressInfo.address || !addressInfo.pincode || !addressInfo.mobileNumber) {
+    if (!addressInfo.name || !addressInfo.address || !addressInfo.whatsappNumber || !addressInfo.mobileNumber) {
       return toast.error("All fields are required");
     }
 
@@ -148,10 +160,14 @@ const CartPage = () => {
       addressInfo,
       email: user.email,
       userid: user.uid,
-      status: "confirmed",
+      status: "placed",
       totalAmount: finalPrice,
       discountApplied: couponState.discount,
+      discountPercentage: couponState.discountPercentage,
+      discountType: "Manual Coupon",
       couponUsed: couponState.code || "None",
+      paymentScreenshot: null, // Will be updated by PurchasePage
+      paymentMethod: null, // Will be updated by PurchasePage
       time: Timestamp.now(),
       date: new Date().toLocaleString("en-US", { 
         month: "short", 
@@ -162,29 +178,32 @@ const CartPage = () => {
 
     try {
       const orderRef = collection(fireDB, "order");
-      await addDoc(orderRef, orderInfo);
+      const docRef = await addDoc(orderRef, orderInfo);
       
-      // Navigate to purchase page with the total and discount info
+      // Navigate to purchase page with the total, discount info, and order ID
       navigate("/purchase", {
         state: {
           totalAmount: finalPrice,
           discountApplied: couponState.discount,
-          cartSubtotal: cartSubtotal
+          cartSubtotal: cartSubtotal,
+          orderId: docRef.id // Pass the order ID
         }
       });
       
       setAddressInfo({ 
         name: "", 
         address: "", 
-        pincode: "", 
+        whatsappNumber: "", 
         mobileNumber: "" 
       });
       
+      // Clear coupon state
       setCouponState({
         code: "",
         discount: 0,
         applied: false,
-        discountPercentage: 0
+        discountPercentage: 0,
+        description: ""
       });
       
       localStorage.removeItem("discount");
@@ -220,7 +239,7 @@ const CartPage = () => {
     <Layout>
       <Toaster position="top-center" />
 
-      {/* Futuristic Neon Background */}
+      {/* Dark Background with Neon Effects */}
       <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black relative overflow-hidden">
         {/* Neon Grid Background */}
         <div className="absolute inset-0">
@@ -250,7 +269,7 @@ const CartPage = () => {
             transition={{ duration: 0.5 }}
             className="mx-auto max-w-2xl lg:max-w-7xl"
           >
-            {/* Cyberpunk Header */}
+            {/* Header */}
             <motion.div
               initial={{ opacity: 0, y: -30 }}
               animate={{ opacity: 1, y: 0 }}
@@ -275,25 +294,25 @@ const CartPage = () => {
                 </div>
               </motion.div>
 
-              {/* Neon Title */}
+              {/* Title */}
               <h1 className="text-4xl lg:text-6xl font-bold tracking-tight mb-4 relative">
                 <span className="relative inline-block">
                   <span className="absolute inset-0 bg-gradient-to-r from-cyan-400 to-pink-400 bg-clip-text text-transparent blur-sm">
-                    SHOPPING CART
+                    Shopping Cart
                   </span>
                   <span className="relative bg-gradient-to-r from-cyan-400 to-pink-400 bg-clip-text text-transparent">
-                    SHOPPING CART
+                    Shopping Cart
                   </span>
                 </span>
               </h1>
 
-              {/* Glitch Effect Subtitle */}
+              {/* Subtitle */}
               <motion.p
-                className="text-green-400 text-lg max-w-2xl mx-auto font-mono"
+                className="text-green-400 text-lg max-w-2xl mx-auto"
                 animate={{ opacity: [1, 0.7, 1] }}
                 transition={{ duration: 1.5, repeat: Infinity }}
               >
-                &gt; SHOPPING LIST... [OK]
+                Review your items and proceed to checkout
               </motion.p>
             </motion.div>
 
@@ -325,9 +344,9 @@ const CartPage = () => {
                       >
                         <Package size={20} className="text-green-400" />
                       </motion.div>
-                      <h2 className="text-xl font-bold text-cyan-400 font-mono">&gt; INVENTORY_SCAN</h2>
-                      <span className="text-sm bg-black border border-yellow-400 text-yellow-400 px-3 py-1 rounded font-mono">
-                        [{cartItemTotal}] {cartItemTotal === 1 ? "UNIT" : "UNITS"}
+                      <h2 className="text-xl font-bold text-cyan-400">Cart Items</h2>
+                      <span className="text-sm bg-black border border-yellow-400 text-yellow-400 px-3 py-1 rounded">
+                        {cartItemTotal} {cartItemTotal === 1 ? "item" : "items"}
                       </span>
                     </div>
                   </motion.div>
@@ -378,9 +397,9 @@ const CartPage = () => {
                               </motion.div>
                             </div>
                             <div className="flex-1 flex flex-col text-center sm:text-left mr-4">
-                              <h3 className="text-lg font-bold text-cyan-400 mb-1 font-mono">{title}</h3>
-                              <p className="text-sm text-green-400 mb-2 font-mono uppercase tracking-wider">[{category}]</p>
-                              <p className="text-2xl font-bold font-mono">
+                              <h3 className="text-lg font-bold text-cyan-400 mb-1">{title}</h3>
+                              <p className="text-sm text-green-400 mb-2 uppercase tracking-wider">{category}</p>
+                              <p className="text-2xl font-bold">
                                 <span className="text-yellow-400">₹</span>
                                 <span className="bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">
                                   {price}
@@ -388,7 +407,7 @@ const CartPage = () => {
                               </p>
                             </div>
                             <div className="flex items-center space-x-3 mt-4 sm:mt-0">
-                              {/* Cyberpunk Decrease Button */}
+                              {/* Decrease Button */}
                               <motion.button
                                 whileTap={{ scale: 0.85 }}
                                 whileHover={{
@@ -396,7 +415,7 @@ const CartPage = () => {
                                   boxShadow: "0 0 20px rgba(239, 68, 68, 0.5)"
                                 }}
                                 onClick={() => dispatch(decrementQuantity(id))}
-                                className={`h-10 w-10 bg-black border border-red-400 hover:bg-red-400/20 text-red-400 rounded-lg flex items-center justify-center transition-all duration-200 font-mono ${
+                                className={`h-10 w-10 bg-black border border-red-400 hover:bg-red-400/20 text-red-400 rounded-lg flex items-center justify-center transition-all duration-200 ${
                                   quantity <= 1 ? 'opacity-50 cursor-not-allowed border-gray-600 text-gray-600' : ''
                                 }`}
                                 disabled={quantity <= 1}
@@ -405,7 +424,7 @@ const CartPage = () => {
                               </motion.button>
 
                               {/* Digital Display */}
-                              <div className="w-16 text-center border border-cyan-400 rounded-lg bg-black text-cyan-400 px-3 py-2 text-lg font-bold font-mono shadow-lg">
+                              <div className="w-16 text-center border border-cyan-400 rounded-lg bg-black text-cyan-400 px-3 py-2 text-lg font-bold shadow-lg">
                                 <motion.span
                                   key={quantity}
                                   initial={{ scale: 1.2, color: "#00ff00" }}
@@ -416,7 +435,7 @@ const CartPage = () => {
                                 </motion.span>
                               </div>
 
-                              {/* Cyberpunk Increase Button */}
+                              {/* Increase Button */}
                               <motion.button
                                 whileTap={{ scale: 0.85 }}
                                 whileHover={{
@@ -424,12 +443,12 @@ const CartPage = () => {
                                   boxShadow: "0 0 20px rgba(34, 197, 94, 0.5)"
                                 }}
                                 onClick={() => dispatch(incrementQuantity(id))}
-                                className="h-10 w-10 bg-black border border-green-400 hover:bg-green-400/20 text-green-400 rounded-lg flex items-center justify-center transition-all duration-200 font-mono"
+                                className="h-10 w-10 bg-black border border-green-400 hover:bg-green-400/20 text-green-400 rounded-lg flex items-center justify-center transition-all duration-200"
                               >
                                 <Plus size={18} />
                               </motion.button>
 
-                              {/* Cyberpunk Delete Button */}
+                              {/* Delete Button */}
                               <motion.button
                                 whileHover={{
                                   scale: 1.1,
@@ -474,10 +493,9 @@ const CartPage = () => {
                           <ShoppingCart size={48} className="text-red-400" strokeWidth={1.5} />
                         </motion.div>
 
-                        <h3 className="text-2xl font-bold text-red-400 mb-2 font-mono">&gt; CART_EMPTY.ERROR</h3>
-                        <p className="text-green-400 mb-6 font-mono">
-                          &gt; NO_ITEMS_DETECTED<br/>
-                          &gt; INITIATING_SHOPPING_PROTOCOL...
+                        <h3 className="text-2xl font-bold text-red-400 mb-2">Your cart is empty</h3>
+                        <p className="text-green-400 mb-6">
+                          Add some items to get started
                         </p>
 
                         <motion.button
@@ -487,9 +505,9 @@ const CartPage = () => {
                           }}
                           whileTap={{ scale: 0.95 }}
                           onClick={() => navigate('/')}
-                          className="px-6 py-3 bg-black border border-green-400 hover:bg-green-400/20 text-green-400 font-bold rounded-xl transition-all duration-200 font-mono"
+                          className="px-6 py-3 bg-black border border-green-400 hover:bg-green-400/20 text-green-400 font-bold rounded-xl transition-all duration-200"
                         >
-                          [START_SHOPPING]
+                          Start Shopping
                         </motion.button>
                       </motion.div>
                     )}
@@ -497,7 +515,7 @@ const CartPage = () => {
                 </div>
               </section>
 
-              {/* Cyberpunk Price Summary Section */}
+              {/* Price Summary Section */}
               {cartItems.length > 0 && (
                 <motion.aside
                   initial={{ opacity: 0, x: 20 }}
@@ -524,24 +542,33 @@ const CartPage = () => {
                       >
                         <Star size={20} className="text-yellow-400" />
                       </motion.div>
-                      <h2 className="text-xl font-bold text-cyan-400 font-mono">&gt; ORDER_SUMMARY</h2>
+                      <h2 className="text-xl font-bold text-cyan-400">Order Summary</h2>
                     </div>
 
                     <div className="space-y-4">
                     <div className="flex justify-between items-center text-green-400 bg-black/50 p-3 rounded-lg border border-green-400/30">
-                      <span className="flex items-center gap-2 font-mono">
+                      <span className="flex items-center gap-2">
                         <Package size={16} />
-                        SUBTOTAL [{cartItemTotal} {cartItemTotal === 1 ? "UNIT" : "UNITS"}]
+                        Subtotal ({cartItemTotal} {cartItemTotal === 1 ? "item" : "items"})
                       </span>
-                      <span className="font-bold text-lg font-mono">₹{cartSubtotal.toFixed(2)}</span>
+                      <span className="font-bold text-lg">₹{cartSubtotal.toFixed(2)}</span>
                     </div>
 
-                    {/* Cyberpunk Coupon Section */}
+                    {/* Estimated Delivery */}
+                    <div className="flex justify-between items-center text-blue-400 bg-black/50 p-3 rounded-lg border border-blue-400/30">
+                      <span className="flex items-center gap-2">
+                        <Package size={16} />
+                        Estimated Delivery
+                      </span>
+                      <span className="font-bold text-sm">{getEstimatedDelivery()}</span>
+                    </div>
+
+                    {/* Manual Coupon Section */}
                     <div className="mt-6 pt-6 border-t border-cyan-400/30">
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-2">
                           <Sparkles size={16} className="text-yellow-400" />
-                          <p className="text-yellow-400 font-bold font-mono">&gt; COUPON_PROTOCOL</p>
+                          <p className="text-yellow-400 font-bold">Coupon Discount</p>
                         </div>
                         {couponState.applied && (
                           <motion.button
@@ -550,31 +577,38 @@ const CartPage = () => {
                             onClick={removeCoupon}
                             className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-red-500/10 transition-all duration-200"
                           >
-                            <X size={14} /> Remove
+                            <X size={14} /> Remove Coupon
                           </motion.button>
                         )}
                       </div>
 
-                      {couponState.applied ? (
+                      {/* Manual Coupon Display */}
+                      {couponState.applied && (
                         <motion.div
                           initial={{ opacity: 0, scale: 0.9 }}
                           animate={{ opacity: 1, scale: 1 }}
-                          className="bg-gradient-to-r from-green-900/40 to-emerald-900/40 border border-green-600/50 rounded-xl p-4 flex items-center justify-between backdrop-blur-sm"
+                          className="bg-gradient-to-r from-purple-900/40 to-pink-900/40 border border-purple-600/50 rounded-xl p-4 flex items-center justify-between backdrop-blur-sm mb-4"
                         >
                           <div className="flex items-center gap-3">
-                            <div className="p-1 bg-green-500 rounded-full">
+                            <div className="p-1 bg-purple-500 rounded-full">
                               <Check className="text-white" size={16} />
                             </div>
-                            <span className="font-semibold text-white">{couponState.code}</span>
-                            <span className="text-xs bg-gradient-to-r from-green-500 to-emerald-500 text-white px-3 py-1 rounded-full font-semibold">
+                            <div>
+                              <span className="font-semibold text-white">{couponState.code}</span>
+                              <p className="text-xs text-purple-300 mt-1">{couponState.description}</p>
+                            </div>
+                            <span className="text-xs bg-gradient-to-r from-purple-500 to-pink-500 text-white px-3 py-1 rounded-full font-semibold">
                               {couponState.discountPercentage}% OFF
                             </span>
                           </div>
-                          <span className="text-green-400 font-bold text-lg">- ₹{couponState.discount.toFixed(2)}</span>
+                          <span className="text-purple-400 font-bold text-lg">- ₹{couponState.discount.toFixed(2)}</span>
                         </motion.div>
-                      ) : (
+                      )}
+
+                      {/* Manual Coupon Input */}
+                      {!couponState.applied && (
                         <div className="space-y-4">
-                          <div className="grid grid-cols-3 gap-2">
+                          <div className="grid grid-cols-2 gap-2">
                             {Object.keys(validCoupons).map((code) => (
                               <motion.button
                                 key={code}
@@ -589,6 +623,9 @@ const CartPage = () => {
                                 <div className="font-semibold">{code}</div>
                                 <div className="text-yellow-400 text-[0.6rem] mt-1 font-medium">
                                   {validCoupons[code].discount}% OFF
+                                </div>
+                                <div className="text-gray-400 text-[0.5rem] mt-1">
+                                  Min ₹{validCoupons[code].minAmount}
                                 </div>
                               </motion.button>
                             ))}
@@ -633,36 +670,67 @@ const CartPage = () => {
                     </div>
 
                     <div className="mt-6 space-y-4">
-                      <div className="flex justify-between text-green-400 bg-black/50 p-3 rounded-lg border border-green-400/30">
-                        <span className="flex items-center gap-2 font-mono">
-                          <Sparkles size={16} />
-                          DISCOUNT_APPLIED
-                        </span>
-                        <span className="font-bold font-mono">- ₹{couponState.discount.toFixed(2)}</span>
-                      </div>
+                      {couponState.discount > 0 && (
+                        <div className="flex justify-between text-green-400 bg-black/50 p-3 rounded-lg border border-green-400/30">
+                          <span className="flex items-center gap-2">
+                            <Sparkles size={16} />
+                            Coupon Discount
+                          </span>
+                          <span className="font-bold">- ₹{couponState.discount.toFixed(2)}</span>
+                        </div>
+                      )}
 
                       <div className="flex justify-between border-t border-cyan-400/30 pt-4 font-bold text-xl bg-black/50 p-4 rounded-lg border border-cyan-400/30">
-                        <span className="text-cyan-400 font-mono">&gt; TOTAL_AMOUNT</span>
+                        <span className="text-cyan-400">Total Amount</span>
                         <motion.span
                           key={finalPrice}
                           initial={{ scale: 1.2, color: "#00ff00" }}
                           animate={{ scale: 1, color: "#fbbf24" }}
                           transition={{ duration: 0.5, type: "spring" }}
-                          className="font-bold text-2xl font-mono text-yellow-400"
+                          className="font-bold text-2xl text-yellow-400"
                         >
                           ₹{finalPrice.toFixed(2)}
                         </motion.span>
                       </div>
 
-                      {finalPrice < cartSubtotal && (
+                      {couponState.discount > 0 && (
                         <motion.div
                           initial={{ opacity: 0, scale: 0.9 }}
                           animate={{ opacity: 1, scale: 1 }}
                           className="text-center text-green-400 text-sm p-3 bg-green-500/10 rounded-lg border border-green-500/20"
                         >
-                          🎉 You saved ₹{couponState.discount.toFixed(2)} on this order!
+                          🎉 You saved ₹{couponState.discount.toFixed(2)} with coupon {couponState.code}!
                         </motion.div>
                       )}
+
+                      {/* Order Summary */}
+                      <div className="bg-black/30 p-4 rounded-lg border border-gray-600/30">
+                        <h4 className="text-sm font-semibold text-gray-300 mb-3">Order Summary:</h4>
+                        <div className="space-y-2 text-xs">
+                          {cartItems.map((item, index) => (
+                            <div key={index} className="flex justify-between text-gray-400">
+                              <span className="truncate">{item.title} x{item.quantity}</span>
+                              <span>₹{(item.price * item.quantity).toFixed(2)}</span>
+                            </div>
+                          ))}
+                          <div className="border-t border-gray-600/30 pt-2 mt-2">
+                            <div className="flex justify-between text-gray-300 font-semibold">
+                              <span>Subtotal:</span>
+                              <span>₹{cartSubtotal.toFixed(2)}</span>
+                            </div>
+                            {couponState.discount > 0 && (
+                              <div className="flex justify-between text-green-400">
+                                <span>Coupon Discount:</span>
+                                <span>- ₹{couponState.discount.toFixed(2)}</span>
+                              </div>
+                            )}
+                            <div className="flex justify-between text-yellow-400 font-bold">
+                              <span>Total:</span>
+                              <span>₹{finalPrice.toFixed(2)}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
 
                     <div className="mt-8">

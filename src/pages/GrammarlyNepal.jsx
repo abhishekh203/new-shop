@@ -8,49 +8,22 @@ import Layout from "../components/layout/Layout";
 import SEOHelmet from "../components/SEO/SEOHelmet";
 import OptimizedImage from "../components/SEO/OptimizedImage";
 import Nepal from "./nepal";
+import { nepalSEOKeywords, generateNepalMetaDescription, generateNepalTitle, generateNepalProductSchema } from "../utils/nepalSEOKeywords";
 
 const GrammarlyNepal = () => {
+    // Dynamic Nepal SEO using the utility functions
+    const serviceName = "Grammarly";
+    const seoFeatures = ["Grammar checking", "Writing assistance", "Advanced features", "Real-time suggestions"];
+    
     const meta = {
-        title: "Grammarly Nepal - Premium Writing Assistant at Best NPR Prices",
-        description: "Get Grammarly premium subscription in Nepal at best prices. Advanced grammar checking, writing assistance in Kathmandu, Pokhara & all Nepal. NPR pricing, eSewa/Khalti accepted.",
-        keywords: "Grammarly Nepal, Grammarly subscription Nepal, buy Grammarly Nepal, Grammarly premium Nepal, Grammarly account Nepal, writing assistant Nepal, grammar checker Nepal, Grammarly price Nepal, Grammarly NPR, Grammarly Kathmandu, improve writing Nepal, English writing Nepal, grammar tool Nepal",
+        title: generateNepalTitle(serviceName, "subscription"),
+        description: generateNepalMetaDescription("grammarly", seoFeatures),
+        keywords: nepalSEOKeywords.grammarly.join(", "),
         canonical: "https://www.digitalshopnepal.com/GrammarlyNepal"
     };
 
-    const grammarlyStructuredData = {
-        "@context": "https://schema.org",
-        "@type": "Product",
-        "name": "Grammarly Premium Subscription Nepal",
-        "description": "Premium Grammarly subscription for Nepal with advanced grammar checking and writing assistance",
-        "brand": {
-            "@type": "Brand",
-            "name": "Grammarly"
-        },
-        "offers": {
-            "@type": "Offer",
-            "price": "999",
-            "priceCurrency": "NPR",
-            "availability": "https://schema.org/InStock",
-            "priceValidUntil": "2024-12-31",
-            "areaServed": {
-                "@type": "Country",
-                "name": "Nepal"
-            }
-        },
-        "aggregateRating": {
-            "@type": "AggregateRating",
-            "ratingValue": "4.7",
-            "reviewCount": "89"
-        },
-        "category": "Writing Software",
-        "audience": {
-            "@type": "Audience",
-            "geographicArea": {
-                "@type": "Country",
-                "name": "Nepal"
-            }
-        }
-    };
+    // Generate dynamic structured data using Nepal SEO utilities
+    const grammarlyStructuredData = generateNepalProductSchema(serviceName, "999", "NPR");
 
     const breadcrumbs = [
         { name: "Home", url: "/" },

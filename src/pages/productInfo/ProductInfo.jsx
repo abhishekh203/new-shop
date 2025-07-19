@@ -29,6 +29,7 @@ import Layout from "../../components/layout/Layout";
 import myContext from "../../context/myContext";
 import { fireDB } from "../../firebase/FirebaseConfig"; // Assuming fireDB is exported from here
 import { addToCart, deleteFromCart } from "../../redux/cartSlice"; // Assuming Redux slices are defined here
+import ProductReviews from "../../components/productReviews/ProductReviews";
 
 // --- Framer Motion Variants ---
 
@@ -89,8 +90,9 @@ const StyledRating = styled(Rating)(({ theme }) => ({
 const ProductInfo = () => {
     // Access context for global state (e.g., user info)
     const context = useContext(myContext);
-    const { user } = context; // Assuming user info might be needed for future features
-
+    // Get current user from localStorage
+    const user = JSON.parse(localStorage.getItem('users'));
+    
     // State variables for product data, loading, quantity, and UI interactions
     const [product, setProduct] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -109,9 +111,20 @@ const ProductInfo = () => {
     // Redux dispatch hook
     const dispatch = useDispatch();
 
-    // Placeholder values for reviews and rating (can be replaced by actual product data)
-    const [reviewCount, setReviewCount] = useState(107);
-    const [ratingValue, setRatingValue] = useState(4.5);
+    // Load favorite status from localStorage on component mount
+    useEffect(() => {
+        if (user?.uid && id) {
+            const savedFavorites = localStorage.getItem(`favorites_${user.uid}`);
+            if (savedFavorites) {
+                try {
+                    const favorites = JSON.parse(savedFavorites);
+                    setIsFavorite(favorites.includes(id));
+                } catch (e) {
+                    console.error("Failed to parse favorites from localStorage");
+                }
+            }
+        }
+    }, [user?.uid, id]);
 
     // --- Data Fetching Function ---
     const getProductData = useCallback(async () => {
@@ -133,10 +146,6 @@ const ProductInfo = () => {
                 const productData = { id: productDoc.id, ...productDoc.data() };
                 setProduct(productData);
                 setShareLink(`${window.location.origin}/productinfo/${id}`);
-
-                // Update review count and rating if available in product data
-                setReviewCount(productData.reviewCount || 107);
-                setRatingValue(productData.rating || 4.5);
 
                 // Increment view count (non-critical, fire-and-forget)
                 updateDoc(productDocRef, { views: increment(1) }).catch(err => console.warn("Failed to update views", err));
@@ -180,10 +189,30 @@ const ProductInfo = () => {
 
     // Toggles favorite status
     const toggleFavorite = useCallback(() => {
+        if (!user?.uid) {
+            toast.error("Please log in to save items to your wishlist");
+            return;
+        }
+
         setIsFavorite(prev => !prev);
+        
+        // Update localStorage
+        try {
+            const savedFavorites = localStorage.getItem(`favorites_${user.uid}`);
+            const favorites = savedFavorites ? JSON.parse(savedFavorites) : [];
+            
+            const newFavorites = isFavorite
+                ? favorites.filter(favId => favId !== id)
+                : [...favorites, id];
+            
+            localStorage.setItem(`favorites_${user.uid}`, JSON.stringify(newFavorites));
+            
         toast.success(!isFavorite ? "Added to favorites" : "Removed from favorites");
-        // TODO: Add persistence logic here if needed (e.g., update user's favorites in Firestore)
-    }, [isFavorite]);
+        } catch (e) {
+            console.error("Failed to update favorites in localStorage");
+            toast.error("Failed to update wishlist");
+        }
+    }, [isFavorite, user?.uid, id]);
 
     // Opens the share dialog
     const handleShare = useCallback(() => setOpenShareDialog(true), []);
@@ -203,6 +232,51 @@ const ProductInfo = () => {
                 toast.error("Could not copy link.");
             });
     }, [shareLink, closeShareDialog]);
+
+    // Admin Stock Management Functions
+    const updateStock = useCallback(async (change) => {
+        if (!user || user.role?.trim()?.toLowerCase() !== "admin") {
+            toast.error("Admin access required");
+            return;
+        }
+
+        if (!product) return;
+
+        try {
+            const newQuantity = Math.max(0, product.quantity + change);
+            const productRef = doc(fireDB, "products", product.id);
+            
+            await updateDoc(productRef, { quantity: newQuantity });
+            toast.success(`Stock ${change > 0 ? 'increased' : 'decreased'} successfully`);
+            
+            // Update local state immediately for better UX
+            setProduct(prev => prev ? { ...prev, quantity: newQuantity } : null);
+        } catch (error) {
+            console.error("Error updating stock:", error);
+            toast.error("Failed to update stock");
+        }
+    }, [user, product]);
+
+    const setStockToZero = useCallback(async () => {
+        if (!user || user.role?.trim()?.toLowerCase() !== "admin") {
+            toast.error("Admin access required");
+            return;
+        }
+
+        if (!product) return;
+
+        try {
+            const productRef = doc(fireDB, "products", product.id);
+            await updateDoc(productRef, { quantity: 0 });
+            toast.success("Stock set to zero");
+            
+            // Update local state immediately for better UX
+            setProduct(prev => prev ? { ...prev, quantity: 0 } : null);
+        } catch (error) {
+            console.error("Error setting stock to zero:", error);
+            toast.error("Failed to set stock to zero");
+        }
+    }, [user, product]);
 
     // Handles "Buy Now" action: adds to cart and navigates to cart page
     const handleBuyNow = useCallback((item) => {
@@ -437,16 +511,6 @@ const ProductInfo = () => {
 
                         {/* Enhanced Rating & Price Section */}
                         <motion.div variants={itemVariants} className="space-y-4">
-                            {/* Rating Section */}
-                            <div className="flex items-center gap-3 p-4 bg-gray-800/40 backdrop-blur-sm rounded-2xl border border-gray-700/50">
-                                <StyledRating value={ratingValue} precision={0.5} readOnly size="medium" />
-                                <span className="text-sm text-gray-300 font-medium">({reviewCount} reviews)</span>
-                                <div className="ml-auto flex items-center gap-2">
-                                    <span className="text-2xl font-bold text-yellow-400">{ratingValue}</span>
-                                    <span className="text-sm text-gray-400">/5</span>
-                                </div>
-                            </div>
-
                             {/* Price Section */}
                             <div className="flex items-center justify-between p-6 bg-gradient-to-r from-gray-800/60 to-gray-900/60 backdrop-blur-lg rounded-2xl border border-gray-700/50">
                                 <div className="flex items-baseline gap-3">
@@ -688,9 +752,72 @@ const ProductInfo = () => {
                                             ? 'bg-green-500/20 text-green-300 border border-green-400/30'
                                             : 'bg-red-500/20 text-red-300 border border-red-400/30'
                                     )}>
-                                        {product.quantity > 0 ? "✓ In Stock" : "✗ Out of Stock"}
+                                        {user && user?.role?.trim()?.toLowerCase() === "admin" 
+                                            ? (product.quantity > 0 ? "✓ In Stock" : "✗ Out of Stock")
+                                            : `${product.quantity} units available`
+                                        }
                                     </span>
                                 </div>
+                                
+                                {/* Admin Stock Management */}
+                                
+                                {user && user?.role?.trim()?.toLowerCase() === "admin" && (
+                                    <div className="mt-4 p-4 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-xl border border-blue-500/20">
+                                        <div className="flex items-center gap-2 mb-3">
+                                            <span className="text-blue-400 text-sm font-semibold">🔧 Admin Stock Control</span>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-gray-300 text-sm">Current Stock:</span>
+                                            <span className="text-white font-bold">{product.quantity}</span>
+                                            <div className="flex items-center gap-2">
+                                                <motion.button
+                                                    onClick={() => updateStock(-1)}
+                                                    whileHover={{ scale: 1.1 }}
+                                                    whileTap={{ scale: 0.9 }}
+                                                    className="w-8 h-8 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg border border-red-500/30 flex items-center justify-center transition-all duration-200"
+                                                    title="Decrease Stock"
+                                                >
+                                                    <Remove fontSize="small" />
+                                                </motion.button>
+                                                <motion.button
+                                                    onClick={() => updateStock(1)}
+                                                    whileHover={{ scale: 1.1 }}
+                                                    whileTap={{ scale: 0.9 }}
+                                                    className="w-8 h-8 bg-green-500/20 hover:bg-green-500/30 text-green-400 rounded-lg border border-green-500/30 flex items-center justify-center transition-all duration-200"
+                                                    title="Increase Stock"
+                                                >
+                                                    <Add fontSize="small" />
+                                                </motion.button>
+                                            </div>
+                                        </div>
+                                        <div className="mt-2 flex gap-2">
+                                            <motion.button
+                                                onClick={() => updateStock(5)}
+                                                whileHover={{ scale: 1.05 }}
+                                                whileTap={{ scale: 0.95 }}
+                                                className="px-3 py-1 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-lg border border-blue-500/30 text-xs transition-all duration-200"
+                                            >
+                                                +5
+                                            </motion.button>
+                                            <motion.button
+                                                onClick={() => updateStock(10)}
+                                                whileHover={{ scale: 1.05 }}
+                                                whileTap={{ scale: 0.95 }}
+                                                className="px-3 py-1 bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 rounded-lg border border-purple-500/30 text-xs transition-all duration-200"
+                                            >
+                                                +10
+                                            </motion.button>
+                                            <motion.button
+                                                onClick={() => setStockToZero()}
+                                                whileHover={{ scale: 1.05 }}
+                                                whileTap={{ scale: 0.95 }}
+                                                className="px-3 py-1 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg border border-red-500/30 text-xs transition-all duration-200"
+                                            >
+                                                Set to 0
+                                            </motion.button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </motion.div>
 
@@ -856,16 +983,53 @@ const ProductInfo = () => {
                             <motion.button
                                 whileHover={{ scale: 1.05, y: -2 }}
                                 whileTap={{ scale: 0.95 }}
-                                onClick={() => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(`Check out this product: ${product.title}`)}&url=${encodeURIComponent(shareLink)}`)}
-                                className="flex-1 flex items-center justify-center gap-2 p-3 bg-sky-600/20 hover:bg-sky-600/30 text-sky-400 rounded-xl border border-sky-500/30 transition-all duration-200"
+                                onClick={() => window.open(`https://www.instagram.com/?url=${encodeURIComponent(shareLink)}`)}
+                                className="flex-1 flex items-center justify-center gap-2 p-3 bg-pink-600/20 hover:bg-pink-600/30 text-pink-400 rounded-xl border border-pink-500/30 transition-all duration-200"
                             >
-                                <span className="text-lg">🐦</span>
-                                <span className="text-sm font-medium">Twitter</span>
+                                <span className="text-lg">📷</span>
+                                <span className="text-sm font-medium">Instagram</span>
                             </motion.button>
                         </div>
                     </div>
                 </motion.div>
             </Dialog>
+
+            {/* Product Reviews Section */}
+            <motion.div
+                initial={{ opacity: 0, y: 50 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.1 }}
+                transition={{ duration: 0.8, delay: 0.2 }}
+                className="max-w-7xl mx-auto mt-20 lg:mt-32 px-4 md:px-8 pb-20"
+            >
+                {/* Reviews Section Header */}
+                <div className="text-center mb-12">
+                    <motion.h2
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.6 }}
+                        className="text-4xl font-bold text-white mb-4"
+                    >
+                        Customer Reviews
+                    </motion.h2>
+                    <motion.p
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.6, delay: 0.2 }}
+                        className="text-gray-400 text-lg"
+                    >
+                        See what customers are saying about this product
+                    </motion.p>
+                </div>
+
+                <ProductReviews 
+                    productId={product?.id} 
+                    productTitle={product?.title}
+                    showReviewForm={true}
+                />
+            </motion.div>
 
             {/* Custom Scrollbar CSS for the description overflow */}
             {/* This CSS can be placed in a global stylesheet or directly here for demonstration */}

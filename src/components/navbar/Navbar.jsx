@@ -652,7 +652,7 @@ const Navbar = () => {
                                 initial="closed"
                                 animate="open"
                                 exit="closed"
-                                className="fixed top-24 sm:top-28 left-4 right-4 max-h-[82vh] bg-gray-900/95 backdrop-blur-xl border border-teal-400/30 shadow-2xl rounded-3xl z-50 flex flex-col md:hidden overflow-hidden"
+                                className="fixed top-32 sm:top-36 left-4 right-4 max-h-[75vh] bg-gray-900/95 backdrop-blur-xl border border-teal-400/30 shadow-2xl rounded-3xl z-50 flex flex-col md:hidden overflow-hidden"
                                 style={{
                                     boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(20, 184, 166, 0.1)"
                                 }}
@@ -722,6 +722,7 @@ const Navbar = () => {
                                         </motion.h4>
                                         {!user ? (
                                             <>
+
                                                 <motion.div variants={mobileNavMenuItemVariants}>
                                                     <MobileNavLink to="/login" icon={<FaSignInAlt />} text="Login" onClick={toggleMenu} />
                                                 </motion.div>

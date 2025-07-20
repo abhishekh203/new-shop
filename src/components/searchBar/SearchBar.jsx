@@ -99,9 +99,9 @@ const SearchBar = () => {
                     onChange={(e) => setSearch(e.target.value)}
                     onFocus={() => setIsFocused(true)}
                     onBlur={() => setTimeout(() => setIsFocused(false), 200)}
-                    className="bg-gray-50 placeholder-gray-400 rounded-full px-4 py-2 lg:py-2.5 xl:py-2.5 w-full outline-none text-gray-800
-                    focus:bg-white focus:ring-2 focus:ring-blue-500 transition duration-200
-                    border border-gray-200 hover:border-blue-300 hover:bg-white hover:shadow-sm
+                    className="bg-gray-700/80 placeholder-gray-400 rounded-full px-4 py-2 lg:py-2.5 xl:py-2.5 w-full outline-none text-white
+                    focus:bg-gray-600/90 focus:ring-2 focus:ring-teal-500/60 transition duration-200
+                    border border-gray-600/50 hover:border-teal-400/60 hover:bg-gray-600/80 hover:shadow-sm backdrop-blur-sm
                     text-sm md:text-base lg:text-base xl:text-base pr-10 min-w-0
                     lg:placeholder:text-base xl:placeholder:text-base"
                 />

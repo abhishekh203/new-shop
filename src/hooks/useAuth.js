@@ -1,6 +1,12 @@
 import { useState, useCallback } from 'react';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
-import { collection, query, where, getDocs, doc, setDoc } from 'firebase/firestore';
+import { 
+    signInWithEmailAndPassword, 
+    createUserWithEmailAndPassword, 
+    sendPasswordResetEmail,
+    signInWithPopup,
+    GoogleAuthProvider 
+} from 'firebase/auth';
+import { collection, query, where, getDocs, doc, setDoc, getDoc } from 'firebase/firestore';
 import { Timestamp } from 'firebase/firestore';
 import { auth, fireDB } from '../firebase/FirebaseConfig';
 import { handleAuthError } from '../utils/errorHandler';
@@ -148,6 +154,89 @@ export const useAuth = () => {
         return rateLimiter.getRemainingAttempts(email);
     }, []);
 
+    // Google signup function
+    const signupWithGoogle = useCallback(async () => {
+        setLoading(true);
+        setProgress(25);
+
+        try {
+            const provider = new GoogleAuthProvider();
+            provider.setCustomParameters({
+                prompt: 'select_account'
+            });
+
+            const result = await signInWithPopup(auth, provider);
+            const firebaseUser = result.user;
+
+            setProgress(50);
+
+            // Check if user already exists in Firestore
+            const userRef = doc(fireDB, "user", firebaseUser.uid);
+            const userDoc = await getDoc(userRef);
+
+            if (userDoc.exists()) {
+                // User already exists, treat as login
+                const userData = userDoc.data();
+                localStorage.setItem("users", JSON.stringify(userData));
+                setProgress(100);
+                toast.success("Welcome back! Logged in successfully.");
+                
+                return { 
+                    success: true, 
+                    user: userData,
+                    redirectTo: userData.role === "admin" ? '/admin-dashboard' : '/'
+                };
+            } else {
+                // New user, create account
+                setProgress(75);
+
+                const userDocData = {
+                    name: firebaseUser.displayName || 'Google User',
+                    email: firebaseUser.email,
+                    uid: firebaseUser.uid,
+                    role: "user",
+                    time: Timestamp.now(),
+                    date: new Date().toISOString(),
+                    emailVerified: firebaseUser.emailVerified || false,
+                    photoURL: firebaseUser.photoURL || null,
+                    provider: 'google'
+                };
+
+                await setDoc(userRef, userDocData);
+                localStorage.setItem("users", JSON.stringify(userDocData));
+
+                setProgress(100);
+                toast.success("Account created successfully with Google!");
+
+                return { 
+                    success: true, 
+                    user: userDocData,
+                    redirectTo: '/'
+                };
+            }
+
+        } catch (error) {
+            console.error("Google signup error:", error);
+            
+            let errorMessage = "Google signup failed. Please try again.";
+            
+            if (error.code === 'auth/popup-closed-by-user') {
+                errorMessage = "Signup cancelled. Please try again.";
+            } else if (error.code === 'auth/popup-blocked') {
+                errorMessage = "Popup blocked. Please allow popups and try again.";
+            } else if (error.code === 'auth/cancelled-popup-request') {
+                errorMessage = "Another signup attempt is in progress.";
+            }
+            
+            toast.error(errorMessage);
+            
+            return { success: false, error: error.code, message: errorMessage };
+        } finally {
+            setLoading(false);
+            setProgress(0);
+        }
+    }, []);
+
     // Check if user is locked out
     const isLockedOut = useCallback((email) => {
         return !rateLimiter.isAllowed(email);
@@ -158,6 +247,7 @@ export const useAuth = () => {
         progress,
         login,
         signup,
+        signupWithGoogle,
         resetPassword,
         getRemainingAttempts,
         isLockedOut

@@ -1,355 +1,553 @@
-import React, { useContext, useState, useEffect, useCallback } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import myContext from "../../context/myContext";
-import toast, { Toaster } from "react-hot-toast";
-import Loader from "../../components/loader/Loader";
-import { FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash, FaArrowRight, FaCheckSquare, FaRegSquare, FaSpinner, FaShieldAlt } from "react-icons/fa";
-import { motion, AnimatePresence } from "framer-motion";
-import { useAuth } from "../../hooks/useAuth";
-import { validateEmail, validatePassword, validateConfirmPassword, validateName, validateTerms, getPasswordStrength } from "../../utils/validation";
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import toast from 'react-hot-toast';
+import { 
+  FaUser, 
+  FaEnvelope, 
+  FaLock, 
+  FaEye, 
+  FaEyeSlash, 
+  FaGoogle,
+  FaShieldAlt,
+  FaCheck,
+  FaTimes,
+  FaSpinner
+} from 'react-icons/fa';
+import { useAuth } from '../../hooks/useAuth';
 
-// --- Animation Variants ---
-const pageVariants = {
+// ============================================================================
+// CONFIGURATION & CONSTANTS
+// ============================================================================
+const VALIDATION_RULES = {
+  name: { minLength: 2, maxLength: 50 },
+  email: { pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ },
+  password: { 
+    minLength: 8, 
+    patterns: {
+      uppercase: /[A-Z]/,
+      lowercase: /[a-z]/,
+      number: /\d/,
+      special: /[!@#$%^&*(),.?":{}|<>]/
+    }
+  }
+};
+
+const ANIMATION_VARIANTS = {
+  container: {
     hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { duration: 0.5, ease: "easeInOut" } },
-};
-
-const cardVariants = {
-    hidden: { y: 40, opacity: 0, scale: 0.95 },
     visible: {
-        y: 0, opacity: 1, scale: 1,
-        transition: {
-            delay: 0.1,
-            duration: 0.6,
-            type: "spring",
-            stiffness: 100,
-            damping: 15,
-            // Stagger children animations within the card
-            // *** Note: Stagger is now applied via containerVariants on the form div below ***
-        }
-    },
+      opacity: 1,
+      transition: { staggerChildren: 0.1, delayChildren: 0.2 }
+    }
+  },
+  item: {
+    hidden: { y: 20, opacity: 0 },
+    visible: { 
+      y: 0, 
+      opacity: 1,
+      transition: { duration: 0.5, ease: "easeOut" }
+    }
+  },
+  button: {
+    idle: { scale: 1 },
+    hover: { scale: 1.02 },
+    tap: { scale: 0.98 }
+  }
 };
 
-// *** FIX: Define containerVariants for staggering form items ***
-const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-        opacity: 1,
-        transition: {
-            delay: 0.2, // Start slightly after card animation
-            staggerChildren: 0.08, // Stagger children entry
-        },
-    },
+// ============================================================================
+// VALIDATION UTILITIES
+// ============================================================================
+const validateField = (name, value, confirmPassword = '', hasStartedTyping = false) => {
+  switch (name) {
+    case 'name':
+      if (!hasStartedTyping) return '';
+      if (!value.trim()) return 'Please enter your full name';
+      if (value.trim().length < VALIDATION_RULES.name.minLength) 
+        return `Need ${VALIDATION_RULES.name.minLength - value.trim().length} more characters`;
+      if (value.trim().length > VALIDATION_RULES.name.maxLength) 
+        return `Name is too long (max ${VALIDATION_RULES.name.maxLength} characters)`;
+      return '';
+
+    case 'email':
+      if (!hasStartedTyping) return '';
+      if (!value) return 'Please enter your email address';
+      if (!VALIDATION_RULES.email.pattern.test(value)) 
+        return 'Please enter a valid email address';
+      return '';
+
+    case 'password':
+      if (!hasStartedTyping) return '';
+      if (!value) return 'Please create a password';
+      if (value.length < VALIDATION_RULES.password.minLength) 
+        return `Need ${VALIDATION_RULES.password.minLength - value.length} more characters`;
+      
+      const { patterns } = VALIDATION_RULES.password;
+      if (!patterns.uppercase.test(value)) return 'Add an uppercase letter (A-Z)';
+      if (!patterns.lowercase.test(value)) return 'Add a lowercase letter (a-z)';
+      if (!patterns.number.test(value)) return 'Add a number (0-9)';
+      if (!patterns.special.test(value)) return 'Add a special character (!@#$%^&*)';
+      return '';
+
+    case 'confirmPassword':
+      if (!hasStartedTyping) return '';
+      if (!value) return 'Please confirm your password';
+      if (value !== confirmPassword) return 'Passwords do not match';
+      return '';
+
+    case 'terms':
+      if (!hasStartedTyping) return '';
+      return value ? '' : 'Please accept the Terms of Service and Privacy Policy';
+
+    default:
+      return '';
+  }
 };
-// *** END FIX ***
 
-const itemVariants = {
-    hidden: { y: 15, opacity: 0 },
-    visible: { y: 0, opacity: 1, transition: { duration: 0.4, ease: "easeOut" } },
+const getPasswordStrength = (password) => {
+  if (!password) return { score: 0, label: 'Enter password', color: 'text-gray-400' };
+  
+  let score = 0;
+  const { patterns } = VALIDATION_RULES.password;
+  
+  if (password.length >= 8) score++;
+  if (patterns.uppercase.test(password)) score++;
+  if (patterns.lowercase.test(password)) score++;
+  if (patterns.number.test(password)) score++;
+  if (patterns.special.test(password)) score++;
+  
+  const strengthMap = {
+    0: { label: 'Very Weak', color: 'text-red-500' },
+    1: { label: 'Weak', color: 'text-red-400' },
+    2: { label: 'Fair', color: 'text-yellow-500' },
+    3: { label: 'Good', color: 'text-blue-500' },
+    4: { label: 'Strong', color: 'text-green-500' },
+    5: { label: 'Very Strong', color: 'text-emerald-500' }
+  };
+  
+  return { score, ...strengthMap[score] };
 };
 
-const errorVariants = {
-    hidden: { opacity: 0, y: -5, height: 0 },
-    visible: { opacity: 1, y: 0, height: 'auto', transition: { duration: 0.3, ease: 'easeOut' } },
-    exit: { opacity: 0, y: 2, height: 0, transition: { duration: 0.2, ease: 'easeIn' } }
+// ============================================================================
+// CUSTOM HOOKS
+// ============================================================================
+const useFormValidation = (formData) => {
+  return useMemo(() => {
+    // Show validation errors only when user has started typing in each field
+    const errors = {
+      name: validateField('name', formData.name, '', formData.name.length > 0),
+      email: validateField('email', formData.email, '', formData.email.length > 0),
+      password: validateField('password', formData.password, '', formData.password.length > 0),
+      confirmPassword: validateField('confirmPassword', formData.confirmPassword, formData.password, formData.confirmPassword.length > 0),
+      terms: validateField('terms', formData.terms, '', false) // Only show when form is submitted
+    };
+
+    // For form validity, always check all fields (regardless of typing state)
+    const actualErrors = {
+      name: validateField('name', formData.name, '', true),
+      email: validateField('email', formData.email, '', true),
+      password: validateField('password', formData.password, '', true),
+      confirmPassword: validateField('confirmPassword', formData.confirmPassword, formData.password, true),
+      terms: validateField('terms', formData.terms, '', true)
+    };
+
+    const isValid = Object.values(actualErrors).every(error => !error) && 
+                   Object.values(formData).every(value => 
+                     typeof value === 'boolean' ? value : Boolean(value?.toString().trim())
+                   );
+
+    return { errors, isValid };
+  }, [formData]);
 };
 
-// --- Component ---
-const Signup = () => {
-    const context = useContext(myContext);
-    const { loading: pageLoading, setLoading: setPageLoading } = context;
-    const navigate = useNavigate();
-    const { signup, loading: authLoading, progress } = useAuth();
+const useResponsiveDesign = () => {
+  const [isMobile, setIsMobile] = useState(false);
+  
+  useEffect(() => {
+    const checkDevice = () => setIsMobile(window.innerWidth < 768);
+    checkDevice();
+    window.addEventListener('resize', checkDevice);
+    return () => window.removeEventListener('resize', checkDevice);
+  }, []);
+  
+  return isMobile;
+};
 
-    // Form state
-    const [userSignup, setUserSignup] = useState({
-        name: "", email: "", password: "", confirmPassword: "",
-        termsAccepted: false, role: "user",
-    });
-    const [showPassword, setShowPassword] = useState(false);
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-    const [formErrors, setFormErrors] = useState({});
-    const [isFormValid, setIsFormValid] = useState(false);
-    const [focusedField, setFocusedField] = useState(null);
-    const [passwordStrength, setPasswordStrength] = useState({ score: 0, label: "", color: "" });
-
-    // --- Form validation ---
-    useEffect(() => {
-        const errors = {};
-        errors.name = validateName(userSignup.name);
-        errors.email = validateEmail(userSignup.email);
-        errors.password = validatePassword(userSignup.password);
-        errors.confirmPassword = validateConfirmPassword(userSignup.password, userSignup.confirmPassword);
-        errors.terms = validateTerms(userSignup.termsAccepted);
-
-        // Additional password requirements
-        if (userSignup.password && !errors.password) {
-            if (!/[A-Z]/.test(userSignup.password)) errors.password = "Must contain an uppercase letter";
-        else if (!/[0-9]/.test(userSignup.password)) errors.password = "Must contain a number";
-        }
-
-        setFormErrors(errors);
-        
-        // Update password strength
-        setPasswordStrength(getPasswordStrength(userSignup.password));
-        
-        const allFieldsFilled = Object.entries(userSignup).every(([key, val]) => key === 'role' || (typeof val === 'boolean' ? val === true : !!String(val).trim()));
-        setIsFormValid(Object.keys(errors).length === 0 && allFieldsFilled);
-
-    }, [userSignup]);
-
-    // --- Helper Functions ---
-    const handleChange = (e) => {
-        const { name, value, type, checked } = e.target;
-        const val = type === 'checkbox' ? checked : value;
-        const processedValue = (name === 'name' || name === 'email') ? val : val;
-        const finalValue = name === 'email' ? processedValue.toLowerCase() : processedValue;
-
-        setUserSignup(prev => ({ ...prev, [name]: finalValue }));
-        if (formErrors[name]) {
-             setFormErrors(prev => ({ ...prev, [name]: "" }));
-        }
-    };
-
-    const checkEmailExists = async (email) => {
-        const q = query(collection(fireDB, "user"), where("email", "==", email));
-        const querySnapshot = await getDocs(q);
-        return !querySnapshot.empty;
-    };
-
-    const handleKeyPress = (e) => {
-        if (e.key === 'Enter' && isFormValid && !authLoading) {
-            userSignupFunction();
-        }
-    };
-
-    // --- Signup Function ---
-    const userSignupFunction = async () => {
-        if (!isFormValid || authLoading) return;
-
-        setFormErrors({});
-        const result = await signup(userSignup);
-
-        if (result.success) {
-            setUserSignup({ name: "", email: "", password: "", confirmPassword: "", termsAccepted: false, role: "user" });
-            setShowPassword(false);
-            setShowConfirmPassword(false);
-            setTimeout(() => navigate('/login'), 1500);
-            } else {
-            // Handle specific errors
-            if (result.error === 'auth/email-already-in-use' || result.error === 'email_exists') {
-                setFormErrors(prev => ({ ...prev, email: result.message }));
-            } else if (result.error === 'auth/weak-password') {
-                setFormErrors(prev => ({ ...prev, password: result.message }));
-            } else if (result.error === 'auth/invalid-email') {
-                setFormErrors(prev => ({ ...prev, email: result.message }));
-            }
-        }
-    };
-
-    // --- JSX Structure ---
-    return (
-        <motion.div
-            variants={pageVariants} initial="hidden" animate="visible"
-            className="flex justify-center items-center min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-950 p-4 font-sans text-gray-200"
+// ============================================================================
+// COMPONENTS
+// ============================================================================
+const InputField = ({ 
+  type, 
+  name, 
+  value, 
+  onChange, 
+  placeholder, 
+  icon: Icon, 
+  error, 
+  showPassword, 
+  onTogglePassword,
+  disabled 
+}) => (
+  <motion.div variants={ANIMATION_VARIANTS.item} className="space-y-2">
+    <label htmlFor={name} className="block text-sm font-medium text-gray-300">
+      {placeholder}
+    </label>
+    <div className="relative">
+      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+        <Icon className={`h-5 w-5 transition-colors ${error ? 'text-red-400' : 'text-gray-400'}`} />
+      </div>
+      <input
+        id={name}
+        name={name}
+        type={type === 'password' ? (showPassword ? 'text' : 'password') : type}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        disabled={disabled}
+        className={`
+          w-full pl-10 pr-${type === 'password' ? '12' : '4'} py-3 
+          border-2 rounded-xl bg-gray-800/50 text-white placeholder-gray-400
+          focus:outline-none focus:ring-2 transition-all duration-200
+          disabled:opacity-50 disabled:cursor-not-allowed
+          ${error 
+            ? 'border-red-500/50 focus:border-red-500 focus:ring-red-500/25' 
+            : 'border-gray-600/50 focus:border-blue-500 focus:ring-blue-500/25'
+          }
+        `}
+        autoComplete={type === 'password' ? 'new-password' : name}
+      />
+      {type === 'password' && (
+        <button
+          type="button"
+          onClick={onTogglePassword}
+          disabled={disabled}
+          className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-200 transition-colors disabled:opacity-50"
         >
-            {pageLoading && !authLoading && <Loader />}
-            <Toaster position="top-center" reverseOrder={false} toastOptions={{
-                 className: '', style: { background: '#333', color: '#fff' },
-            }}/>
+          {showPassword ? <FaEyeSlash /> : <FaEye />}
+        </button>
+      )}
+    </div>
+    <AnimatePresence>
+      {error && (
+        <motion.p
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          exit={{ opacity: 0, height: 0 }}
+          className="text-sm text-red-400 flex items-center gap-2"
+        >
+          <FaTimes className="h-3 w-3" />
+          {error}
+        </motion.p>
+      )}
+    </AnimatePresence>
+  </motion.div>
+);
 
-            <motion.div
-                variants={cardVariants} initial="hidden" animate="visible"
-                className="w-full max-w-md bg-gray-900/70 backdrop-blur-lg rounded-2xl shadow-2xl overflow-hidden border border-gray-700/50"
-            >
-                {/* Card Header */}
-                <div className="bg-gradient-to-r from-indigo-600 to-purple-700 py-8 px-6 text-center relative overflow-hidden">
-                    <motion.div initial={{ scale:0, opacity: 0}} animate={{ scale:1, opacity: 0.1}} transition={{delay: 0.5, duration: 1}} className="absolute -top-10 -left-10 w-32 h-32 bg-white rounded-full opacity-10"></motion.div>
-                    <motion.div initial={{ scale:0, opacity: 0}} animate={{ scale:1, opacity: 0.1}} transition={{delay: 0.7, duration: 1}} className="absolute -bottom-12 -right-8 w-24 h-24 bg-white rounded-full opacity-10"></motion.div>
-                    <motion.h2 initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.3, type: "spring", stiffness: 120 }} className="text-3xl font-bold text-white relative z-10 tracking-tight"> Create Account </motion.h2>
-                    <motion.p initial={{ y: -10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.4, duration: 0.4 }} className="text-indigo-100 mt-2 relative z-10 text-sm"> Join us and start exploring! </motion.p>
-                </div>
+const PasswordStrengthIndicator = ({ password }) => {
+  const strength = getPasswordStrength(password);
+  
+  if (!password) return null;
+  
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-2"
+    >
+      <div className="flex items-center justify-between">
+        <span className="text-xs text-gray-400">Password Strength:</span>
+        <span className={`text-xs font-medium ${strength.color}`}>
+          {strength.label}
+        </span>
+      </div>
+      <div className="w-full bg-gray-700 rounded-full h-2">
+        <motion.div
+          className={`h-2 rounded-full transition-all duration-300 ${
+            strength.score <= 1 ? 'bg-red-500' :
+            strength.score === 2 ? 'bg-yellow-500' :
+            strength.score === 3 ? 'bg-blue-500' :
+            strength.score === 4 ? 'bg-green-500' :
+            'bg-emerald-500'
+          }`}
+          initial={{ width: 0 }}
+          animate={{ width: `${(strength.score / 5) * 100}%` }}
+        />
+      </div>
+      <div className="flex items-center gap-2 text-xs text-gray-500">
+        <FaShieldAlt />
+        <span>Use 8+ characters with uppercase, lowercase, numbers & symbols</span>
+      </div>
+    </motion.div>
+  );
+};
 
-                {/* Form Area */}
-                <motion.div
-                    className="p-8 space-y-5"
-                    variants={containerVariants} // Apply container variants for staggering children
-                    initial="hidden"
-                    animate="visible"
-                >
-                    {/* --- Name Input --- */}
-                    <motion.div variants={itemVariants}>
-                        <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-1.5"> Full Name </label>
-                        <div className="relative">
-                            <motion.div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none" animate={{ scale: focusedField === 'name' ? 1.1 : 1 }} transition={{ type: 'spring', stiffness: 300, damping: 10 }}>
-                                <FaUser className={`transition-colors h-4 w-4 ${focusedField === 'name' ? 'text-indigo-400' : 'text-gray-400'}`} />
-                            </motion.div>
-                            <input type="text" id="name" placeholder="e.g., John Doe" value={userSignup.name} onChange={handleChange} name="name" onFocus={() => setFocusedField('name')} onBlur={() => setFocusedField(null)} onKeyPress={handleKeyPress}
-                                className={`w-full pl-10 pr-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 transition duration-200 ease-in-out placeholder-gray-500 bg-gray-800/50 text-gray-100 ${ formErrors.name ? 'border-red-500/50 focus:ring-red-500/50 focus:border-red-500/50' : 'border-gray-600/50 focus:ring-blue-500/50 focus:border-blue-500/50' }`}
-                                autoComplete="name" disabled={authLoading} autoFocus aria-invalid={!!formErrors.name} aria-describedby={formErrors.name ? "name-error" : undefined}
-                            />
-                        </div>
-                        <AnimatePresence> {formErrors.name && ( <motion.p id="name-error" className="mt-1.5 text-xs text-red-400" variants={errorVariants} initial="hidden" animate="visible" exit="hidden"> {formErrors.name} </motion.p> )} </AnimatePresence>
-                    </motion.div>
+const TermsCheckbox = ({ checked, onChange, disabled }) => (
+  <motion.div variants={ANIMATION_VARIANTS.item} className="flex items-start gap-3">
+    <button
+      type="button"
+      onClick={() => onChange(!checked)}
+      disabled={disabled}
+      className={`
+        mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center transition-all
+        ${checked 
+          ? 'bg-blue-600 border-blue-600 text-white' 
+          : 'border-gray-400 hover:border-gray-300'
+        }
+        disabled:opacity-50 disabled:cursor-not-allowed
+      `}
+    >
+      {checked && <FaCheck className="h-3 w-3" />}
+    </button>
+    <label className="text-sm text-gray-300 leading-relaxed">
+      I agree to the{' '}
+      <Link 
+        to="/terms" 
+        target="_blank" 
+        rel="noopener noreferrer"
+        className="text-blue-400 hover:text-blue-300 underline font-medium"
+      >
+        Terms of Service
+      </Link>
+      {' '}and{' '}
+      <Link 
+        to="/privacy" 
+        target="_blank" 
+        rel="noopener noreferrer"
+        className="text-blue-400 hover:text-blue-300 underline font-medium"
+      >
+        Privacy Policy
+      </Link>
+    </label>
+  </motion.div>
+);
 
-                    {/* --- Email Input --- */}
-                    <motion.div variants={itemVariants}>
-                        <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-1.5"> Email Address </label>
-                        <div className="relative">
-                             <motion.div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none" animate={{ scale: focusedField === 'email' ? 1.1 : 1 }} transition={{ type: 'spring', stiffness: 300, damping: 10 }}>
-                                <FaEnvelope className={`transition-colors h-4 w-4 ${focusedField === 'email' ? 'text-indigo-400' : 'text-gray-400'}`} />
-                             </motion.div>
-                            <input type="email" id="email" placeholder="your@email.com" value={userSignup.email} onChange={handleChange} name="email" onFocus={() => setFocusedField('email')} onBlur={() => setFocusedField(null)} onKeyPress={handleKeyPress}
-                                className={`w-full pl-10 pr-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 transition duration-200 ease-in-out placeholder-gray-500 bg-gray-800/50 text-gray-100 ${ formErrors.email ? 'border-red-500/50 focus:ring-red-500/50 focus:border-red-500/50' : 'border-gray-600/50 focus:ring-blue-500/50 focus:border-blue-500/50' }`}
-                                autoComplete="email" disabled={authLoading} aria-invalid={!!formErrors.email} aria-describedby={formErrors.email ? "email-error" : undefined}
-                            />
-                        </div>
-                        <AnimatePresence> {formErrors.email && ( <motion.p id="email-error" className="mt-1.5 text-xs text-red-400" variants={errorVariants} initial="hidden" animate="visible" exit="hidden"> {formErrors.email} </motion.p> )} </AnimatePresence>
-                    </motion.div>
-
-                    {/* --- Password Input --- */}
-                    <motion.div variants={itemVariants}>
-                        <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-1.5"> Password </label>
-                        <div className="relative">
-                             <motion.div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none" animate={{ scale: focusedField === 'password' ? 1.1 : 1 }} transition={{ type: 'spring', stiffness: 300, damping: 10 }}>
-                                <FaLock className={`transition-colors h-4 w-4 ${focusedField === 'password' ? 'text-indigo-400' : 'text-gray-400'}`} />
-                             </motion.div>
-                            <input type={showPassword ? "text" : "password"} id="password" placeholder="••••••••" value={userSignup.password} onChange={handleChange} name="password" onFocus={() => setFocusedField('password')} onBlur={() => setFocusedField(null)} onKeyPress={handleKeyPress}
-                                className={`w-full pl-10 pr-10 py-2.5 border rounded-lg focus:outline-none focus:ring-2 transition duration-200 ease-in-out placeholder-gray-500 bg-gray-800/50 text-gray-100 ${ formErrors.password ? 'border-red-500/50 focus:ring-red-500/50 focus:border-red-500/50' : 'border-gray-600/50 focus:ring-blue-500/50 focus:border-blue-500/50' }`}
-                                autoComplete="new-password" disabled={authLoading} aria-invalid={!!formErrors.password} aria-describedby={formErrors.password ? "password-error" : "password-hint"}
-                            />
-                            <button type="button" className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-200 transition" onClick={() => setShowPassword(!showPassword)} disabled={authLoading} aria-label={showPassword ? "Hide password" : "Show password"}> {showPassword ? <FaEyeSlash /> : <FaEye />} </button>
-                        </div>
-                        {/* Password Strength Indicator */}
-                        {userSignup.password && (
-                            <motion.div 
-                                initial={{ opacity: 0, y: -5 }} 
-                                animate={{ opacity: 1, y: 0 }}
-                                className="mt-2 space-y-2"
-                            >
-                                <div className="flex items-center justify-between">
-                                    <span className="text-xs text-gray-400">Password Strength:</span>
-                                    <span className={`text-xs font-medium ${passwordStrength.color}`}>
-                                        {passwordStrength.label}
-                                    </span>
-                                </div>
-                                <div className="w-full bg-gray-700 rounded-full h-1.5">
-                                    <motion.div 
-                                        className={`h-1.5 rounded-full transition-all duration-300 ${
-                                            passwordStrength.score <= 1 ? 'bg-red-500' :
-                                            passwordStrength.score === 2 ? 'bg-orange-500' :
-                                            passwordStrength.score === 3 ? 'bg-yellow-500' :
-                                            passwordStrength.score === 4 ? 'bg-blue-500' :
-                                            'bg-green-500'
-                                        }`}
-                                        initial={{ width: 0 }}
-                                        animate={{ width: `${(passwordStrength.score / 5) * 100}%` }}
-                                    />
-                                </div>
-                                <div className="flex items-center gap-2 text-xs text-gray-500">
-                                    <FaShieldAlt className="text-xs" />
-                                    <span>Strong passwords include uppercase, lowercase, numbers, and special characters</span>
-                                </div>
-                            </motion.div>
-                        )}
-                        
-                        <AnimatePresence>
-                            {formErrors.password ? (
-                                <motion.p id="password-error" className="mt-1.5 text-xs text-red-400" variants={errorVariants} initial="hidden" animate="visible" exit="hidden"> {formErrors.password} </motion.p>
-                            ) : (
-                                <p id="password-hint" className="mt-1.5 text-xs text-gray-500"> Min 6 chars, 1 uppercase, 1 number. </p>
-                            )}
-                        </AnimatePresence>
-                    </motion.div>
-
-                    {/* --- Confirm Password Input --- */}
-                    <motion.div variants={itemVariants}>
-                        <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300 mb-1.5"> Confirm Password </label>
-                        <div className="relative">
-                             <motion.div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none" animate={{ scale: focusedField === 'confirmPassword' ? 1.1 : 1 }} transition={{ type: 'spring', stiffness: 300, damping: 10 }}>
-                                <FaLock className={`transition-colors h-4 w-4 ${focusedField === 'confirmPassword' ? 'text-indigo-400' : 'text-gray-400'}`} />
-                             </motion.div>
-                            <input type={showConfirmPassword ? "text" : "password"} id="confirmPassword" placeholder="••••••••" value={userSignup.confirmPassword} onChange={handleChange} name="confirmPassword" onFocus={() => setFocusedField('confirmPassword')} onBlur={() => setFocusedField(null)} onKeyPress={handleKeyPress}
-                                className={`w-full pl-10 pr-10 py-2.5 border rounded-lg focus:outline-none focus:ring-2 transition duration-200 ease-in-out placeholder-gray-500 bg-gray-800/50 text-gray-100 ${ formErrors.confirmPassword ? 'border-red-500/50 focus:ring-red-500/50 focus:border-red-500/50' : 'border-gray-600/50 focus:ring-blue-500/50 focus:border-blue-500/50' }`}
-                                autoComplete="new-password" disabled={authLoading} aria-invalid={!!formErrors.confirmPassword} aria-describedby={formErrors.confirmPassword ? "confirmPassword-error" : undefined}
-                            />
-                            <button type="button" className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-200 transition" onClick={() => setShowConfirmPassword(!showConfirmPassword)} disabled={authLoading} aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}> {showConfirmPassword ? <FaEyeSlash /> : <FaEye />} </button>
-                        </div>
-                        <AnimatePresence> {formErrors.confirmPassword && ( <motion.p id="confirmPassword-error" className="mt-1.5 text-xs text-red-400" variants={errorVariants} initial="hidden" animate="visible" exit="hidden"> {formErrors.confirmPassword} </motion.p> )} </AnimatePresence>
-                    </motion.div>
-
-                    {/* --- Terms Checkbox --- */}
-                    <motion.div variants={itemVariants} className="pt-1">
-                        <div className="flex items-start">
-                            <button
-                                type="button"
-                                onClick={() => setUserSignup({ ...userSignup, termsAccepted: !userSignup.termsAccepted })}
-                                className={`mr-2.5 mt-0.5 text-xl transition-colors ${userSignup.termsAccepted ? 'text-indigo-500' : 'text-gray-400 hover:text-gray-500'}`}
-                                disabled={authLoading} aria-pressed={userSignup.termsAccepted} aria-label="Accept Terms of Service"
-                            > {userSignup.termsAccepted ? <FaCheckSquare /> : <FaRegSquare />} </button>
-                            <label htmlFor="terms" className="text-sm text-gray-400">
-                                I agree to the{' '}
-                                <Link to="/terms" target="_blank" rel="noopener noreferrer" className="font-medium text-indigo-400 hover:text-indigo-300 underline"> Terms of Service </Link>
-                                {' '}and{' '}
-                                <Link to="/privacy" target="_blank" rel="noopener noreferrer" className="font-medium text-indigo-400 hover:text-indigo-300 underline"> Privacy Policy </Link>.
-                            </label>
-                            <input type="checkbox" id="terms" name="termsAccepted" checked={userSignup.termsAccepted} onChange={handleChange} className="sr-only" />
-                        </div>
-                        <AnimatePresence> {formErrors.terms && ( <motion.p className="mt-1.5 text-xs text-red-400 pl-8" variants={errorVariants} initial="hidden" animate="visible" exit="hidden"> {formErrors.terms} </motion.p> )} </AnimatePresence>
-                    </motion.div>
-
-                    {/* Progress Indicator */}
-                    {authLoading && progress > 0 && (
-                        <motion.div 
-                            initial={{ opacity: 0, height: 0 }} 
-                            animate={{ opacity: 1, height: 'auto' }}
-                            className="w-full bg-gray-700 rounded-full h-2 mb-4"
-                        >
-                            <motion.div 
-                                className="bg-gradient-to-r from-indigo-500 to-purple-500 h-2 rounded-full"
-                                initial={{ width: 0 }}
-                                animate={{ width: `${progress}%` }}
-                                transition={{ duration: 0.3 }}
-                            />
-                        </motion.div>
-                    )}
-
-                    {/* --- Signup Button --- */}
-                    <motion.div variants={itemVariants} className="pt-2">
-                        <motion.button
-                            onClick={userSignupFunction}
-                            disabled={!isFormValid || authLoading}
-                            whileHover={isFormValid && !authLoading ? { scale: 1.03, filter: 'brightness(1.1)' } : {}}
-                            whileTap={isFormValid && !authLoading ? { scale: 0.98 } : {}}
-                            transition={{ type: "spring", stiffness: 400, damping: 12 }}
-                            className={`w-full flex justify-center items-center py-3 px-4 text-white font-semibold rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 transition-all duration-300 ease-in-out ${ isFormValid && !authLoading ? 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:ring-indigo-500' : 'bg-gray-600 cursor-not-allowed opacity-70' }`}
-                        >
-                            {authLoading ? (
-                                <> <FaSpinner className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" /> Creating Account... </>
-                            ) : ( 'Create Account' )}
-                        </motion.button>
-                    </motion.div>
-
-                    {/* --- Divider --- */}
-                    <motion.div variants={itemVariants} className="flex items-center pt-2">
-                        <div className="flex-1 border-t border-gray-600/50"></div>
-                        <span className="px-3 text-gray-500 text-sm">Already have an account?</span>
-                        <div className="flex-1 border-t border-gray-600/50"></div>
-                    </motion.div>
-
-                    {/* --- Login Link --- */}
-                    <motion.div variants={itemVariants} className="text-center">
-                        <Link
-                            to="/login"
-                            className={`inline-flex items-center justify-center font-semibold text-indigo-400 hover:text-indigo-300 hover:underline transition-colors duration-200 ${authLoading ? 'pointer-events-none opacity-70' : ''}`}
-                        >
-                            Sign in Instead <FaArrowRight className="inline ml-1.5 text-xs" />
-                        </Link>
-                    </motion.div>
-                </motion.div>
-            </motion.div>
+// ============================================================================
+// MAIN COMPONENT
+// ============================================================================
+const Signup = () => {
+  const navigate = useNavigate();
+  const { signup, signupWithGoogle, loading } = useAuth();
+  const isMobile = useResponsiveDesign();
+  
+  // Form State
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    terms: false
+  });
+  
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
+  const { errors, isValid } = useFormValidation(formData);
+  
+  // Event Handlers
+  const handleInputChange = useCallback((e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+  }, []);
+  
+  const handleSubmit = useCallback(async (e) => {
+    e.preventDefault();
+    if (!isValid || loading) return;
+    
+    const result = await signup({
+      name: formData.name.trim(),
+      email: formData.email.toLowerCase().trim(),
+      password: formData.password,
+      role: 'user'
+    });
+    
+    if (result.success) {
+      toast.success('Account created successfully!');
+      setTimeout(() => navigate('/login'), 1500);
+    }
+  }, [formData, isValid, loading, signup, navigate]);
+  
+  const handleGoogleSignup = useCallback(async () => {
+    if (loading) return;
+    
+    const result = await signupWithGoogle();
+    if (result.success) {
+      toast.success('Account created successfully!');
+      setTimeout(() => navigate(result.redirectTo || '/'), 1500);
+    }
+  }, [loading, signupWithGoogle, navigate]);
+  
+  const handleKeyPress = useCallback((e) => {
+    if (e.key === 'Enter' && isValid && !loading) {
+      handleSubmit(e);
+    }
+  }, [isValid, loading, handleSubmit]);
+  
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 flex items-center justify-center p-4">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-500/20 rounded-full blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-500/20 rounded-full blur-3xl" />
+      </div>
+      
+      <motion.div
+        initial="hidden"
+        animate="visible"
+        variants={ANIMATION_VARIANTS.container}
+        className={`
+          relative w-full max-w-md bg-gray-900/80 backdrop-blur-xl 
+          rounded-2xl shadow-2xl border border-gray-700/50 overflow-hidden
+          ${isMobile ? 'mx-4' : ''}
+        `}
+      >
+        {/* Header */}
+        <motion.div 
+          variants={ANIMATION_VARIANTS.item}
+          className="bg-gradient-to-r from-blue-600 to-purple-600 p-8 text-center relative overflow-hidden"
+        >
+          <div className="absolute inset-0 bg-black/20" />
+          <div className="relative z-10">
+            <h1 className="text-3xl font-bold text-white mb-2">Create Account</h1>
+            <p className="text-blue-100">Join us and start your journey</p>
+          </div>
         </motion.div>
-    );
+        
+        {/* Form */}
+        <div className="p-8">
+          <motion.form onSubmit={handleSubmit} className="space-y-6" variants={ANIMATION_VARIANTS.container}>
+            {/* Google Signup */}
+            <motion.button
+              type="button"
+              onClick={handleGoogleSignup}
+              disabled={loading}
+              variants={ANIMATION_VARIANTS.button}
+              whileHover="hover"
+              whileTap="tap"
+              className="w-full flex items-center justify-center gap-3 py-3 px-4 border-2 border-gray-600 rounded-xl bg-white text-gray-900 font-medium hover:bg-gray-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? (
+                <FaSpinner className="animate-spin" />
+              ) : (
+                <FaGoogle className="text-red-500" />
+              )}
+              Continue with Google
+            </motion.button>
+            
+            {/* Divider */}
+            <motion.div variants={ANIMATION_VARIANTS.item} className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-600" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-gray-900 text-gray-400">Or continue with email</span>
+              </div>
+            </motion.div>
+            
+            {/* Form Fields */}
+            <InputField
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={handleInputChange}
+              placeholder="Full Name"
+              icon={FaUser}
+              error={errors.name}
+              disabled={loading}
+            />
+            
+            <InputField
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleInputChange}
+              placeholder="Email Address"
+              icon={FaEnvelope}
+              error={errors.email}
+              disabled={loading}
+            />
+            
+            <div className="space-y-3">
+              <InputField
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleInputChange}
+                placeholder="Password"
+                icon={FaLock}
+                error={errors.password}
+                showPassword={showPassword}
+                onTogglePassword={() => setShowPassword(!showPassword)}
+                disabled={loading}
+              />
+              <PasswordStrengthIndicator password={formData.password} />
+            </div>
+            
+            <InputField
+              type="password"
+              name="confirmPassword"
+              value={formData.confirmPassword}
+              onChange={handleInputChange}
+              placeholder="Confirm Password"
+              icon={FaLock}
+              error={errors.confirmPassword}
+              showPassword={showConfirmPassword}
+              onTogglePassword={() => setShowConfirmPassword(!showConfirmPassword)}
+              disabled={loading}
+            />
+            
+            <TermsCheckbox
+              checked={formData.terms}
+              onChange={(checked) => setFormData(prev => ({ ...prev, terms: checked }))}
+              error={errors.terms}
+              disabled={loading}
+            />
+            
+            {/* Submit Button */}
+            <motion.button
+              type="submit"
+              disabled={!isValid || loading}
+              variants={ANIMATION_VARIANTS.button}
+              whileHover={isValid && !loading ? "hover" : "idle"}
+              whileTap={isValid && !loading ? "tap" : "idle"}
+              className={`
+                w-full py-3 px-4 rounded-xl font-semibold transition-all duration-200 flex items-center justify-center gap-2
+                ${isValid && !loading
+                  ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg'
+                  : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                }
+              `}
+            >
+              {loading ? (
+                <>
+                  <FaSpinner className="animate-spin" />
+                  Creating Account...
+                </>
+              ) : (
+                'Create Account'
+              )}
+            </motion.button>
+            
+            {/* Login Link */}
+            <motion.div variants={ANIMATION_VARIANTS.item} className="text-center">
+              <p className="text-gray-400">
+                Already have an account?{' '}
+                <Link 
+                  to="/login" 
+                  className="text-blue-400 hover:text-blue-300 font-medium hover:underline transition-colors"
+                >
+                  Sign in
+                </Link>
+              </p>
+            </motion.div>
+          </motion.form>
+        </div>
+      </motion.div>
+    </div>
+  );
 };
 
 export default Signup;

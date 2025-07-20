@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion"; // Keep framer-motion f
 const largeScreenImages = [
     "https://cap.img.pmdstatic.net/fit/https.3A.2F.2Fi.2Epmdstatic.2Enet.2Fcap.2F2022.2F11.2F03.2F09cc07e8-23ec-424e-b895-d3ddd84bb652.2Ejpeg/1200x630/cr/wqkgcGljdHVyYW5jZS9HZXR0eUltYWdlcyAvIENBUElUQUw%3D/netflix-spotify-amazon-faire-des-economies-en-partageant-son-abonnement-avec-des-inconnus-une-solution-perenne-1450950.jpg",
     // Assuming these local paths are correct relative to the public folder or served correctly
+    "/img/home.jpg",
     "/img/head.jpg.jpg", // Use absolute paths from public folder if not using module imports
     "/img/tools.png.jpg",
     "/img/111.webp",
@@ -14,8 +15,9 @@ const largeScreenImages = [
 ];
 
 const smallScreenImages = [
-    "https://cap.img.pmdstatic.net/fit/https.3A.2F.2Fi.2Epmdstatic.2Enet.2Fcap.2F2022.2F11.2F03.2F09cc07e8-23ec-424e-b895-d3ddd84bb652.2Ejpeg/1200x630/cr/wqkgcGljdHVyYW5jZS9HZXR0eUltYWdlcyAvIENBUElUQUw%3D/netflix-spotify-amazon-faire-des-economies-en-partageant-son-abonnement-avec-des-inconnus-une-solution-perenne-1450950.jpg",
+   
     // Assuming these local paths are correct relative to the public folder or served correctly
+    "/img/home.jpg",
     "/img/n.jpg", // Use absolute paths from public folder if not using module imports
     "/img/np.jpg",
     "/img/111.webp",

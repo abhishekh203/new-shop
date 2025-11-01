@@ -111,4 +111,9 @@ export class RateLimiter {
         const timeSinceFirst = Date.now() - userAttempts.firstAttempt;
         return Math.max(0, this.lockoutDuration - timeSinceFirst);
     }
+    
+    resetAttempts(identifier) {
+        // Reset attempts counter for successful login
+        this.attempts.delete(identifier);
+    }
 } 

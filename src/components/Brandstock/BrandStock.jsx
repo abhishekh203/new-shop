@@ -158,38 +158,87 @@ const BrandsStock = () => {
   };
 
   return (
-    <div className="bg-black py-16 px-4 relative">
-      {/* Modern Background Pattern */}
-      <div className="absolute inset-0 opacity-3">
-        <div className="absolute inset-0" style={{
-          backgroundImage: `radial-gradient(circle at 25% 25%, #1f2937 0%, transparent 50%),
-                           radial-gradient(circle at 75% 75%, #374151 0%, transparent 50%)`,
-          backgroundSize: '150px 150px'
-        }}></div>
+    <div className="bg-black py-16 px-4 relative overflow-hidden">
+      {/* Background Elements - Same as Hero Section */}
+      <div className="absolute inset-0">
+        {/* Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-black via-gray-900 to-black"></div>
+        
+        {/* Animated Background Pattern */}
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1)_1px,transparent_1px)] bg-[length:20px_20px]"></div>
+        </div>
+        
+        {/* Floating Orbs */}
+        <div className="absolute top-20 left-10 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-20 right-10 w-40 h-40 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        <div className="absolute top-1/2 left-1/4 w-24 h-24 bg-green-500/10 rounded-full blur-2xl animate-pulse delay-500"></div>
       </div>
 
       <div className="max-w-7xl mx-auto relative z-10">
-        {/* Header Section */}
+        {/* Enhanced Header Section */}
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
           viewport={{ once: true }}
-          className="text-center mb-12"
+          className="text-center mb-16"
         >
+          {/* Premium Badge */}
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            whileInView={{ scale: 1, opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-500/20 to-red-500/20 backdrop-blur-sm border border-orange-400/30 rounded-full text-orange-300 text-sm font-medium mb-8"
+          >
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+            >
+              ⭐
+            </motion.div>
+            Premium Partners
+            <motion.div
+              animate={{ scale: [1, 1.2, 1] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            >
+              🔥
+            </motion.div>
+          </motion.div>
+
           <motion.h2
-            className="text-3xl md:text-4xl font-bold text-white mb-4"
+            className="text-4xl md:text-6xl font-black text-white mb-6 leading-tight"
+            initial={{ scale: 0.9 }}
+            whileInView={{ scale: 1 }}
+            transition={{ duration: 0.8, delay: 0.3 }}
             whileHover={{ scale: 1.02 }}
           >
-            Premium <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-orange-600">Brands</span> We Offer
+            Premium{" "}
+            <span className="relative">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-red-500 to-pink-500 animate-pulse">
+                Brands
+              </span>
+              <motion.div
+                className="absolute -bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-orange-400 to-red-500 rounded-full"
+                initial={{ scaleX: 0 }}
+                whileInView={{ scaleX: 1 }}
+                transition={{ duration: 1, delay: 0.8 }}
+              />
+            </span>{" "}
+            We Offer
           </motion.h2>
+          
           <motion.p
-            className="text-lg text-gray-300 max-w-3xl mx-auto"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
+            className="text-xl text-gray-300 max-w-4xl mx-auto leading-relaxed"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5, duration: 0.8 }}
           >
-            Our rigorous selection process ensures only the highest quality options. We understand that security and stability are non-negotiable.
+            Our rigorous selection process ensures only the{" "}
+            <span className="text-orange-400 font-semibold">highest quality options</span>. 
+            We understand that{" "}
+            <span className="text-cyan-400 font-semibold">security and stability</span> are non-negotiable.
           </motion.p>
         </motion.div>
 
@@ -205,17 +254,70 @@ const BrandsStock = () => {
             <motion.div
               key={index}
               variants={item}
-              whileHover={{ scale: 1.03, y: -3, boxShadow: "0 5px 15px rgba(107, 114, 128, 0.15)" }}
-              whileTap={{ scale: 0.98 }}
-              className="bg-gradient-to-br from-gray-900/90 to-gray-800/70 backdrop-blur-sm p-4 rounded-xl border border-gray-700/50 flex flex-col items-center justify-center h-28 hover:shadow-lg hover:shadow-gray-500/10 transition-all cursor-pointer"
+              whileHover={{ 
+                scale: 1.08, 
+                y: -8, 
+                rotateY: 5,
+                boxShadow: "0 20px 40px rgba(0, 0, 0, 0.3)",
+                background: "linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05))"
+              }}
+              whileTap={{ scale: 0.95 }}
+              className="group relative bg-gradient-to-br from-gray-900/90 to-gray-800/70 backdrop-blur-sm p-6 rounded-2xl border border-gray-700/50 flex flex-col items-center justify-center h-32 hover:border-orange-400/50 transition-all duration-300 cursor-pointer overflow-hidden"
             >
-              <motion.img
-                src={brand.logo}
-                alt={brand.name}
-                className="h-10 object-contain mb-2"
-                whileHover={{ scale: 1.05 }}
+              {/* Animated Background Glow */}
+              <motion.div
+                className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-red-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                initial={false}
               />
-              <p className="text-gray-300 text-xs md:text-sm text-center">{brand.name}</p>
+              
+              {/* Shine Effect */}
+              <motion.div
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"
+                style={{ transform: 'skewX(-20deg)' }}
+              />
+
+              {/* Floating Particles */}
+              <motion.div
+                className="absolute top-2 right-2 w-1 h-1 bg-orange-400 rounded-full opacity-0 group-hover:opacity-100"
+                animate={{
+                  y: [0, -10, 0],
+                  opacity: [0, 1, 0]
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  delay: index * 0.1
+                }}
+              />
+
+              <motion.div
+                className="relative z-10 flex flex-col items-center"
+                whileHover={{ scale: 1.1 }}
+                transition={{ type: "spring", stiffness: 300 }}
+              >
+                <motion.img
+                  src={brand.logo}
+                  alt={brand.name}
+                  className="h-12 object-contain mb-3 filter drop-shadow-lg"
+                  whileHover={{ 
+                    scale: 1.15,
+                    rotate: [0, -2, 2, 0],
+                    filter: "brightness(1.2)"
+                  }}
+                  transition={{ duration: 0.3 }}
+                />
+                <motion.p 
+                  className="text-gray-300 text-sm font-medium text-center group-hover:text-white transition-colors duration-300"
+                  whileHover={{ scale: 1.05 }}
+                >
+                  {brand.name}
+                </motion.p>
+              </motion.div>
+
+              {/* Corner Accent */}
+              <motion.div
+                className="absolute top-0 right-0 w-8 h-8 bg-gradient-to-br from-orange-400/20 to-transparent rounded-bl-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+              />
             </motion.div>
           ))}
         </motion.div>

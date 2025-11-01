@@ -18,10 +18,11 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AddProductPage from "./pages/admin/AddProductPage";
 import UpdateProductPage from "./pages/admin/UpdateProductPage";
 import MyState from "./context/myState";
-import { Toaster } from "react-hot-toast";
+import { NotificationProvider } from "./context/NotificationContext";
 import { ProtectedRouteForUser } from "./protectedRoute/ProtectedRouteForUser";
 import { ProtectedRouteForAdmin } from "./protectedRoute/ProtectedRouteForAdmin";
 import PerformanceOptimizer from "./components/SEO/PerformanceOptimizer";
+import { HelmetProvider } from "react-helmet-async";
 import CategoryPage from "./pages/category/CategoryPage";
 import ContactUs from "./components/Contactus/ContactUs";
 import PurchasePage from "./components/Purchasepage/PurchasePage"; // Import PurchasePage
@@ -46,48 +47,14 @@ import HowToBuyNetflixNepal from "./pages/How-to-buy-netflix-in-nepal"; // Impor
 import ReviewsPage from "./pages/reviews/ReviewsPage"; // Import ReviewsPage
 import ErrorBoundary from "./components/ErrorBoundary"; // Import ErrorBoundary
 import NetworkStatus from "./components/NetworkStatus"; // Import NetworkStatus
-
-// Custom Responsive Toaster Component
-const ResponsiveToaster = () => {
-  return (
-    <div className="hidden md:block">
-      <Toaster 
-        position="top-right"
-        toastOptions={{
-          duration: 4000,
-          style: {
-            background: '#1f2937',
-            color: '#fff',
-            border: '1px solid #374151',
-            borderRadius: '8px',
-            padding: '12px 16px',
-            fontSize: '14px',
-            fontWeight: '500'
-          },
-          success: {
-            style: {
-              background: '#10b981',
-              color: '#fff',
-              border: '1px solid #059669'
-            }
-          },
-          error: {
-            style: {
-              background: '#ef4444',
-              color: '#fff',
-              border: '1px solid #dc2626'
-            }
-          }
-        }}
-      />
-    </div>
-  );
-};
+// import AIChatDemo from "./pages/aiChatDemo/AIChatDemo"; // Import AI Chat Demo - DISABLED
 
 const App = () => {
   return (
     <ErrorBoundary>
+    <HelmetProvider>
     <MyState>
+      <NotificationProvider position="bottom-right">
       <Router>
         <PerformanceOptimizer />
         <ScrollTop />
@@ -96,7 +63,7 @@ const App = () => {
           <Route path="/" element={<HomePage />} />
           <Route path="/subscription" element={<SubscriptionPage />} /> {/* Subscription page route */}
           <Route path="/*" element={<NoPage />} />
-          <Route path="/productinfo/:id" element={<ProductInfo />} />
+          <Route path="/productinfo/:slug" element={<ProductInfo />} />
           <Route path="/cart" element={<CartPage />} />
           <Route path="/allproduct" element={<AllProduct />} />
           <Route path="/signup" element={<Signup />} />
@@ -143,10 +110,12 @@ const App = () => {
           <Route path="/GrammarlyNepal" element={<GrammarlyNepal />} />
           <Route path="/TinderNepal" element={<TinderNepal />} />
           <Route path="/How-to-buy-netflix-in-nepal" element={<HowToBuyNetflixNepal />} /> {/* New route for Netflix guide */}
+          {/* <Route path="/ai-chat-demo" element={<AIChatDemo />} /> */} {/* AI Chat Demo page - DISABLED */}
         </Routes>
-        <ResponsiveToaster />
       </Router>
+      </NotificationProvider>
     </MyState>
+    </HelmetProvider>
     </ErrorBoundary>
   );
 }

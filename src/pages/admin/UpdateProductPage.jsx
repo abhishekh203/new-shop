@@ -207,7 +207,22 @@ const UpdateProductPage = () => {
 
     // --- JSX Structure ---
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-950 p-4 md:p-8 text-gray-200 font-sans">
+        <div className="min-h-screen bg-black p-4 md:p-8 text-gray-200 font-sans relative overflow-hidden">
+            {/* Background Elements - Same as Hero Section */}
+            <div className="absolute inset-0">
+                {/* Gradient Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-br from-black via-gray-900 to-black"></div>
+                
+                {/* Animated Background Pattern */}
+                <div className="absolute inset-0 opacity-20">
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1)_1px,transparent_1px)] bg-[length:20px_20px]"></div>
+                </div>
+                
+                {/* Floating Orbs */}
+                <div className="absolute top-20 left-10 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl animate-pulse"></div>
+                <div className="absolute bottom-20 right-10 w-40 h-40 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+                <div className="absolute top-1/2 left-1/4 w-24 h-24 bg-green-500/10 rounded-full blur-2xl animate-pulse delay-500"></div>
+            </div>
             {/* Loading Overlay */}
             <AnimatePresence>
                 {pageLoading && (

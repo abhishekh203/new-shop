@@ -1,58 +1,24 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import toast from "react-hot-toast";
 import emailjs from "@emailjs/browser";
-import { motion, AnimatePresence } from "framer-motion";
 import {
   FaPaperPlane, FaWhatsapp, FaTelegram, FaEnvelope, FaComments,
   FaChevronDown, FaShieldAlt, FaRocket, FaStar, FaCheckCircle,
-  FaQuestionCircle, FaPhone, FaClock, FaUsers, FaHeadset
+  FaQuestionCircle, FaPhone, FaClock, FaUsers, FaHeadset,
+  FaMapMarkerAlt, FaGlobe, FaMobile, FaLaptop
 } from "react-icons/fa";
-
+import { BsLightningCharge, BsCurrencyExchange } from "react-icons/bs";
 import Layout from "../layout/Layout";
-
-// Enhanced animation variants
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.15,
-      delayChildren: 0.3
-    }
-  }
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 40 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.8,
-      ease: "easeOut"
-    }
-  }
-};
-
-const floatingVariants = {
-  animate: {
-    y: [0, -20, 0],
-    rotate: [0, 5, -5, 0],
-    transition: {
-      duration: 6,
-      repeat: Infinity,
-      ease: "easeInOut"
-    }
-  }
-};
+import { serifTheme } from "../../design-system/themes/serifTheme";
+import { SerifButton, SerifBadge, SerifPageWrapper } from "../../design-system/components";
+import { useNotification } from "../../context/NotificationContext";
 
 const ContactUs = () => {
   const navigate = useNavigate();
+  const notification = useNotification();
   const [formData, setFormData] = useState({ name: "", email: "", message: "" });
   const [isLoading, setIsLoading] = useState(false);
   const [activeAccordion, setActiveAccordion] = useState(null);
-  const [hoveredCard, setHoveredCard] = useState(null);
 
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -75,17 +41,9 @@ const ContactUs = () => {
       // Send auto-reply to user
       await emailjs.send(serviceId, autoReplyTemplateId, formData, publicKey);
 
-      toast.success("Message sent successfully! We'll get back to you soon.", {
-        duration: 4000,
-        position: 'top-center',
-        style: {
-          background: '#10B981',
-          color: 'white',
-          borderRadius: '12px',
-          padding: '16px',
-          fontSize: '14px',
-          fontWeight: '500'
-        }
+      notification.success("Message sent successfully! We'll get back to you soon.", {
+        icon: <FaPaperPlane />,
+        duration: 4000
       });
 
       setFormData({ name: "", email: "", message: "" });
@@ -95,17 +53,9 @@ const ContactUs = () => {
       }, 2000);
 
     } catch (error) {
-      toast.error("Failed to send message. Please try again.", {
-        duration: 4000,
-        position: 'top-center',
-        style: {
-          background: '#EF4444',
-          color: 'white',
-          borderRadius: '12px',
-          padding: '16px',
-          fontSize: '14px',
-          fontWeight: '500'
-        }
+      notification.error("Failed to send message. Please try again.", {
+        icon: <FaPaperPlane />,
+        duration: 4000
       });
     } finally {
       setIsLoading(false);
@@ -121,15 +71,15 @@ const ContactUs = () => {
       question: "HOW TO BUY A SUBSCRIPTION?",
       answer: (
         <div className="space-y-3">
-          <p className="text-white font-medium">Follow these simple steps to purchase your subscription:</p>
-          <ol className="list-decimal pl-6 space-y-2 text-gray-200">
-            <li>Choose your favorite subscription from our store</li>
-            <li>Add the subscription to your cart and proceed to checkout</li>
-            <li>Fill in your details to create a new username and password</li>
-            <li>Select your preferred payment gateway and complete your payment</li>
-            <li>
+          <p className={`${serifTheme.colors.text.primary} font-medium`}>Follow these simple steps to purchase your subscription:</p>
+          <ol className="list-decimal pl-6 space-y-2">
+            <li className={serifTheme.colors.text.secondary}>Choose your favorite subscription from our store</li>
+            <li className={serifTheme.colors.text.secondary}>Add the subscription to your cart and proceed to checkout</li>
+            <li className={serifTheme.colors.text.secondary}>Fill in your details to create a new username and password</li>
+            <li className={serifTheme.colors.text.secondary}>Select your preferred payment gateway and complete your payment</li>
+            <li className={serifTheme.colors.text.secondary}>
               Your subscription will be delivered to your registered email within 30-180 minutes 
-              <span className="text-blue-300 font-medium"> (up to 8 hours in rare cases)</span>
+              <span className={`${serifTheme.colors.text.accent} font-medium`}> (up to 8 hours in rare cases)</span>
             </li>
           </ol>
         </div>
@@ -214,244 +164,153 @@ const ContactUs = () => {
 
   return (
     <Layout>
-      <div className="relative min-h-screen bg-gradient-to-br from-gray-950 via-black to-gray-900 overflow-hidden">
-        {/* Enhanced Background Pattern */}
-        <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-900/20 via-purple-900/20 to-cyan-900/20"></div>
-          <div className="absolute inset-0" style={{
-            backgroundImage: `radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
-                             radial-gradient(circle at 80% 80%, rgba(147, 51, 234, 0.1) 0%, transparent 50%),
-                             radial-gradient(circle at 40% 60%, rgba(6, 182, 212, 0.1) 0%, transparent 50%)`,
-            backgroundSize: '200px 200px'
-          }}></div>
-        </div>
+      <SerifPageWrapper>
+        <section className="relative min-h-screen py-12 md:py-20" style={{ fontFamily: serifTheme.fontFamily.serif }}>
+          <div className="max-w-7xl mx-auto px-4 md:px-8">
+            {/* Header Section */}
+            <div className="text-center mb-12 md:mb-16">
+              {/* Badge */}
+              <div className="inline-flex items-center mb-6">
+                <SerifBadge variant="primary" size="medium" className="text-sm md:text-base">
+                  <BsLightningCharge className="mr-2" />
+                  #1 Digital Shop in Nepal
+                </SerifBadge>
+              </div>
 
-        {/* Enhanced Floating Elements */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <motion.div
-            variants={floatingVariants}
-            animate="animate"
-            className="absolute top-20 left-10 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl"
-          />
-          <motion.div
-            variants={floatingVariants}
-            animate="animate"
-            transition={{ delay: 2 }}
-            className="absolute top-40 right-20 w-24 h-24 bg-purple-500/10 rounded-full blur-3xl"
-          />
-          <motion.div
-            variants={floatingVariants}
-            animate="animate"
-            transition={{ delay: 4 }}
-            className="absolute bottom-32 left-1/4 w-40 h-40 bg-cyan-500/10 rounded-full blur-3xl"
-          />
-          <motion.div
-            variants={floatingVariants}
-            animate="animate"
-            transition={{ delay: 1 }}
-            className="absolute top-1/2 right-1/3 w-20 h-20 bg-green-500/10 rounded-full blur-2xl"
-          />
-        </div>
-
-        <div className="relative z-10">
-          {/* Enhanced Header Section */}
-          <motion.div
-            initial={{ opacity: 0, y: -50 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1 }}
-            className="pt-24 pb-16 px-6 text-center"
-          >
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 1, delay: 0.3 }}
-              className="relative z-10 mb-8"
-            >
-              <h1 className="text-5xl md:text-6xl lg:text-7xl font-black mb-6 leading-tight">
-                <span className="bg-gradient-to-r from-blue-400 via-cyan-400 to-teal-300 bg-clip-text text-transparent">
-                  Get in
-                </span>
-                <br />
-                <span className="text-white">Touch</span>
+              {/* Title */}
+              <h1 className={`text-4xl md:text-5xl lg:text-6xl font-bold leading-tight ${serifTheme.gradients.accent} mb-6`}>
+                Get in Touch
               </h1>
 
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: "120px" }}
-                transition={{ duration: 1, delay: 0.8 }}
-                className="h-1.5 bg-gradient-to-r from-blue-500 via-cyan-500 to-teal-400 mx-auto rounded-full shadow-lg"
-              />
-            </motion.div>
+              {/* Subtitle */}
+              <p className={`text-xl md:text-2xl ${serifTheme.colors.text.secondary} font-medium mb-6`}>
+                Have questions about our digital products? Need support?
+              </p>
 
-            <motion.p
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1, delay: 1 }}
-              className="text-xl md:text-2xl text-gray-100 max-w-4xl mx-auto leading-relaxed mb-8 font-medium"
-            >
-              Have questions about our digital products? Need support?
-              <span className="text-cyan-300 font-bold"> We're here to help 24/7</span>
-            </motion.p>
+              {/* Description */}
+              <p className={`${serifTheme.colors.text.tertiary} text-lg leading-relaxed max-w-3xl mx-auto mb-8`}>
+                We're here to help 24/7 • Instant response • Local support • Secure communication
+              </p>
 
-            {/* Enhanced Stats */}
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1, delay: 1.2 }}
-              className="flex flex-wrap justify-center gap-8 text-sm text-gray-200"
-            >
-              <div className="flex items-center gap-3 bg-white/5 backdrop-blur-sm px-4 py-2 rounded-full border border-white/10">
-                <FaCheckCircle className="text-green-400 text-lg" />
-                <span className="font-medium">10K+ Happy Customers</span>
+              {/* Trust Indicators */}
+              <div className="flex flex-wrap justify-center gap-4 mt-8">
+                <SerifBadge variant="secondary" size="small" className="flex items-center gap-2">
+                  <FaShieldAlt className="text-green-600" />
+                  Secure Communication
+                </SerifBadge>
+                <SerifBadge variant="secondary" size="small" className="flex items-center gap-2">
+                  <FaGlobe className="text-blue-600" />
+                  Local Support
+                </SerifBadge>
+                <SerifBadge variant="secondary" size="small" className="flex items-center gap-2">
+                  <BsCurrencyExchange className="text-yellow-600" />
+                  NPR Pricing
+                </SerifBadge>
               </div>
-              <div className="flex items-center gap-3 bg-white/5 backdrop-blur-sm px-4 py-2 rounded-full border border-white/10">
-                <FaRocket className="text-blue-400 text-lg" />
-                <span className="font-medium">Fast Response Time</span>
-              </div>
-              <div className="flex items-center gap-3 bg-white/5 backdrop-blur-sm px-4 py-2 rounded-full border border-white/10">
-                <FaShieldAlt className="text-purple-400 text-lg" />
-                <span className="font-medium">Secure & Trusted</span>
-              </div>
-            </motion.div>
-          </motion.div>
+            </div>
 
-          {/* Main Content */}
-          <div className="container mx-auto px-6 pb-20">
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-16">
+            {/* Main Content Grid */}
+            <div className="grid lg:grid-cols-2 gap-8 md:gap-12 items-start">
+              
               {/* Left Column - Contact Methods */}
-              <motion.div
-                variants={containerVariants}
-                initial="hidden"
-                animate="visible"
-                className="space-y-8"
-              >
+              <div className="space-y-6">
                 {/* Contact Methods Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-1 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                   {contactMethods.map((method, index) => (
-                    <motion.div
+                    <div
                       key={index}
-                      variants={itemVariants}
-                      whileHover={{ y: -10, scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onHoverStart={() => setHoveredCard(index)}
-                      onHoverEnd={() => setHoveredCard(null)}
-                      className={`group relative bg-gradient-to-br from-gray-900/90 to-black/95 backdrop-blur-xl rounded-2xl overflow-hidden border ${method.borderColor} hover:border-opacity-80 transition-all duration-500 shadow-2xl hover:shadow-3xl`}
+                      className={`group relative ${serifTheme.gradients.card} ${serifTheme.radius.card} p-5 border ${serifTheme.colors.border.primary} hover:border-amber-400/60 ${serifTheme.transitions.default} hover:-translate-y-1 ${serifTheme.colors.shadow.card} hover:shadow-lg`}
                     >
-                      {/* Background Gradient */}
-                      <div className={`absolute inset-0 bg-gradient-to-br ${method.bgGradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
-
-                      {/* Glow Effect */}
-                      <div className="absolute -inset-0.5 bg-gradient-to-r opacity-0 group-hover:opacity-30 blur transition-opacity duration-500"
-                           style={{ background: `linear-gradient(45deg, ${method.gradient.replace('from-', '').replace('to-', '').replace(' ', ', ')})` }} />
-
-                      <div className="relative p-8">
-                        {/* Icon and Stats */}
-                        <div className="flex items-start justify-between mb-6">
-                          <div className={`p-4 rounded-2xl bg-gradient-to-br ${method.gradient} shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                      {/* Icon and Stats */}
+                      <div className="flex items-start justify-between mb-4">
+                        <div className={`p-3 ${serifTheme.radius.card} ${serifTheme.gradients.button} ${serifTheme.colors.shadow.button}`}>
+                          <div className="text-white text-xl">
                             {method.icon}
                           </div>
-                          <div className="text-right">
-                            <span className={`text-xs font-bold ${method.color} bg-gray-800/70 px-3 py-1 rounded-full border border-gray-600/50`}>
-                              {method.stats}
-                            </span>
-                          </div>
                         </div>
-
-                        {/* Content */}
-                        <div className="mb-6">
-                          <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:bg-clip-text transition-all duration-300"
-                              style={{ backgroundImage: `linear-gradient(45deg, ${method.gradient.replace('from-', '').replace('to-', '').replace(' ', ', ')})` }}>
-                            {method.title}
-                          </h3>
-                          <p className="text-gray-200 text-lg leading-relaxed font-medium">{method.description}</p>
-                        </div>
-
-                        {/* Action Button */}
-                        <motion.a
-                          href={method.href}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          className={`inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r ${method.gradient} text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 group-hover:shadow-2xl`}
-                        >
-                          <span>{method.btnText}</span>
-                          <motion.div
-                            animate={{ x: hoveredCard === index ? 5 : 0 }}
-                            transition={{ duration: 0.2 }}
-                          >
-                            →
-                          </motion.div>
-                        </motion.a>
+                        <SerifBadge variant="secondary" size="small">
+                          {method.stats}
+                        </SerifBadge>
                       </div>
-                    </motion.div>
+
+                      {/* Content */}
+                      <div className="mb-4">
+                        <h3 className={`text-lg font-bold ${serifTheme.colors.text.primary} mb-2`}>
+                          {method.title}
+                        </h3>
+                        <p className={`${serifTheme.colors.text.secondary} text-sm leading-relaxed`}>
+                          {method.description}
+                        </p>
+                      </div>
+
+                      {/* Action Button */}
+                      <a
+                        href={method.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block"
+                      >
+                        <SerifButton
+                          variant="primary"
+                          size="small"
+                          className="w-full"
+                          icon={<FaPaperPlane />}
+                        >
+                          {method.btnText} →
+                        </SerifButton>
+                      </a>
+                    </div>
                   ))}
                 </div>
 
-                {/* Enhanced Quick Stats */}
-                <motion.div
-                  variants={itemVariants}
-                  className="bg-gradient-to-br from-gray-900/90 to-black/95 backdrop-blur-xl rounded-2xl p-8 border border-gray-700/50 shadow-2xl"
-                >
-                  <h3 className="text-2xl font-bold text-white mb-8 flex items-center gap-3">
-                    <FaStar className="text-yellow-400 text-2xl" />
+                {/* Quick Stats */}
+                <div className={`${serifTheme.gradients.card} ${serifTheme.radius.card} p-6 border ${serifTheme.colors.border.primary} ${serifTheme.colors.shadow.card}`}>
+                  <h3 className={`text-xl font-bold ${serifTheme.colors.text.primary} mb-6 flex items-center gap-3`}>
+                    <FaStar className="text-yellow-500 text-xl" />
                     Why Choose Us?
                   </h3>
-                  <div className="grid grid-cols-2 gap-6">
-                    <div className="text-center group">
-                      <div className="text-3xl font-bold text-blue-400 mb-2 group-hover:text-blue-300 transition-colors">10K+</div>
-                      <div className="text-gray-200 text-sm font-medium">Happy Customers</div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="text-center">
+                      <div className={`text-2xl font-bold ${serifTheme.gradients.accent} mb-1`}>10K+</div>
+                      <div className={`${serifTheme.colors.text.secondary} text-sm font-medium`}>Happy Customers</div>
                     </div>
-                    <div className="text-center group">
-                      <div className="text-3xl font-bold text-green-400 mb-2 group-hover:text-green-300 transition-colors">24/7</div>
-                      <div className="text-gray-200 text-sm font-medium">Support Available</div>
+                    <div className="text-center">
+                      <div className={`text-2xl font-bold ${serifTheme.gradients.accent} mb-1`}>24/7</div>
+                      <div className={`${serifTheme.colors.text.secondary} text-sm font-medium`}>Support Available</div>
                     </div>
-                    <div className="text-center group">
-                      <div className="text-3xl font-bold text-purple-400 mb-2 group-hover:text-purple-300 transition-colors">&lt; 2hr</div>
-                      <div className="text-gray-200 text-sm font-medium">Response Time</div>
+                    <div className="text-center">
+                      <div className={`text-2xl font-bold ${serifTheme.gradients.accent} mb-1`}>&lt; 2hr</div>
+                      <div className={`${serifTheme.colors.text.secondary} text-sm font-medium`}>Response Time</div>
                     </div>
-                    <div className="text-center group">
-                      <div className="text-3xl font-bold text-cyan-400 mb-2 group-hover:text-cyan-300 transition-colors">100%</div>
-                      <div className="text-gray-200 text-sm font-medium">Satisfaction</div>
+                    <div className="text-center">
+                      <div className={`text-2xl font-bold ${serifTheme.gradients.accent} mb-1`}>100%</div>
+                      <div className={`${serifTheme.colors.text.secondary} text-sm font-medium`}>Satisfaction</div>
                     </div>
                   </div>
-                </motion.div>
-              </motion.div>
+                </div>
+              </div>
 
               {/* Right Column - Contact Form */}
-              <motion.div
-                variants={itemVariants}
-                className="space-y-8"
-              >
-                <div className="bg-gradient-to-br from-gray-900/90 to-black/95 backdrop-blur-xl rounded-2xl p-8 border border-gray-700/50 shadow-2xl">
+              <div className="space-y-6">
+                <div className={`${serifTheme.gradients.card} ${serifTheme.radius.card} p-6 md:p-8 border ${serifTheme.colors.border.primary} ${serifTheme.colors.shadow.card}`}>
                   {/* Form Header */}
-                  <div className="mb-8 text-center">
-                    <motion.div
-                      initial={{ scale: 0.8, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      transition={{ duration: 0.8 }}
-                      className="inline-flex items-center gap-4 mb-6"
-                    >
-                      <div className="p-4 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-2xl shadow-lg">
-                        <FaPaperPlane className="text-white text-2xl" />
+                  <div className="mb-6 md:mb-8 text-center">
+                    <div className="inline-flex items-center gap-4 mb-4">
+                      <div className={`p-3 ${serifTheme.gradients.button} ${serifTheme.radius.card} ${serifTheme.colors.shadow.button}`}>
+                        <FaPaperPlane className="text-white text-xl" />
                       </div>
-                      <h3 className="text-3xl font-bold text-white">Send Message</h3>
-                    </motion.div>
-                    <p className="text-gray-200 text-lg font-medium">
+                      <h3 className={`text-2xl font-bold ${serifTheme.colors.text.primary}`}>Send Message</h3>
+                    </div>
+                    <p className={`${serifTheme.colors.text.secondary} text-base font-medium`}>
                       Have a question? We'd love to hear from you. Send us a message and we'll respond as soon as possible.
                     </p>
                   </div>
 
                   {/* Contact Form */}
-                  <form onSubmit={handleSubmit} className="space-y-6">
+                  <form onSubmit={handleSubmit} className="space-y-5">
                     {/* Name Field */}
-                    <motion.div
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.2 }}
-                      className="space-y-3"
-                    >
-                      <label className="block text-sm font-bold text-gray-200 mb-2">
+                    <div className="space-y-2">
+                      <label className={`block text-sm font-bold ${serifTheme.colors.text.primary} mb-2`}>
                         Full Name *
                       </label>
                       <input
@@ -461,18 +320,13 @@ const ContactUs = () => {
                         onChange={handleInputChange}
                         required
                         placeholder="Enter your full name"
-                        className="w-full px-5 py-4 bg-gray-800/80 border border-gray-600/50 rounded-xl text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-300 backdrop-blur-sm font-medium"
+                        className={`w-full px-4 py-3 ${serifTheme.colors.background.card} border ${serifTheme.colors.border.secondary} ${serifTheme.radius.button} ${serifTheme.colors.text.primary} placeholder-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent ${serifTheme.transitions.default}`}
                       />
-                    </motion.div>
+                    </div>
 
                     {/* Email Field */}
-                    <motion.div
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.4 }}
-                      className="space-y-3"
-                    >
-                      <label className="block text-sm font-bold text-gray-200 mb-2">
+                    <div className="space-y-2">
+                      <label className={`block text-sm font-bold ${serifTheme.colors.text.primary} mb-2`}>
                         Email Address *
                       </label>
                       <input
@@ -482,18 +336,13 @@ const ContactUs = () => {
                         onChange={handleInputChange}
                         required
                         placeholder="Enter your email address"
-                        className="w-full px-5 py-4 bg-gray-800/80 border border-gray-600/50 rounded-xl text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-300 backdrop-blur-sm font-medium"
+                        className={`w-full px-4 py-3 ${serifTheme.colors.background.card} border ${serifTheme.colors.border.secondary} ${serifTheme.radius.button} ${serifTheme.colors.text.primary} placeholder-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent ${serifTheme.transitions.default}`}
                       />
-                    </motion.div>
+                    </div>
 
                     {/* Message Field */}
-                    <motion.div
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.6 }}
-                      className="space-y-3"
-                    >
-                      <label className="block text-sm font-bold text-gray-200 mb-2">
+                    <div className="space-y-2">
+                      <label className={`block text-sm font-bold ${serifTheme.colors.text.primary} mb-2`}>
                         Your Message *
                       </label>
                       <textarea
@@ -501,66 +350,44 @@ const ContactUs = () => {
                         value={formData.message}
                         onChange={handleInputChange}
                         required
-                        rows={6}
+                        rows={5}
                         placeholder="Tell us how we can help you..."
-                        className="w-full px-5 py-4 bg-gray-800/80 border border-gray-600/50 rounded-xl text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-300 backdrop-blur-sm resize-none font-medium"
+                        className={`w-full px-4 py-3 ${serifTheme.colors.background.card} border ${serifTheme.colors.border.secondary} ${serifTheme.radius.button} ${serifTheme.colors.text.primary} placeholder-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent ${serifTheme.transitions.default} resize-none`}
                       />
-                    </motion.div>
+                    </div>
 
                     {/* Submit Button */}
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.8 }}
-                    >
-                      <motion.button
+                    <div>
+                      <SerifButton
                         type="submit"
                         disabled={isLoading}
-                        whileHover={{ scale: 1.02, y: -2 }}
-                        whileTap={{ scale: 0.98 }}
-                        className="w-full py-4 px-6 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white font-bold rounded-xl shadow-xl hover:shadow-2xl transition-all duration-300 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                        variant="primary"
+                        size="large"
+                        fullWidth
+                        loading={isLoading}
+                        icon={!isLoading ? <FaPaperPlane /> : undefined}
                       >
-                        {isLoading ? (
-                          <>
-                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                            <span>Sending Message...</span>
-                          </>
-                        ) : (
-                          <>
-                            <FaPaperPlane className="text-lg" />
-                            <span>Send Message</span>
-                          </>
-                        )}
-                      </motion.button>
-                    </motion.div>
+                        {isLoading ? 'Sending Message...' : 'Send Message'}
+                      </SerifButton>
+                    </div>
                   </form>
                 </div>
-              </motion.div>
+              </div>
             </div>
 
-            {/* Enhanced FAQ Section */}
-            <motion.div
-              initial={{ opacity: 0, y: 50 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1, delay: 1.5 }}
-              className="mt-20 bg-gradient-to-br from-gray-900/90 to-black/95 backdrop-blur-xl rounded-2xl p-8 border border-gray-700/50 shadow-2xl"
-            >
+            {/* FAQ Section */}
+            <div className={`mt-16 md:mt-20 ${serifTheme.gradients.card} ${serifTheme.radius.card} p-6 md:p-8 border ${serifTheme.colors.border.primary} ${serifTheme.colors.shadow.card}`}>
               {/* FAQ Header */}
-              <div className="text-center mb-12">
-                <motion.div
-                  initial={{ scale: 0.8, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ duration: 0.8, delay: 1.7 }}
-                  className="inline-flex items-center gap-4 mb-8"
-                >
-                  <div className="p-4 bg-gradient-to-r from-purple-600 to-pink-500 rounded-2xl shadow-lg">
-                    <FaQuestionCircle className="text-white text-2xl" />
+              <div className="text-center mb-10 md:mb-12">
+                <div className="inline-flex items-center gap-4 mb-6">
+                  <div className={`p-3 ${serifTheme.gradients.button} ${serifTheme.radius.card} ${serifTheme.colors.shadow.button}`}>
+                    <FaQuestionCircle className="text-white text-xl" />
                   </div>
-                  <h2 className="text-4xl md:text-5xl font-bold text-white">
+                  <h2 className={`text-3xl md:text-4xl font-bold ${serifTheme.colors.text.primary}`}>
                     Frequently Asked Questions
                   </h2>
-                </motion.div>
-                <p className="text-xl text-gray-200 max-w-3xl mx-auto leading-relaxed font-medium">
+                </div>
+                <p className={`text-lg ${serifTheme.colors.text.secondary} max-w-3xl mx-auto leading-relaxed font-medium`}>
                   Get instant answers to the most common questions about our digital products and services
                 </p>
               </div>
@@ -568,60 +395,40 @@ const ContactUs = () => {
               {/* FAQ Items */}
               <div className="space-y-4 max-w-4xl mx-auto">
                 {faqs.map((faq, index) => (
-                  <motion.div
+                  <div
                     key={index}
-                    initial={{ opacity: 0, y: 30 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6, delay: 1.8 + index * 0.1 }}
-                    className="group"
+                    className={`${serifTheme.colors.background.card} ${serifTheme.radius.button} border ${serifTheme.colors.border.secondary} overflow-hidden hover:border-amber-400/60 ${serifTheme.transitions.default}`}
                   >
-                    <div className="bg-gray-800/80 backdrop-blur-sm rounded-xl border border-gray-700/50 overflow-hidden hover:border-gray-600/70 transition-all duration-300 shadow-lg">
-                      <motion.button
-                        onClick={() => setActiveAccordion(activeAccordion === index ? null : index)}
-                        className="w-full p-6 text-left flex items-center justify-between hover:bg-gray-700/30 transition-all duration-300"
-                        whileHover={{ x: 5 }}
-                      >
-                        <h3 className="text-lg font-bold text-white pr-4 group-hover:text-blue-300 transition-colors">
-                          {faq.question}
-                        </h3>
-                        <motion.div
-                          animate={{ rotate: activeAccordion === index ? 180 : 0 }}
-                          transition={{ duration: 0.3 }}
-                          className="flex-shrink-0"
-                        >
-                          <FaChevronDown className="text-gray-400 group-hover:text-blue-400 transition-colors" />
-                        </motion.div>
-                      </motion.button>
+                    <button
+                      onClick={() => setActiveAccordion(activeAccordion === index ? null : index)}
+                      className={`w-full p-4 text-left flex items-center justify-between hover:bg-amber-50/30 ${serifTheme.transitions.default}`}
+                    >
+                      <h3 className={`text-base font-bold ${serifTheme.colors.text.primary} pr-4`}>
+                        {faq.question}
+                      </h3>
+                      <div className={`flex-shrink-0 transition-transform duration-300 ${activeAccordion === index ? 'rotate-180' : ''}`}>
+                        <FaChevronDown className={`${serifTheme.colors.text.tertiary}`} />
+                      </div>
+                    </button>
 
-                      <AnimatePresence>
-                        {activeAccordion === index && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: "auto", opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.4, ease: "easeInOut" }}
-                            className="overflow-hidden"
-                          >
-                            <div className="p-6 pt-0 border-t border-gray-700/50">
-                              <div className="text-gray-200 leading-relaxed font-medium">
-                                {typeof faq.answer === 'string' ? (
-                                  <p>{faq.answer}</p>
-                                ) : (
-                                  faq.answer
-                                )}
-                              </div>
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  </motion.div>
+                    {activeAccordion === index && (
+                      <div className="px-4 pb-4 pt-0 border-t border-amber-200/30">
+                        <div className={`${serifTheme.colors.text.secondary} leading-relaxed font-medium text-sm pt-4`}>
+                          {typeof faq.answer === 'string' ? (
+                            <p>{faq.answer}</p>
+                          ) : (
+                            faq.answer
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 ))}
               </div>
-            </motion.div>
+            </div>
           </div>
-        </div>
-      </div>
+        </section>
+      </SerifPageWrapper>
     </Layout>
   );
 };

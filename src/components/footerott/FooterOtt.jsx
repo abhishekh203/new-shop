@@ -1,4 +1,6 @@
 import React from "react";
+import { serifTheme } from '../../design-system/themes';
+import { SerifFilterChip } from '../../design-system/components';
 
 const DigitalServicesNepal = () => {
   const services = [
@@ -33,25 +35,41 @@ const DigitalServicesNepal = () => {
   ];
 
   return (
-    <div className="bg-gray-900 text-gray-300 py-8 px-4">
-      <div className="max-w-6xl mx-auto">
-        <h1 className="text-2xl font-bold text-white mb-6 text-center">
+    <div className={`${serifTheme.gradients.background} py-8 px-4 relative overflow-hidden`} style={{ fontFamily: serifTheme.fontFamily.serif }}>
+      {/* Background Elements - Serif Theme */}
+      <div className="absolute inset-0">
+        {/* Gradient Overlay */}
+        <div className={`absolute inset-0 ${serifTheme.gradients.overlay}`}></div>
+        
+        {/* Animated Background Pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(180,83,9,0.2)_1px,transparent_1px)] bg-[length:20px_20px]"></div>
+        </div>
+        
+        {/* Floating Orbs - Warm Amber/Orange Tones */}
+        <div className="absolute top-20 left-10 w-32 h-32 bg-amber-500/20 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-20 right-10 w-40 h-40 bg-orange-500/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        <div className="absolute top-1/2 left-1/4 w-24 h-24 bg-yellow-500/20 rounded-full blur-2xl animate-pulse delay-500"></div>
+      </div>
+
+      <div className="max-w-6xl mx-auto relative z-10">
+        <h1 className={`text-2xl font-bold ${serifTheme.colors.text.primary} mb-6 text-center`}>
           Premium Digital Services Available in Nepal
         </h1>
         
         {/* Visible Services List */}
-        <div className="bg-gray-800/50 p-6 rounded-lg">
-          <p className="text-gray-400 mb-4 text-center">
+        <div className={`${serifTheme.gradients.card} backdrop-blur-sm p-6 ${serifTheme.radius.card} border ${serifTheme.colors.border.primary} ${serifTheme.colors.shadow.card}`}>
+          <p className={`${serifTheme.colors.text.secondary} mb-4 text-center`}>
             Get instant access to premium digital subscriptions in Nepal:
           </p>
           <div className="flex flex-wrap gap-2 justify-center">
             {services.map((service, index) => (
-              <span 
-                key={index} 
-                className="bg-gray-700 px-3 py-1 rounded-full text-sm hover:bg-yellow-500 hover:text-black transition-colors"
-              >
-                {service}
-              </span>
+              <SerifFilterChip
+                key={index}
+                label={service}
+                isActive={false}
+                onClick={() => {}}
+              />
             ))}
           </div>
         </div>

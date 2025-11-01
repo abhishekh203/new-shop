@@ -6,6 +6,7 @@ import Loader from "../../components/loader/Loader";
 import { useDispatch, useSelector } from "react-redux";
 import { addToCart, deleteFromCart } from "../../redux/cartSlice";
 import toast from "react-hot-toast";
+import { createProductUrl } from "../../utils/slugUtils";
 import { 
   Button, 
   Card, 
@@ -13,12 +14,11 @@ import {
   CardMedia, 
   Typography, 
   Chip, 
-  Rating,
   Box,
   Grid,
   Container
 } from "@mui/material";
-import { AddShoppingCart, RemoveShoppingCart, Star } from "@mui/icons-material";
+import { AddShoppingCart, RemoveShoppingCart } from "@mui/icons-material";
 import { collection, getDocs } from "firebase/firestore";
 import { fireDB } from "../../firebase/FirebaseConfig";
 
@@ -148,21 +148,9 @@ const CategoryPage = () => {
                                                     borderTopLeftRadius: '16px',
                                                     borderTopRightRadius: '16px'
                                                 }}
-                                                onClick={() => navigate(`/productinfo/${item.id}`)}
+                                                onClick={() => navigate(createProductUrl(item))}
                                             />
                                             <CardContent sx={{ flexGrow: 1 }}>
-                                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                                                    <Rating
-                                                        value={item.rating || 4.5}
-                                                        precision={0.5}
-                                                        readOnly
-                                                        icon={<Star sx={{ color: '#ffc107' }} />}
-                                                        emptyIcon={<Star sx={{ color: 'rgba(255,255,255,0.4)' }} />}
-                                                    />
-                                                    <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)', ml: 1 }}>
-                                                        ({item.reviews || 24})
-                                                    </Typography>
-                                                </Box>
                                                 <Typography 
                                                     gutterBottom 
                                                     variant="h6" 

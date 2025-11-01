@@ -28,23 +28,23 @@
         <loc>https://digitalshopnepal.com/NetflixNepal</loc>
         <priority>0.9</priority>
         <changefreq>weekly</changefreq>
-        <lastmod>2024-01-15</lastmod>
+        <lastmod>2024-10-02</lastmod>
         <image:image>
             <image:loc>https://digitalshopnepal.com/img/netflix.png</image:loc>
-            <image:title>Netflix Nepal Subscription</image:title>
-            <image:caption>Premium Netflix subscription for Nepal</image:caption>
+            <image:title>Netflix Premium Nepal - Best Prices | Ultra HD Streaming</image:title>
+            <image:caption>Buy Netflix Premium subscription in Nepal at best prices starting from NPR 399. Ultra HD streaming, no VPN required, instant activation.</image:caption>
         </image:image>
     </url>
     
     <url>
         <loc>https://digitalshopnepal.com/SpotifyNepal</loc>
-        <priority>0.85</priority>
+        <priority>0.9</priority>
         <changefreq>weekly</changefreq>
-        <lastmod>2024-01-15</lastmod>
+        <lastmod>2024-10-02</lastmod>
         <image:image>
             <image:loc>https://digitalshopnepal.com/img/spotify.png</image:loc>
-            <image:title>Spotify Nepal Subscription</image:title>
-            <image:caption>Premium Spotify music streaming for Nepal</image:caption>
+            <image:title>Spotify Premium Nepal - Best Prices | Ad-Free Music Streaming</image:title>
+            <image:caption>Buy Spotify Premium subscription in Nepal at best prices starting from NPR 499. No VPN required, instant activation.</image:caption>
         </image:image>
     </url>
     

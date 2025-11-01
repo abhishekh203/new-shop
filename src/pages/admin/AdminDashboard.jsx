@@ -6,6 +6,9 @@ import OrderDetail from '../../components/admin/OrderDetail';
 import UserDetail from '../../components/admin/UserDetail';
 import ReviewDetail from '../../components/admin/ReviewDetail';
 import myContext from '../../context/myContext';
+import { serifTheme } from '../../design-system/themes/serifTheme';
+import { SerifButton, SerifBadge } from '../../design-system/components';
+import { useNotification } from '../../context/NotificationContext';
 import { 
   FiShoppingBag, 
   FiList, 
@@ -22,19 +25,20 @@ import {
   FiActivity,
   FiSettings,
   FiBell,
-  FiSearch
+  FiSearch,
+  FiHome
 } from 'react-icons/fi';
 import { BsBoxSeam, BsPersonLinesFill } from 'react-icons/bs';
 import { RiDashboardFill } from 'react-icons/ri';
 import { Timestamp, addDoc, collection } from "firebase/firestore";
 import { fireDB } from "../../firebase/FirebaseConfig";
-import toast from "react-hot-toast";
 
 const AdminDashboard = () => {
     const user = JSON.parse(localStorage.getItem('users'));
     const context = useContext(myContext);
     const { getAllProduct, getAllOrder, getAllUser, getAllReview, loading, setLoading } = context;
     const navigate = useNavigate();
+    const notification = useNotification();
     
     // State management
     const [activeTab, setActiveTab] = useState(0);
@@ -68,15 +72,15 @@ const AdminDashboard = () => {
 
     // Category list with icons
     const categoryList = [
-        { name: 'netflix', icon: '🎬', color: 'bg-red-500' },
-        { name: 'OTT', icon: '📺', color: 'bg-blue-500' },
-        { name: 'streaming', icon: '📡', color: 'bg-green-500' },
-        { name: 'music', icon: '🎵', color: 'bg-purple-500' },
-        { name: 'Software', icon: '💻', color: 'bg-indigo-500' },
-        { name: 'games', icon: '🎮', color: 'bg-pink-500' },
-        { name: 'movies', icon: '🎥', color: 'bg-yellow-500' },
-        { name: 'bundle', icon: '🎁', color: 'bg-teal-500' },
-        { name: 'education', icon: '📚', color: 'bg-orange-500' },
+        { name: 'netflix', icon: '🎬', color: 'bg-error' },
+        { name: 'OTT', icon: '📺', color: 'bg-secondary' },
+        { name: 'streaming', icon: '📡', color: 'bg-primary' },
+        { name: 'music', icon: '🎵', color: 'bg-secondary' },
+        { name: 'Software', icon: '💻', color: 'bg-secondary' },
+        { name: 'games', icon: '🎮', color: 'bg-accent' },
+        { name: 'movies', icon: '🎥', color: 'bg-accent' },
+        { name: 'bundle', icon: '🎁', color: 'bg-primary' },
+        { name: 'education', icon: '📚', color: 'bg-accent' },
         { name: 'vpn', icon: '🔒', color: 'bg-gray-500' },
         { name: 'AI', icon: '🤖', color: 'bg-cyan-500' },
         { name: 'special offer', icon: '🔥', color: 'bg-red-600' },
@@ -88,7 +92,6 @@ const AdminDashboard = () => {
     const stats = useMemo(() => {
         const totalRevenue = getAllOrder.reduce((sum, order) => sum + (parseFloat(order.totalAmount) || 0), 0);
         const pendingOrders = getAllOrder.filter(order => order.status === 'pending').length;
-        const activeUsers = getAllUser.filter(user => user.status === 'active').length;
         const avgRating = getAllReview.length > 0 
             ? (getAllReview.reduce((sum, review) => sum + (review.rating || 0), 0) / getAllReview.length).toFixed(1)
             : 0;
@@ -99,8 +102,8 @@ const AdminDashboard = () => {
                 value: getAllProduct.length,
                 change: '+12%',
                 icon: <FiShoppingBag size={24} />,
-                color: 'bg-gradient-to-r from-amber-500 to-orange-500',
-                textColor: 'text-white',
+                color: serifTheme.gradients.button,
+                textColor: serifTheme.colors.text.buttonPrimary,
                 tabIndex: 0
             },
             {
@@ -108,18 +111,18 @@ const AdminDashboard = () => {
                 value: `रु ${totalRevenue.toFixed(2)}`,
                 change: '+8.2%',
                 icon: <FiDollarSign size={24} />,
-                color: 'bg-gradient-to-r from-green-500 to-emerald-500',
-                textColor: 'text-white',
+                color: serifTheme.colors.button.success,
+                textColor: serifTheme.colors.text.buttonPrimary,
                 tabIndex: 1
             },
             {
-                title: 'Active Users',
-                value: activeUsers,
-                change: '+5.1%',
-                icon: <FiUsers size={24} />,
-                color: 'bg-gradient-to-r from-blue-500 to-indigo-500',
-                textColor: 'text-white',
-                tabIndex: 2
+                title: 'Total Orders',
+                value: getAllOrder.length,
+                change: '+15.3%',
+                icon: <FiList size={24} />,
+                color: serifTheme.colors.button.secondary,
+                textColor: serifTheme.colors.text.primary,
+                tabIndex: 1
             },
             {
                 title: 'Avg Rating',
@@ -135,10 +138,10 @@ const AdminDashboard = () => {
 
     // Navigation items
     const navigationItems = [
-        { id: 0, name: 'Products', icon: <BsBoxSeam />, component: <ProductDetail /> },
-        { id: 1, name: 'Orders', icon: <FiList />, component: <OrderDetail /> },
-        { id: 2, name: 'Users', icon: <BsPersonLinesFill />, component: <UserDetail /> },
-        { id: 3, name: 'Reviews', icon: <FiMessageSquare />, component: <ReviewDetail /> }
+        { id: 0, name: 'Products', icon: <BsBoxSeam />, component: <ProductDetail globalSearchTerm={searchTerm} /> },
+        { id: 1, name: 'Orders', icon: <FiList />, component: <OrderDetail globalSearchTerm={searchTerm} /> },
+        { id: 2, name: 'Users', icon: <BsPersonLinesFill />, component: <UserDetail globalSearchTerm={searchTerm} /> },
+        { id: 3, name: 'Reviews', icon: <FiMessageSquare />, component: <ReviewDetail globalSearchTerm={searchTerm} /> }
     ];
 
     // Dark mode toggle
@@ -162,7 +165,13 @@ const AdminDashboard = () => {
         localStorage.removeItem('users');
         localStorage.removeItem('auth');
         navigate('/');
-        toast.success('Logged out successfully');
+        notification.success('Logged out successfully');
+    };
+
+    // Homepage navigation function
+    const handleHomepageNavigation = () => {
+        navigate('/');
+        notification.success('Redirecting to homepage');
     };
 
     // Add product function with better validation
@@ -176,7 +185,7 @@ const AdminDashboard = () => {
         if (!product.description.trim()) errors.push("Product description is required");
 
         if (errors.length > 0) {
-            errors.forEach(error => toast.error(error));
+            errors.forEach(error => notification.error(error));
             return;
         }
 
@@ -184,7 +193,7 @@ const AdminDashboard = () => {
         try {
             const productRef = collection(fireDB, 'products');
             await addDoc(productRef, product);
-            toast.success("Product added successfully");
+            notification.success("Product added successfully");
             setShowAddProductModal(false);
             setProduct({
                 title: "",
@@ -202,7 +211,7 @@ const AdminDashboard = () => {
             });
         } catch (error) {
             console.error("Add product error:", error);
-            toast.error(`Failed to add product: ${error.message}`);
+            notification.error(`Failed to add product: ${error.message}`);
         } finally {
             setLoading(false);
         }
@@ -227,33 +236,35 @@ const AdminDashboard = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+        <div className={`min-h-screen ${serifTheme.gradients.background} transition-colors duration-300`} style={{ fontFamily: serifTheme.fontFamily.serif }}>
             {/* Mobile Header */}
-            <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-white dark:bg-gray-800 shadow-lg border-b border-gray-200 dark:border-gray-700">
+            <div className={`lg:hidden fixed top-0 left-0 right-0 z-40 ${serifTheme.gradients.card} shadow-lg border-b ${serifTheme.colors.border.primary}`}>
                 <div className="flex items-center justify-between p-3">
                 <button 
                     onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
-                        className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+                        className={`p-2 ${serifTheme.radius.button} ${serifTheme.colors.button.secondary} ${serifTheme.colors.text.primary} hover:bg-amber-50 ${serifTheme.transitions.default}`}
                 >
                         {mobileSidebarOpen ? <FiX size={18} /> : <FiMenu size={18} />}
                 </button>
-                    <h1 className="text-lg font-bold text-gray-800 dark:text-white flex items-center">
-                        <RiDashboardFill className="mr-2 text-blue-600" size={20} />
+                    <h1 className={`text-lg font-bold ${serifTheme.colors.text.primary} flex items-center`}>
+                        <RiDashboardFill className={`mr-2 ${serifTheme.gradients.accent}`} size={20} />
                         Admin
                 </h1>
                     <div className="flex items-center space-x-1">
                         <button
                             onClick={toggleDarkMode}
-                            className="p-1.5 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+                            className={`p-1.5 ${serifTheme.radius.button} ${serifTheme.colors.button.secondary} ${serifTheme.colors.text.primary} hover:bg-amber-50 ${serifTheme.transitions.default}`}
                         >
                             {darkMode ? <FiSun size={16} /> : <FiMoon size={16} />}
                         </button>
-                        <button
+                        <SerifButton
                             onClick={() => setShowAddProductModal(true)}
-                            className="p-1.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition"
+                            variant="primary"
+                            size="small"
+                            icon={<FiPlus />}
                         >
-                            <FiPlus size={16} />
-                        </button>
+                            Add
+                        </SerifButton>
                     </div>
                 </div>
             </div>
@@ -269,22 +280,22 @@ const AdminDashboard = () => {
                         className="lg:hidden fixed inset-0 z-30"
                     >
                         <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setMobileSidebarOpen(false)} />
-                        <div className="absolute left-0 top-0 w-72 lg:w-80 h-full bg-white dark:bg-gray-800 shadow-xl">
+                        <div className={`absolute left-0 top-0 w-72 lg:w-80 h-full ${serifTheme.gradients.card} shadow-xl border-r ${serifTheme.colors.border.primary}`}>
                             <div className="flex flex-col h-full">
                         {/* User Profile */}
-                                <div className="p-4 lg:p-6 border-b border-gray-200 dark:border-gray-700">
+                                <div className={`p-4 lg:p-6 border-b ${serifTheme.colors.border.primary}`}>
                                     <div className="flex items-center space-x-3 lg:space-x-4">
                             <img 
                                 src={user?.photoURL || './img/ak.jpg'} 
                                 alt="Admin" 
-                                            className="w-10 h-10 lg:w-12 lg:h-12 rounded-full border-2 border-gray-200 dark:border-gray-600 object-cover"
+                                            className={`w-10 h-10 lg:w-12 lg:h-12 rounded-full border-2 ${serifTheme.colors.border.secondary} object-cover`}
                                         />
                                         <div>
-                                            <h2 className="text-base lg:text-lg font-semibold text-gray-800 dark:text-white">{user?.name}</h2>
-                                            <p className="text-xs lg:text-sm text-gray-500 dark:text-gray-400">{user?.email}</p>
-                                            <span className="inline-block mt-1 px-2 py-0.5 lg:py-1 text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full">
+                                            <h2 className={`text-base lg:text-lg font-semibold ${serifTheme.colors.text.primary}`}>{user?.name}</h2>
+                                            <p className={`text-xs lg:text-sm ${serifTheme.colors.text.tertiary}`}>{user?.email}</p>
+                                            <SerifBadge variant="primary" size="small" className="mt-1">
                                     {user?.role}
-                                </span>
+                                </SerifBadge>
                                         </div>
                             </div>
                         </div>
@@ -299,28 +310,42 @@ const AdminDashboard = () => {
                                                     setActiveTab(item.id);
                                             setMobileSidebarOpen(false);
                                         }}
-                                                className={`w-full flex items-center px-3 lg:px-4 py-2.5 lg:py-3 rounded-lg lg:rounded-xl transition-all duration-200 text-sm lg:text-base ${
+                                                className={`w-full flex items-center px-3 lg:px-4 py-2.5 lg:py-3 ${serifTheme.radius.button} transition-all duration-200 text-sm lg:text-base ${
                                                     activeTab === item.id 
-                                                        ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800' 
-                                                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                                                        ? `${serifTheme.colors.button.secondary} ${serifTheme.colors.text.accent} border ${serifTheme.colors.border.primary}` 
+                                                        : `${serifTheme.colors.text.secondary} hover:bg-amber-50/50`
                                                 }`}
                                             >
                                                 <span className="mr-2 lg:mr-3">{item.icon}</span>
                                                 {item.name}
                                     </button>
                                         ))}
+                                        
+                                        {/* Homepage Button */}
+                                        <button
+                                            onClick={() => {
+                                                handleHomepageNavigation();
+                                                setMobileSidebarOpen(false);
+                                            }}
+                                            className={`w-full flex items-center px-3 lg:px-4 py-2.5 lg:py-3 ${serifTheme.radius.button} transition-all duration-200 text-sm lg:text-base ${serifTheme.colors.text.secondary} hover:bg-amber-50/50 border-t ${serifTheme.colors.border.primary} mt-2 pt-4`}
+                                        >
+                                            <span className="mr-2 lg:mr-3"><FiHome /></span>
+                                            Homepage
+                                        </button>
                                     </div>
                                 </nav>
 
                                 {/* Footer */}
-                                <div className="p-3 lg:p-4 border-t border-gray-200 dark:border-gray-700">
-                                    <button
+                                <div className={`p-3 lg:p-4 border-t ${serifTheme.colors.border.primary}`}>
+                                    <SerifButton
                                         onClick={handleLogout}
-                                        className="w-full flex items-center justify-center px-3 lg:px-4 py-2.5 lg:py-3 text-sm lg:text-base text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg lg:rounded-xl transition"
+                                        variant="danger"
+                                        size="medium"
+                                        fullWidth
+                                        icon={<FiLogOut />}
                                     >
-                                        <FiLogOut className="mr-2" size={16} />
                                         Logout
-                            </button>
+                            </SerifButton>
                         </div>
                     </div>
                 </div>
@@ -329,30 +354,30 @@ const AdminDashboard = () => {
             </AnimatePresence>
 
             {/* Desktop Sidebar */}
-            <div className="hidden lg:block fixed inset-y-0 left-0 w-80 bg-white dark:bg-gray-800 shadow-xl border-r border-gray-200 dark:border-gray-700">
+            <div className={`hidden lg:block fixed inset-y-0 left-0 w-80 ${serifTheme.gradients.card} shadow-xl border-r ${serifTheme.colors.border.primary}`}>
                 <div className="flex flex-col h-full">
                     {/* Logo */}
-                    <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                        <h1 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center">
-                            <RiDashboardFill className="mr-3 text-blue-600" />
+                    <div className={`p-6 border-b ${serifTheme.colors.border.primary}`}>
+                        <h1 className={`text-2xl font-bold ${serifTheme.colors.text.primary} flex items-center`}>
+                            <RiDashboardFill className={`mr-3 ${serifTheme.gradients.accent}`} />
                             Admin Panel
                         </h1>
                     </div>
 
                     {/* User Profile */}
-                    <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                    <div className={`p-6 border-b ${serifTheme.colors.border.primary}`}>
                         <div className="flex items-center space-x-4">
                         <img 
                             src={user?.photoURL || './img/ak.jpg'} 
                             alt="Admin" 
-                                className="w-12 h-12 rounded-full border-2 border-gray-200 dark:border-gray-600 object-cover"
+                                className={`w-12 h-12 rounded-full border-2 ${serifTheme.colors.border.secondary} object-cover`}
                         />
                             <div>
-                                <h2 className="text-lg font-semibold text-gray-800 dark:text-white">{user?.name}</h2>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">{user?.email}</p>
-                                <span className="inline-block mt-1 px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full">
+                                <h2 className={`text-lg font-semibold ${serifTheme.colors.text.primary}`}>{user?.name}</h2>
+                                <p className={`text-sm ${serifTheme.colors.text.tertiary}`}>{user?.email}</p>
+                                <SerifBadge variant="primary" size="small" className="mt-1">
                                 {user?.role}
-                            </span>
+                            </SerifBadge>
                             </div>
                         </div>
                     </div>
@@ -364,28 +389,39 @@ const AdminDashboard = () => {
                                 <button
                                     key={item.id}
                                     onClick={() => setActiveTab(item.id)}
-                                    className={`w-full flex items-center px-4 py-3 rounded-xl transition-all duration-200 ${
+                                    className={`w-full flex items-center px-4 py-3 ${serifTheme.radius.button} transition-all duration-200 ${
                                         activeTab === item.id 
-                                            ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800' 
-                                            : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                                            ? `${serifTheme.colors.button.secondary} ${serifTheme.colors.text.accent} border ${serifTheme.colors.border.primary}` 
+                                            : `${serifTheme.colors.text.secondary} hover:bg-amber-50/50`
                                     }`}
                                 >
                                     <span className="mr-3">{item.icon}</span>
                                     {item.name}
                                 </button>
                             ))}
+                            
+                            {/* Homepage Button */}
+                            <button
+                                onClick={handleHomepageNavigation}
+                                className={`w-full flex items-center px-4 py-3 ${serifTheme.radius.button} transition-all duration-200 ${serifTheme.colors.text.secondary} hover:bg-amber-50/50 border-t ${serifTheme.colors.border.primary} mt-2 pt-4`}
+                            >
+                                <span className="mr-3"><FiHome /></span>
+                                Homepage
+                            </button>
                         </div>
                     </nav>
 
                     {/* Footer */}
-                    <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-                        <button
+                    <div className={`p-4 border-t ${serifTheme.colors.border.primary}`}>
+                        <SerifButton
                             onClick={handleLogout}
-                            className="w-full flex items-center justify-center px-4 py-3 text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition"
+                            variant="danger"
+                            size="medium"
+                            fullWidth
+                            icon={<FiLogOut />}
                         >
-                            <FiLogOut className="mr-2" />
                             Logout
-                        </button>
+                        </SerifButton>
                     </div>
                 </div>
             </div>
@@ -393,33 +429,33 @@ const AdminDashboard = () => {
             {/* Main Content */}
             <div className="lg:ml-80 pt-14 lg:pt-0">
                 <div className="p-3 lg:p-6">
-                {/* Header */}
+                    {/* Header */}
                     <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center mb-6 lg:mb-8">
                         <div>
-                            <h1 className="text-2xl lg:text-3xl font-bold text-gray-800 dark:text-white mb-1 lg:mb-2">
+                            <h1 className={`text-2xl lg:text-3xl font-bold ${serifTheme.colors.text.primary} mb-1 lg:mb-2`}>
                                 Dashboard Overview
                             </h1>
-                            <p className="text-sm lg:text-base text-gray-600 dark:text-gray-400">
+                            <p className={`text-sm lg:text-base ${serifTheme.colors.text.secondary}`}>
                                 Welcome back, {user?.name}. Here's what's happening with your store today.
                             </p>
                         </div>
                         <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 mt-4 lg:mt-0">
                             {/* Search - Hidden on very small screens */}
                             <div className="relative w-full sm:w-auto">
-                                <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+                                <FiSearch className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${serifTheme.colors.text.tertiary}`} size={16} />
                                 <input
                                     type="text"
                                     placeholder="Search..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full sm:w-48 pl-8 pr-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    className={`w-full sm:w-48 pl-8 pr-4 py-2 text-sm border ${serifTheme.colors.border.secondary} ${serifTheme.radius.button} ${serifTheme.colors.background.card} ${serifTheme.colors.text.primary} placeholder-amber-400 focus:ring-2 focus:ring-amber-500 focus:border-transparent ${serifTheme.transitions.default}`}
                                 />
                             </div>
                             
                             {/* Action Buttons */}
                             <div className="flex items-center space-x-2 w-full sm:w-auto">
                                 {/* Notifications */}
-                                <button className="relative p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition">
+                                <button className={`relative p-2 ${serifTheme.radius.button} ${serifTheme.colors.button.secondary} ${serifTheme.colors.text.primary} hover:bg-amber-50 ${serifTheme.transitions.default}`}>
                                     <FiBell size={16} />
                                     {notifications.length > 0 && (
                                         <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
@@ -431,19 +467,20 @@ const AdminDashboard = () => {
                                 {/* Dark Mode Toggle */}
                             <button
                                 onClick={toggleDarkMode}
-                                    className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition"
+                                    className={`p-2 ${serifTheme.radius.button} ${serifTheme.colors.button.secondary} ${serifTheme.colors.text.primary} hover:bg-amber-50 ${serifTheme.transitions.default}`}
                             >
                                     {darkMode ? <FiSun size={16} /> : <FiMoon size={16} />}
                             </button>
 
                                 {/* Add Product Button */}
-                            <button
+                            <SerifButton
                                     onClick={() => setShowAddProductModal(true)}
-                                    className="flex items-center px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition text-sm"
+                                    variant="primary"
+                                    size="small"
+                                    icon={<FiPlus />}
                             >
-                                    <FiPlus className="mr-1" size={14} />
                                 Add Product
-                            </button>
+                            </SerifButton>
                             </div>
                         </div>
                     </div>
@@ -476,9 +513,9 @@ const AdminDashboard = () => {
                     </div>
 
                     {/* Content Area */}
-                    <div className="bg-white dark:bg-gray-800 rounded-xl lg:rounded-2xl shadow-lg overflow-hidden">
+                    <div className={`${serifTheme.gradients.card} ${serifTheme.radius.card} ${serifTheme.colors.shadow.card} overflow-hidden border ${serifTheme.colors.border.primary}`}>
                                 <div className="p-4 lg:p-6">
-                            <h2 className="text-xl lg:text-2xl font-bold text-gray-800 dark:text-white mb-4 lg:mb-6">
+                            <h2 className={`text-xl lg:text-2xl font-bold ${serifTheme.colors.text.primary} mb-4 lg:mb-6`}>
                                 {navigationItems[activeTab].name} Management
                             </h2>
                             <AnimatePresence mode="wait">
@@ -510,17 +547,17 @@ const AdminDashboard = () => {
                             initial={{ scale: 0.9, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             exit={{ scale: 0.9, opacity: 0 }}
-                            className="bg-white dark:bg-gray-800 rounded-xl lg:rounded-2xl shadow-2xl w-full max-w-lg lg:max-w-2xl max-h-[90vh] overflow-y-auto"
+                            className={`${serifTheme.gradients.card} ${serifTheme.radius.card} ${serifTheme.colors.shadow.card} w-full max-w-lg lg:max-w-2xl max-h-[90vh] overflow-y-auto border ${serifTheme.colors.border.primary}`}
                         >
                         <div className="p-4 lg:p-6">
                                 <div className="flex justify-between items-center mb-4 lg:mb-6">
-                                <h2 className="text-xl lg:text-2xl font-bold text-gray-800 dark:text-white">Add New Product</h2>
+                                <h2 className={`text-xl lg:text-2xl font-bold ${serifTheme.colors.text.primary}`}>Add New Product</h2>
                                 <button 
                                         onClick={() => {
                                             setShowAddProductModal(false);
                                             resetProductForm();
                                         }}
-                                        className="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+                                        className={`p-2 ${serifTheme.radius.button} ${serifTheme.colors.text.tertiary} hover:text-amber-900 hover:bg-amber-50 ${serifTheme.transitions.default}`}
                                     >
                                         <FiX size={20} />
                                 </button>
@@ -529,7 +566,7 @@ const AdminDashboard = () => {
                                 <div className="space-y-4 lg:space-y-6">
                                 {/* Product Title */}
                                 <div>
-                                        <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        <label htmlFor="title" className={`block text-sm font-medium ${serifTheme.colors.text.primary} mb-2`}>
                                         Product Title <span className="text-red-500">*</span>
                                     </label>
                                     <input
@@ -538,7 +575,7 @@ const AdminDashboard = () => {
                                         value={product.title}
                                         onChange={(e) => setProduct({ ...product, title: e.target.value })}
                                         placeholder="Enter product title"
-                                            className="w-full px-3 lg:px-4 py-2.5 lg:py-3 text-sm border border-gray-300 dark:border-gray-600 rounded-lg lg:rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition"
+                                            className={`w-full px-3 lg:px-4 py-2.5 lg:py-3 text-sm border ${serifTheme.colors.border.secondary} ${serifTheme.radius.button} ${serifTheme.colors.background.card} ${serifTheme.colors.text.primary} placeholder-amber-400 focus:ring-2 focus:ring-amber-500 focus:border-transparent ${serifTheme.transitions.default}`}
                                         required
                                     />
                                 </div>
@@ -546,7 +583,7 @@ const AdminDashboard = () => {
                                 {/* Price and Category */}
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
                                     <div>
-                                            <label htmlFor="price" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                            <label htmlFor="price" className={`block text-sm font-medium ${serifTheme.colors.text.primary} mb-2`}>
                                                 Price (रु) <span className="text-red-500">*</span>
                                         </label>
                                         <input
@@ -557,20 +594,20 @@ const AdminDashboard = () => {
                                             placeholder="0.00"
                                             min="0"
                                             step="0.01"
-                                                className="w-full px-3 lg:px-4 py-2.5 lg:py-3 text-sm border border-gray-300 dark:border-gray-600 rounded-lg lg:rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition"
+                                                className={`w-full px-3 lg:px-4 py-2.5 lg:py-3 text-sm border ${serifTheme.colors.border.secondary} ${serifTheme.radius.button} ${serifTheme.colors.background.card} ${serifTheme.colors.text.primary} placeholder-amber-400 focus:ring-2 focus:ring-amber-500 focus:border-transparent ${serifTheme.transitions.default}`}
                                             required
                                         />
                                     </div>
 
                                     <div>
-                                            <label htmlFor="category" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                            <label htmlFor="category" className={`block text-sm font-medium ${serifTheme.colors.text.primary} mb-2`}>
                                             Category <span className="text-red-500">*</span>
                                         </label>
                                         <select
                                             id="category"
                                             value={product.category}
                                             onChange={(e) => setProduct({ ...product, category: e.target.value })}
-                                                className="w-full px-3 lg:px-4 py-2.5 lg:py-3 text-sm border border-gray-300 dark:border-gray-600 rounded-lg lg:rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition"
+                                                className={`w-full px-3 lg:px-4 py-2.5 lg:py-3 text-sm border ${serifTheme.colors.border.secondary} ${serifTheme.radius.button} ${serifTheme.colors.background.card} ${serifTheme.colors.text.primary} focus:ring-2 focus:ring-amber-500 focus:border-transparent ${serifTheme.transitions.default}`}
                                             required
                                         >
                                             <option value="" disabled>Select a category</option>
@@ -585,7 +622,7 @@ const AdminDashboard = () => {
 
                                 {/* Image URL */}
                                 <div>
-                                        <label htmlFor="imageUrl" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        <label htmlFor="imageUrl" className={`block text-sm font-medium ${serifTheme.colors.text.primary} mb-2`}>
                                         Image URL <span className="text-red-500">*</span>
                                     </label>
                                     <input
@@ -594,16 +631,16 @@ const AdminDashboard = () => {
                                         value={product.productImageUrl}
                                         onChange={(e) => setProduct({ ...product, productImageUrl: e.target.value })}
                                         placeholder="https://example.com/image.jpg"
-                                            className="w-full px-3 lg:px-4 py-2.5 lg:py-3 text-sm border border-gray-300 dark:border-gray-600 rounded-lg lg:rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition"
+                                            className={`w-full px-3 lg:px-4 py-2.5 lg:py-3 text-sm border ${serifTheme.colors.border.secondary} ${serifTheme.radius.button} ${serifTheme.colors.background.card} ${serifTheme.colors.text.primary} placeholder-amber-400 focus:ring-2 focus:ring-amber-500 focus:border-transparent ${serifTheme.transitions.default}`}
                                         required
                                     />
                                     {product.productImageUrl && (
                                             <div className="mt-3">
-                                                <p className="text-xs lg:text-sm text-gray-500 dark:text-gray-400 mb-2">Image Preview:</p>
+                                                <p className={`text-xs lg:text-sm ${serifTheme.colors.text.tertiary} mb-2`}>Image Preview:</p>
                                             <img 
                                                 src={product.productImageUrl} 
                                                 alt="Preview" 
-                                                    className="max-w-full h-24 lg:h-32 object-contain border border-gray-300 dark:border-gray-600 rounded-lg"
+                                                    className={`max-w-full h-24 lg:h-32 object-contain border ${serifTheme.colors.border.secondary} ${serifTheme.radius.button}`}
                                                 onError={(e) => e.target.style.display = 'none'}
                                             />
                                         </div>
@@ -612,7 +649,7 @@ const AdminDashboard = () => {
 
                                 {/* Description */}
                                 <div>
-                                        <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        <label htmlFor="description" className={`block text-sm font-medium ${serifTheme.colors.text.primary} mb-2`}>
                                         Description <span className="text-red-500">*</span>
                                     </label>
                                     <textarea
@@ -621,31 +658,34 @@ const AdminDashboard = () => {
                                         onChange={(e) => setProduct({ ...product, description: e.target.value })}
                                         placeholder="Enter detailed product description..."
                                         rows="3"
-                                            className="w-full px-3 lg:px-4 py-2.5 lg:py-3 text-sm border border-gray-300 dark:border-gray-600 rounded-lg lg:rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition resize-none"
+                                            className={`w-full px-3 lg:px-4 py-2.5 lg:py-3 text-sm border ${serifTheme.colors.border.secondary} ${serifTheme.radius.button} ${serifTheme.colors.background.card} ${serifTheme.colors.text.primary} placeholder-amber-400 focus:ring-2 focus:ring-amber-500 focus:border-transparent ${serifTheme.transitions.default} resize-none`}
                                         required
                                     />
                                 </div>
 
                                 {/* Buttons */}
                                     <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-4 pt-4">
-                                    <button
+                                    <SerifButton
                                         type="button"
                                             onClick={() => {
                                                 setShowAddProductModal(false);
                                                 resetProductForm();
                                             }}
-                                            className="w-full sm:w-auto px-4 lg:px-6 py-2.5 lg:py-3 text-sm border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 rounded-lg lg:rounded-xl hover:bg-gray-50 dark:hover:bg-gray-600 transition"
+                                            variant="secondary"
+                                            size="medium"
                                     >
                                         Cancel
-                                    </button>
-                                    <button
+                                    </SerifButton>
+                                    <SerifButton
                                         type="button"
                                         onClick={addProductFunction}
                                         disabled={loading}
-                                            className="w-full sm:w-auto px-4 lg:px-6 py-2.5 lg:py-3 text-sm bg-blue-600 text-white rounded-lg lg:rounded-xl hover:bg-blue-700 disabled:opacity-70 disabled:cursor-not-allowed transition"
+                                        variant="primary"
+                                        size="medium"
+                                        loading={loading}
                                     >
                                         {loading ? 'Adding...' : 'Add Product'}
-                                    </button>
+                                    </SerifButton>
                                 </div>
                             </div>
                         </div>

@@ -1,129 +1,399 @@
-import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion"; // Keep framer-motion for potential future animations or if used elsewhere
+import React, { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
+import { Link, useNavigate } from "react-router-dom";
+import { 
+  FaPlay, 
+  FaStar, 
+  FaShieldAlt, 
+  FaRocket, 
+  FaHeadphones,
+  FaTv,
+  FaMobile,
+  FaLaptop,
+  FaCheckCircle,
+  FaEnvelope,
+  FaUsers,
+  FaAward,
+  FaFire,
+  FaCrown,
+  FaArrowRight,
+  FaGift,
+  FaHeart,
+  FaMagic
+} from "react-icons/fa";
+import { BsLightningCharge, BsGlobe, BsCurrencyExchange, BsStarFill } from "react-icons/bs";
+import { floatingProducts, heroContent, companyStats } from "../../config/homepageConfig";
+import { serifTheme } from "../../design-system/themes";
+import SerifButton from "../../design-system/components/SerifButton";
 
-// Define image arrays for different screen sizes
-const largeScreenImages = [
-    "https://cap.img.pmdstatic.net/fit/https.3A.2F.2Fi.2Epmdstatic.2Enet.2Fcap.2F2022.2F11.2F03.2F09cc07e8-23ec-424e-b895-d3ddd84bb652.2Ejpeg/1200x630/cr/wqkgcGljdHVyYW5jZS9HZXR0eUltYWdlcyAvIENBUElUQUw%3D/netflix-spotify-amazon-faire-des-economies-en-partageant-son-abonnement-avec-des-inconnus-une-solution-perenne-1450950.jpg",
-    // Assuming these local paths are correct relative to the public folder or served correctly
-    "/img/home.jpg",
-    "/img/head.jpg.jpg", // Use absolute paths from public folder if not using module imports
-    "/img/tools.png.jpg",
-    "/img/111.webp",
-    "/img/12.png",
-    "https://pbs.twimg.com/media/F1zNhWXWwAA_Y6E.png",
-    "/img/13.png",
-];
+// Floating Product Card Component with Sequential Loading
+const FloatingProductCard = ({ product, index }) => {
+  const navigate = useNavigate();
 
-const smallScreenImages = [
-   
-    // Assuming these local paths are correct relative to the public folder or served correctly
-    "/img/home.jpg",
-    "/img/n.jpg", // Use absolute paths from public folder if not using module imports
-    "/img/np.jpg",
-    "/img/111.webp",
-    "/img/12.png",
-    "https://pbs.twimg.com/media/F1zNhWXWwAA_Y6E.png",
-    "/img/13.png",
-];
+  const handleCardClick = () => {
+    navigate(product.url);
+  };
+
+  return (
+    <motion.div
+      initial={{ 
+        opacity: 0, 
+        y: 80, 
+        scale: 0.3,
+        rotate: -20,
+        filter: "blur(10px)"
+      }}
+      animate={{ 
+        opacity: 1, 
+        y: 0, 
+        scale: 1,
+        rotate: 0,
+        filter: "blur(0px)",
+        x: [0, 10, 0],
+      }}
+      transition={{ 
+        duration: 1.2, 
+        delay: 1.5 + (index * 0.8), // Sequential delay: 1.5s, 2.3s, 3.1s, 3.9s
+        ease: [0.25, 0.1, 0.25, 1],
+        x: {
+          duration: 3,
+          repeat: Infinity,
+          ease: "easeInOut",
+          delay: 2 + (index * 0.8) // Start floating after appearance
+        }
+      }}
+      whileHover={{ 
+        scale: 1.08, 
+        rotate: 8,
+        y: -5,
+        transition: { 
+          duration: 0.3,
+          type: "spring",
+          stiffness: 300
+        }
+      }}
+      onClick={handleCardClick}
+      className="absolute z-20 cursor-pointer"
+      style={product.position}
+    >
+      <div className={`${serifTheme.gradients.card} backdrop-blur-xl ${serifTheme.radius.card} p-4 shadow-lg hover:shadow-xl border ${serifTheme.colors.border.primary} w-64 ${serifTheme.transitions.default}`}>
+        {/* Badge with delayed animation */}
+        <motion.div 
+          className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold text-white bg-gradient-to-r ${product.color} mb-3`}
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ 
+            delay: 1.8 + (index * 0.8),
+            duration: 0.5,
+            type: "spring",
+            stiffness: 200
+          }}
+        >
+          <FaMagic className="mr-1" />
+          {product.badge}
+        </motion.div>
+        
+        {/* Product Image with loading effect */}
+        <motion.div 
+          className="flex items-center justify-center h-16 mb-3 bg-gray-50 rounded-xl overflow-hidden"
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ 
+            delay: 2.0 + (index * 0.8),
+            duration: 0.6,
+            type: "spring",
+            stiffness: 150
+          }}
+        >
+          <motion.img 
+            src={product.image} 
+            alt={product.title}
+            className="h-12 w-12 object-contain"
+            initial={{ scale: 0, rotate: -180 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ 
+              delay: 2.2 + (index * 0.8),
+              duration: 0.8,
+              type: "spring",
+              stiffness: 200,
+              damping: 15
+            }}
+            onError={(e) => {
+              e.target.src = "/img/hero.png";
+            }}
+          />
+        </motion.div>
+        
+        {/* Product Info with staggered animation */}
+        <motion.h3 
+          className={`font-bold ${serifTheme.colors.text.primary} text-sm mb-2`}
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ 
+            delay: 2.4 + (index * 0.8),
+            duration: 0.5
+          }}
+        >
+          {product.title}
+        </motion.h3>
+        
+        <motion.div 
+          className="flex items-center justify-between"
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ 
+            delay: 2.6 + (index * 0.8),
+            duration: 0.5
+          }}
+        >
+          <div className="flex items-center space-x-2">
+            <span className={`text-lg font-black ${serifTheme.colors.text.primary}`}>{product.price}</span>
+            <span className={`text-sm ${serifTheme.colors.text.muted} line-through`}>{product.originalPrice}</span>
+          </div>
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            className={`${serifTheme.colors.button.primary} ${serifTheme.colors.button.textPrimary} p-2 ${serifTheme.radius.button} ${serifTheme.colors.shadow.button} ${serifTheme.transitions.default}`}
+            initial={{ scale: 0, rotate: -90 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ 
+              delay: 2.8 + (index * 0.8),
+              duration: 0.6,
+              type: "spring",
+              stiffness: 200
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleCardClick();
+            }}
+          >
+            <FaArrowRight className="text-xs" />
+          </motion.button>
+        </motion.div>
+      </div>
+    </motion.div>
+  );
+};
 
 const HeroSection = () => {
-    const [currentSlide, setCurrentSlide] = useState(0);
-    // State to track screen size for selecting image array
-    const [isSmallDevice, setIsSmallDevice] = useState(window.innerWidth < 640);
+  const containerRef = useRef(null);
+  const navigate = useNavigate();
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start start", "end start"]
+  });
 
-    // Determine which image array to use based on screen size
-    const images = isSmallDevice ? smallScreenImages : largeScreenImages;
+  const y = useTransform(scrollYProgress, [0, 1], ["0%", "50%"]);
+  const opacity = useTransform(scrollYProgress, [0, 1], [1, 0]);
 
-    // Effect to handle window resize and update the image array choice
-    useEffect(() => {
-        const handleResize = () => {
-            const smallDevice = window.innerWidth < 640;
-            setIsSmallDevice(smallDevice);
-        };
+  return (
+    <section ref={containerRef} className={`relative min-h-screen ${serifTheme.gradients.background} overflow-hidden`} style={{ fontFamily: serifTheme.fontFamily.serif }}>
+      {/* Animated Background */}
+      <div className="absolute inset-0">
+        {/* Gradient Mesh - Warm tones */}
+        <div className="absolute inset-0 bg-gradient-to-br from-amber-200/10 via-transparent to-orange-200/10"></div>
+        
+        {/* Animated Grid */}
+        <motion.div 
+          animate={{ 
+            backgroundPosition: ["0% 0%", "100% 100%"],
+          }}
+          transition={{
+            duration: 20,
+            repeat: Infinity,
+            ease: "linear"
+          }}
+          className="absolute inset-0 opacity-10 bg-[linear-gradient(rgba(139,69,19,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(139,69,19,0.1)_1px,transparent_1px)] bg-[length:60px_60px]"
+        />
+        
+        {/* Floating Orbs - Warm tones */}
+        <motion.div
+          animate={{
+            scale: [1, 1.2, 1],
+            opacity: [0.3, 0.6, 0.3],
+          }}
+          transition={{
+            duration: 4,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+          className="absolute top-20 left-20 w-96 h-96 bg-gradient-to-r from-amber-400/20 to-orange-400/20 rounded-full blur-3xl"
+        />
+        <motion.div
+          animate={{
+            scale: [1.2, 1, 1.2],
+            opacity: [0.2, 0.5, 0.2],
+          }}
+          transition={{
+            duration: 6,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 2
+          }}
+          className="absolute bottom-20 right-20 w-80 h-80 bg-gradient-to-r from-yellow-400/15 to-amber-400/15 rounded-full blur-3xl"
+        />
+      </div>
 
-        // Add resize listener
-        window.addEventListener("resize", handleResize);
-        handleResize(); // Call initially to set the correct state
-
-        // Cleanup listener on component unmount
-        return () => window.removeEventListener("resize", handleResize);
-    }, []); // Empty dependency array ensures this runs only once on mount and cleanup on unmount
-
-    // Effect to handle the automatic sliding interval
-    useEffect(() => {
-        // Set up the interval to advance the slide
-        const intervalId = setInterval(() => {
-            setCurrentSlide((prevSlide) => (prevSlide + 1) % images.length);
-        }, 5000); // Change slide every 5 seconds
-
-        // Clear the interval on component unmount or when images array changes (due to resize)
-        return () => clearInterval(intervalId);
-    }, [images.length]); // Rerun effect if the number of images changes
-
-    return (
-        <div className="relative w-full overflow-hidden bg-gradient-to-r from-gray-900 via-gray-800 to-blue-900">
-            {/* Image Slider Container */}
-            {/* AnimatePresence can be useful here for smoother slide transitions if desired */}
-            <div
-                className="flex transition-transform duration-700 ease-in-out" // Increased duration for smoother slide
-                style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+      {/* Main Content */}
+      <motion.div 
+        style={{ y, opacity }}
+        className="relative z-10 container mx-auto px-6 py-20 lg:py-32"
+      >
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+          
+          {/* Left Content */}
+          <div className={`${serifTheme.colors.text.primary} space-y-8`}>
+            {/* Badge - Hidden */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="hidden"
             >
-                {/* Map through the selected image array */}
-                {images.map((image, index) => (
-                    <div key={index} className="w-full flex-shrink-0 relative">
-                        <img
-                            className="w-full h-60 sm:h-72 md:h-80 lg:h-96 object-cover" // Adjusted heights for responsiveness
-                            src={image}
-                            alt={`Slide ${index + 1}`}
-                            loading={index === 0 ? "eager" : "lazy"} // Load first image eagerly, others lazily
-                            // Add error handling for images
-                            onError={(e) => {
-                                e.target.onerror = null; // Prevent infinite loop if fallback fails
-                                e.target.src="/img/placeholder.png"; // Replace with a path to a placeholder image
-                                console.warn(`Failed to load image: ${image}`);
-                            }}
-                        />
-                         {/* Optional: Add a subtle overlay for text contrast if needed */}
-                         {/* <div className="absolute inset-0 bg-black opacity-20"></div> */}
-                    </div>
-                ))}
-            </div>
+              <FaMagic className="mr-2" />
+              {heroContent.badge}
+            </motion.div>
 
-            {/* Navigation Buttons (Previous/Next) */}
-            <button
-                aria-label="Previous Slide"
-                onClick={() => setCurrentSlide((prev) => (prev - 1 + images.length) % images.length)}
-                className="absolute left-2 sm:left-4 top-1/2 transform -translate-y-1/2 bg-black/40 text-white p-2 rounded-full shadow-lg focus:outline-none focus:ring-2 focus:ring-white/50 hover:bg-black/60 transition-all duration-200 backdrop-blur-sm z-10"
+            {/* Main Title */}
+            <motion.h1
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.8 }}
+              className="text-5xl lg:text-7xl font-black leading-tight"
             >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-                </svg>
-            </button>
-            <button
-                 aria-label="Next Slide"
-                onClick={() => setCurrentSlide((prev) => (prev + 1) % images.length)}
-                className="absolute right-2 sm:right-4 top-1/2 transform -translate-y-1/2 bg-black/40 text-white p-2 rounded-full shadow-lg focus:outline-none focus:ring-2 focus:ring-white/50 hover:bg-black/60 transition-all duration-200 backdrop-blur-sm z-10"
-            >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                </svg>
-            </button>
+              <span className={`${serifTheme.colors.text.primary}`}>
+                {heroContent.title.split(' ').slice(0, 2).join(' ')}
+              </span>
+              <br />
+              <span className={serifTheme.gradients.accent}>
+                {heroContent.title.split(' ').slice(2).join(' ')}
+              </span>
+            </motion.h1>
 
-             {/* Optional: Slide Indicator Dots */}
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2 z-10">
-                {images.map((_, index) => (
-                    <button
-                        key={index}
-                        aria-label={`Go to slide ${index + 1}`}
-                        onClick={() => setCurrentSlide(index)}
-                        className={`w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full transition-colors duration-300 ${
-                            currentSlide === index ? 'bg-white shadow-md' : 'bg-white/50 hover:bg-white/75'
-                        }`}
-                    />
-                ))}
-            </div>
+            {/* Subtitle */}
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className={`text-xl ${serifTheme.colors.text.secondary} leading-relaxed max-w-lg`}
+            >
+              {heroContent.subtitle}
+            </motion.p>
+
+            {/* Features */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="grid grid-cols-2 gap-3"
+            >
+              {heroContent.features.map((feature, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.5 + index * 0.1 }}
+                  className={`flex items-center ${serifTheme.colors.text.secondary} text-sm`}
+                >
+                  <FaCheckCircle className={`mr-2 ${serifTheme.colors.text.accent}`} />
+                  <span>{feature}</span>
+                </motion.div>
+              ))}
+            </motion.div>
+
+            {/* CTA Buttons */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+              className="flex flex-col sm:flex-row gap-4 pt-4"
+            >
+              <Link to="/allproduct" className="inline-block">
+                <SerifButton
+                  variant="primary"
+                  size="large"
+                  icon={<FaRocket />}
+                  iconPosition="left"
+                  className="inline-flex items-center w-full"
+                >
+                  Start with Digital
+                  <FaArrowRight className="ml-3" />
+                </SerifButton>
+              </Link>
+              
+              <Link to="/Contactus" className="inline-block">
+                <SerifButton
+                  variant="secondary"
+                  size="large"
+                  icon={<FaEnvelope />}
+                  iconPosition="left"
+                  className="inline-flex items-center w-full"
+                >
+                  Contact us
+                </SerifButton>
+              </Link>
+            </motion.div>
+
+            {/* Description */}
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.8 }}
+              className={`${serifTheme.colors.text.tertiary} text-sm`}
+            >
+              {heroContent.description}
+            </motion.p>
+          </div>
+
+          {/* Right Content - Floating Cards */}
+          <div className="relative hidden lg:block">
+            {/* Main Visual Container */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.4, duration: 1 }}
+              className="relative h-[600px] w-full"
+            >
+              {/* Central Glow Effect - Warm tones */}
+              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-gradient-to-r from-amber-400/20 to-orange-400/20 rounded-full blur-3xl"></div>
+              
+              {/* Floating Product Cards */}
+              {floatingProducts.map((product, index) => (
+                <FloatingProductCard key={product.id} product={product} index={index} />
+              ))}
+              
+              {/* Central Logo/Icon - Removed */}
+            </motion.div>
+          </div>
         </div>
-    );
+
+        {/* Bottom Stats */}
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.2 }}
+          className={`flex flex-wrap justify-center gap-8 mt-20 pt-12 border-t ${serifTheme.colors.border.primary}`}
+        >
+          <div className="text-center">
+            <div className={`text-3xl font-black ${serifTheme.colors.text.primary} mb-2`}>{companyStats.hero.happyCustomers}</div>
+            <div className={`${serifTheme.colors.text.tertiary} text-sm`}>Happy Customers</div>
+          </div>
+          <div className="text-center">
+            <div className={`text-3xl font-black ${serifTheme.colors.text.primary} mb-2`}>{companyStats.hero.averageRating}</div>
+            <div className={`${serifTheme.colors.text.tertiary} text-sm`}>Average Rating</div>
+          </div>
+          <div className="text-center">
+            <div className={`text-3xl font-black ${serifTheme.colors.text.primary} mb-2`}>{companyStats.hero.supportHours}</div>
+            <div className={`${serifTheme.colors.text.tertiary} text-sm`}>Support</div>
+          </div>
+          <div className="text-center">
+            <div className={`text-3xl font-black ${serifTheme.colors.text.primary} mb-2`}>{companyStats.hero.securePercentage}</div>
+            <div className={`${serifTheme.colors.text.tertiary} text-sm`}>Secure</div>
+          </div>
+        </motion.div>
+      </motion.div>
+    </section>
+  );
 };
 
 export default HeroSection;

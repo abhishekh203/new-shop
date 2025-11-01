@@ -3,11 +3,12 @@ import React from "react";
 import Footer from "../footer/Footer";
 import Navbar from "../navbar/Navbar";
 import Breadcrumb from "../SEO/Breadcrumb";
-import StickyMobileCart from "../StickyMobileCart/StickyMobileCart";
+import { serifTheme } from "../../design-system/themes/serifTheme";
+// import StickyMobileCart from "../StickyMobileCart/StickyMobileCart";
 
 const Layout = ({ children, showBreadcrumb = false, customBreadcrumbs = null }) => {
     return (
-        <div className="bg-gradient-to-r from-black to-blue-600 min-h-screen">
+        <div className={`${serifTheme.gradients.background} min-h-screen`} style={{ fontFamily: serifTheme.fontFamily.serif }}>
             <Navbar />
             <main className="main-content" role="main">
                 {showBreadcrumb && (
@@ -18,8 +19,8 @@ const Layout = ({ children, showBreadcrumb = false, customBreadcrumbs = null }) 
                 {children}
             </main>
             <Footer />
-            {/* Sticky Mobile Cart - Only shows on mobile when cart has items */}
-            <StickyMobileCart />
+            {/* Sticky Mobile Cart - Disabled in favor of bottom navigation bar */}
+            {/* <StickyMobileCart /> */}
         </div>
     );
 }

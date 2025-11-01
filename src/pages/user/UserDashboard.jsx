@@ -6,6 +6,7 @@ import myContext from "../../context/myContext"; // Your existing context path
 import Loader from "../../components/loader/Loader"; // Your existing Loader path
 import { useDispatch, useSelector } from "react-redux";
 import { addToCart } from "../../redux/cartSlice";
+import { serifTheme, applySerifTheme } from "../../design-system/themes";
 import {
     FiUser, FiMail, FiCalendar, FiShoppingBag,
     FiClock, FiDownload, FiChevronDown, FiChevronUp,
@@ -25,7 +26,6 @@ import { RiRefund2Line, RiCustomerService2Line } from "react-icons/ri";
 import { MdOutlineSecurity, MdDevicesOther } from "react-icons/md";
 import { toast } from "react-hot-toast"; // Ensure Toaster is included in your Layout or App root
 // import Chart from 'react-apexcharts'; // Keep commented if not used or causes issues
-import { motion, AnimatePresence } from "framer-motion";
 import { collection, query, where, getDocs, orderBy, getDoc, doc } from 'firebase/firestore';
 import { fireDB } from '../../firebase/FirebaseConfig';
 
@@ -36,36 +36,26 @@ const StatsCard = ({ title, value, icon, bgColor, textColor, footerText, footerI
     const IconComponent = icon;
     const FooterIcon = footerIcon;
     return (
-        <motion.div
-            className="bg-gradient-to-br from-gray-900/80 to-gray-800/60 backdrop-blur-xl rounded-2xl p-6 border border-gray-700/30 shadow-xl relative overflow-hidden"
-            whileHover={{ y: -5, scale: 1.02 }}
-            transition={{ duration: 0.3 }}
-        >
-            {/* Background Glow */}
-            <div className="absolute inset-0 bg-gradient-to-br from-cyan-600/5 to-blue-600/5 rounded-2xl"></div>
-
+        <div className={`${serifTheme.colors.background.card} ${serifTheme.radius.card} ${serifTheme.spacing.cardPadding} ${serifTheme.colors.border.primary} border ${serifTheme.colors.shadow.cardHover} relative ${serifTheme.transitions.default}`} 
+             style={{ fontFamily: serifTheme.fontFamily.serif }}>
             <div className="relative z-10">
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-400 mb-2">{title}</p>
-                        <p className="text-3xl font-black text-white">{value}</p>
+                        <p className={`text-sm font-medium ${serifTheme.colors.text.secondary} mb-2`}>{title}</p>
+                        <p className={`text-3xl font-bold ${serifTheme.colors.text.primary}`}>{value}</p>
                     </div>
-                    <motion.div
-                        className={`p-3 rounded-xl ${bgColor} ${textColor} shadow-lg`}
-                        whileHover={{ scale: 1.1, rotate: 5 }}
-                        transition={{ duration: 0.2 }}
-                    >
+                    <div className={`p-3 ${serifTheme.radius.button} ${serifTheme.colors.accent.primary} text-white shadow-lg`}>
                         <IconComponent className="w-6 h-6" />
-                    </motion.div>
+                    </div>
                 </div>
                 {footerText && (
-                    <div className="flex items-center text-sm text-gray-300 bg-gray-800/50 px-3 py-2 rounded-lg backdrop-blur-sm">
-                        {FooterIcon && <FooterIcon className="mr-2 w-4 h-4 text-cyan-400" />}
+                    <div className={`flex items-center text-sm ${serifTheme.colors.text.tertiary} ${serifTheme.colors.background.secondary} px-3 py-2 ${serifTheme.radius.input}`}>
+                        {FooterIcon && <FooterIcon className={`mr-2 w-4 h-4 ${serifTheme.colors.text.accent}`} />}
                         <span>{footerText}</span>
                     </div>
                 )}
             </div>
-        </motion.div>
+        </div>
     );
 };
 
@@ -73,15 +63,8 @@ const StatsCard = ({ title, value, icon, bgColor, textColor, footerText, footerI
 const ProductCard = ({ item, isFavorite, onToggleFavorite, onAddToCart }) => {
     const rating = 4; // Static rating for example
     return (
-        <motion.div
-            className="bg-gradient-to-br from-gray-900/80 to-gray-800/60 backdrop-blur-xl rounded-2xl overflow-hidden border border-gray-700/30 shadow-xl transition-all duration-300 relative"
-            whileHover={{ y: -10, scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            layout
-        >
-            {/* Background Glow */}
-            <div className="absolute inset-0 bg-gradient-to-br from-cyan-600/5 to-blue-600/5 rounded-2xl"></div>
-
+        <div className={`${serifTheme.colors.background.card} ${serifTheme.radius.card} overflow-hidden border ${serifTheme.colors.border.primary} ${serifTheme.colors.shadow.cardHover} ${serifTheme.transitions.default} relative`}
+             style={{ fontFamily: serifTheme.fontFamily.serif }}>
             <div className="relative z-10">
                 <div className="relative">
                     <img
@@ -90,55 +73,51 @@ const ProductCard = ({ item, isFavorite, onToggleFavorite, onAddToCart }) => {
                         className="w-full h-48 object-cover"
                         onError={(e) => {
                             e.target.onerror = null;
-                            e.target.src = "https://via.placeholder.com/300/1f2937/9ca3af?text=No+Image";
+                            e.target.src = "https://via.placeholder.com/300/f3f4f6/6b7280?text=No+Image";
                         }}
                     />
-                    <motion.button
-                        className="absolute top-3 right-3 bg-gray-900/80 backdrop-blur-sm p-2 rounded-full shadow-lg border border-gray-700/50 transition-colors duration-200 hover:bg-red-600/20"
+                    <button
+                        className={`absolute top-3 right-3 ${serifTheme.colors.background.card} p-2 ${serifTheme.radius.badge} shadow-lg border ${serifTheme.colors.border.secondary} ${serifTheme.transitions.default} hover:bg-red-50`}
                         onClick={(e) => { e.stopPropagation(); onToggleFavorite(item.id); }}
                         aria-label={isFavorite ? "Remove from Wishlist" : "Add to Wishlist"}
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
                     >
                         {isFavorite ? (
-                            <FaHeart className="text-red-400 w-4 h-4" />
+                            <FaHeart className="text-red-500 w-4 h-4" />
                         ) : (
-                            <FaRegHeart className="text-gray-300 w-4 h-4" />
+                            <FaRegHeart className={`${serifTheme.colors.text.tertiary} w-4 h-4`} />
                         )}
-                    </motion.button>
+                    </button>
                     {item.category && (
                         <div className="absolute bottom-3 left-3">
-                            <span className="bg-cyan-600/20 backdrop-blur-sm text-cyan-300 text-xs font-medium px-3 py-1 rounded-full border border-cyan-500/30 capitalize">
+                            <span className={`${serifTheme.colors.accent.secondary} text-white text-xs font-medium px-3 py-1 ${serifTheme.radius.badge} border ${serifTheme.colors.border.accent} capitalize`}>
                                 {item.category}
                             </span>
                         </div>
                     )}
                 </div>
-                <div className="p-6">
-                    <h3 className="font-bold text-white mb-2 line-clamp-1" title={item.title}>{item.title}</h3>
+                <div className={`${serifTheme.spacing.cardPadding}`}>
+                    <h3 className={`font-bold ${serifTheme.colors.text.primary} mb-2 line-clamp-1`} title={item.title}>{item.title}</h3>
                     <div className="flex items-center mb-3">
                         {[...Array(5)].map((_, i) => (
                             i < rating ? (
-                                <FaStar key={i} className="w-4 h-4 text-yellow-400" />
+                                <FaStar key={i} className="w-4 h-4 text-yellow-500" />
                             ) : (
-                                <FaRegStar key={i} className="w-4 h-4 text-gray-500" />
+                                <FaRegStar key={i} className={`w-4 h-4 ${serifTheme.colors.text.muted}`} />
                             )
                         ))}
                     </div>
                     <div className="flex items-center justify-between">
-                        <span className="text-xl font-black text-white">रु {Number(item.price).toFixed(2)}</span>
-                        <motion.button
+                        <span className={`text-xl font-bold ${serifTheme.colors.text.primary}`}>रु {Number(item.price).toFixed(2)}</span>
+                        <button
                             onClick={() => onAddToCart(item)}
-                            className="px-4 py-2 bg-gradient-to-r from-cyan-600 to-blue-600 text-white text-sm font-medium rounded-lg hover:from-cyan-500 hover:to-blue-500 transition-all duration-200 shadow-lg"
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
+                            className={`px-4 py-2 ${serifTheme.colors.button.primary} ${serifTheme.colors.button.textPrimary} text-sm font-medium ${serifTheme.radius.button} ${serifTheme.transitions.default} shadow-lg`}
                         >
                             Add to Cart
-                        </motion.button>
+                        </button>
                     </div>
                 </div>
             </div>
-        </motion.div>
+        </div>
     );
 };
 
@@ -164,14 +143,10 @@ const OrderCard = ({
 
 
     return (
-        <motion.div
-            layout // Animate layout changes
+        <div
             key={order.id}
-            className="bg-gray-50 dark:bg-gray-700 rounded-xl overflow-hidden shadow-sm transition-all duration-300 border border-gray-200 dark:border-gray-600"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            whileHover={{ y: -3, boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' }}
+            className={`${serifTheme.colors.background.card} ${serifTheme.radius.card} overflow-hidden ${serifTheme.colors.shadow.card} ${serifTheme.transitions.default} border ${serifTheme.colors.border.primary}`}
+            style={{ fontFamily: serifTheme.fontFamily.serif }}
         >
             {/* Order Summary Header */}
             <div
@@ -182,11 +157,11 @@ const OrderCard = ({
                 aria-controls={`order-details-${order.id}`}
             >
                 <div className="flex-1 min-w-0">
-                    <div className="flex items-center text-gray-900 dark:text-white mb-1 font-medium">
-                        <FiShoppingBag className="mr-2 text-blue-500 flex-shrink-0" />
+                    <div className={`flex items-center ${serifTheme.colors.text.primary} mb-1 font-medium`}>
+                        <FiShoppingBag className={`mr-2 ${serifTheme.colors.text.accent} flex-shrink-0`} />
                         <span className="truncate" title={`Order #${order.id}`}>Order #{order.id.substring(0, 8)}...</span>
                     </div>
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-gray-500 dark:text-gray-400 text-sm">
+                    <div className={`flex flex-wrap items-center gap-x-4 gap-y-1 ${serifTheme.colors.text.tertiary} text-sm`}>
                         <div className="flex items-center">
                             <FiClock className="mr-1.5 flex-shrink-0" />
                             <span>{new Date(order.date).toLocaleString()}</span>
@@ -200,10 +175,10 @@ const OrderCard = ({
 
                 <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 mt-2 sm:mt-0 w-full sm:w-auto">
                     <div className="flex items-center justify-between sm:justify-start">
-                         <span className="sm:hidden text-sm text-gray-500 dark:text-gray-400">Total:</span>
+                         <span className={`sm:hidden text-sm ${serifTheme.colors.text.tertiary}`}>Total:</span>
                         <div className="flex items-center">
-                            <BsCurrencyRupee className="mr-1 text-green-600 dark:text-green-400 text-lg" />
-                            <span className="font-bold text-lg text-gray-900 dark:text-white">
+                            <BsCurrencyRupee className={`mr-1 text-green-600 text-lg`} />
+                            <span className={`font-bold text-lg ${serifTheme.colors.text.primary}`}>
                                 रु {totalAmount.toFixed(2)}
                             </span>
                         </div>
@@ -213,7 +188,7 @@ const OrderCard = ({
                         <span className="capitalize">{order.status}</span>
                     </div>
                     <button
-                        className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition flex items-center justify-center text-sm p-2 rounded-full sm:bg-gray-100 sm:dark:bg-gray-600"
+                        className={`${serifTheme.colors.text.accent} hover:text-amber-800 ${serifTheme.transitions.default} flex items-center justify-center text-sm p-2 ${serifTheme.radius.badge} sm:${serifTheme.colors.background.secondary}`}
                         onClick={(e) => {
                             e.stopPropagation();
                             onToggleExpand(order.id);
@@ -230,59 +205,55 @@ const OrderCard = ({
             </div>
 
             {/* Order Details (Collapsible Content) */}
-            <AnimatePresence>
-                {isExpanded && (
-                    <motion.div
-                        id={`order-details-${order.id}`}
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        transition={{ duration: 0.3, ease: "easeInOut" }}
-                        className="border-t border-gray-200 dark:border-gray-600 overflow-hidden"
-                    >
-                        <div className="p-4 sm:p-6 bg-white dark:bg-gray-800">
+            {/* Order Details (Expandable) */}
+            {isExpanded && (
+                <div
+                    id={`order-details-${order.id}`}
+                    className={`border-t ${serifTheme.colors.border.secondary} overflow-hidden`}
+                >
+                        <div className={`${serifTheme.spacing.cardPadding} ${serifTheme.colors.background.card}`}>
                            {/* ... (rest of the expanded content: shipping, summary, items, actions) ... */}
                            {/* Shipping Info & Order Summary */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                                 {/* Shipping Info */}
                                 <div>
-                                    <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
-                                        <FiMapPin className="mr-2 text-blue-500" />
+                                    <h3 className={`text-base font-semibold ${serifTheme.colors.text.primary} mb-3 flex items-center`}>
+                                        <FiMapPin className={`mr-2 ${serifTheme.colors.text.accent}`} />
                                         Shipping Information
                                     </h3>
-                                    <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-4 text-sm space-y-2">
-                                        <p className="text-gray-700 dark:text-gray-300">
+                                    <div className="p-2 text-sm space-y-2">
+                                        <p className={serifTheme.colors.text.secondary}>
                                             <strong>Address:</strong> {order.shippingAddress || 'Not specified'}
                                         </p>
-                                        <p className="text-gray-700 dark:text-gray-300">
+                                        <p className={serifTheme.colors.text.secondary}>
                                             <strong>Phone:</strong> {order.phoneNumber || 'Not specified'}
                                         </p>
                                     </div>
                                 </div>
                                 {/* Order Summary */}
                                 <div>
-                                    <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
-                                                                                    <FiBox className="mr-2 text-blue-500" />
+                                    <h3 className={`text-base font-semibold ${serifTheme.colors.text.primary} mb-3 flex items-center`}>
+                                                                                    <FiBox className={`mr-2 ${serifTheme.colors.text.accent}`} />
                                         Order Summary
                                     </h3>
-                                    <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-4 text-sm space-y-2">
+                                    <div className="p-2 text-sm space-y-2">
                                         <div className="flex justify-between items-center">
-                                            <span className="text-gray-700 dark:text-gray-300">Subtotal:</span>
-                                            <span className="text-gray-900 dark:text-white font-medium">
+                                            <span className={serifTheme.colors.text.secondary}>Subtotal:</span>
+                                            <span className={`${serifTheme.colors.text.primary} font-medium`}>
                                                 रु {totalAmount.toFixed(2)}
                                             </span>
                                         </div>
                                         <div className="flex justify-between items-center">
-                                            <span className="text-gray-700 dark:text-gray-300">Shipping:</span>
-                                            <span className="text-gray-900 dark:text-white font-medium">रु 0.00</span>
+                                            <span className={serifTheme.colors.text.secondary}>Shipping:</span>
+                                            <span className={`${serifTheme.colors.text.primary} font-medium`}>रु 0.00</span>
                                         </div>
                                         <div className="flex justify-between items-center">
-                                            <span className="text-gray-700 dark:text-gray-300">Tax:</span>
-                                            <span className="text-gray-900 dark:text-white font-medium">रु 0.00</span>
+                                            <span className={serifTheme.colors.text.secondary}>Tax:</span>
+                                            <span className={`${serifTheme.colors.text.primary} font-medium`}>रु 0.00</span>
                                         </div>
-                                        <div className="flex justify-between items-center pt-3 mt-3 border-t border-gray-200 dark:border-gray-600">
-                                            <span className="text-base font-semibold text-gray-900 dark:text-white">Total:</span>
-                                            <span className="text-lg font-bold text-gray-900 dark:text-white">
+                                        <div className={`flex justify-between items-center pt-3 mt-3 border-t ${serifTheme.colors.border.secondary}`}>
+                                            <span className={`text-base font-semibold ${serifTheme.colors.text.primary}`}>Total:</span>
+                                            <span className={`text-lg font-bold ${serifTheme.colors.text.primary}`}>
                                                 रु {totalAmount.toFixed(2)}
                                             </span>
                                         </div>
@@ -291,13 +262,13 @@ const OrderCard = ({
                             </div>
 
                             {/* Order Items */}
-                            <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Order Items ({order.cartItems.length})</h3>
+                            <h3 className={`text-base font-semibold ${serifTheme.colors.text.primary} mb-4`}>Order Items ({order.cartItems.length})</h3>
                             <div className="space-y-4 mb-6">
                                 {order.cartItems.map((item, index) => (
-                                    <div key={item.id || index} className="flex flex-col sm:flex-row items-start sm:items-center bg-gray-100 dark:bg-gray-700 rounded-lg p-3 sm:p-4 gap-4 shadow-sm">
+                                    <div key={item.id || index} className="flex flex-col sm:flex-row items-start sm:items-center p-2 gap-4 border-b border-gray-100 last:border-b-0">
                                         <div className="flex-shrink-0 relative">
                                             <img
-                                                className="w-16 h-16 sm:w-20 sm:h-20 object-contain rounded-md border border-gray-200 dark:border-gray-500 bg-white dark:bg-gray-800"
+                                                className={`w-16 h-16 sm:w-20 sm:h-20 object-contain ${serifTheme.radius.input} border ${serifTheme.colors.border.secondary} ${serifTheme.colors.background.card}`}
                                                 src={item.productImageUrl}
                                                 alt={item.title}
                                                 onError={(e) => {
@@ -306,42 +277,42 @@ const OrderCard = ({
                                                 }}
                                             />
                                             <button
-                                                className="absolute -top-2 -right-2 bg-white dark:bg-gray-800 p-1 rounded-full shadow-md transition-colors duration-200 hover:bg-red-100 dark:hover:bg-red-900/50"
+                                                className={`absolute -top-2 -right-2 ${serifTheme.colors.background.card} p-1 ${serifTheme.radius.badge} shadow-md ${serifTheme.transitions.default} hover:bg-red-50`}
                                                 onClick={(e) => { e.stopPropagation(); onToggleFavorite(item.id); }}
                                                 aria-label={favorites.includes(item.id) ? "Remove from Wishlist" : "Add to Wishlist"}
                                             >
                                                 {favorites.includes(item.id) ? (
                                                     <FaHeart className="text-red-500 w-4 h-4" />
                                                 ) : (
-                                                    <FaRegHeart className="text-gray-400 w-4 h-4" />
+                                                    <FaRegHeart className={`${serifTheme.colors.text.muted} w-4 h-4`} />
                                                 )}
                                             </button>
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <h4 className="font-medium text-gray-900 dark:text-white text-sm sm:text-base line-clamp-2">{item.title}</h4>
-                                            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 capitalize">{item.category}</p>
+                                            <h4 className={`font-medium ${serifTheme.colors.text.primary} text-sm sm:text-base line-clamp-2`}>{item.title}</h4>
+                                            <p className={`text-xs sm:text-sm ${serifTheme.colors.text.tertiary} capitalize`}>{item.category}</p>
                                              <button
                                                 onClick={() => handleAddToCart(item)} // Add Buy Again functionality
-                                                className="mt-2 text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                                                className={`mt-2 text-xs ${serifTheme.colors.text.accent} hover:underline`}
                                             >
                                                 Buy Again
                                             </button>
                                         </div>
                                         <div className="text-left sm:text-right mt-2 sm:mt-0 w-full sm:w-auto">
-                                            <p className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white">
+                                            <p className={`text-sm sm:text-base font-semibold ${serifTheme.colors.text.primary}`}>
                                                 रु {(Number(item.price) * Number(item.quantity)).toFixed(2)}
                                             </p>
-                                            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">रु {Number(item.price).toFixed(2)} × {item.quantity}</p>
+                                            <p className={`text-xs sm:text-sm ${serifTheme.colors.text.tertiary}`}>रु {Number(item.price).toFixed(2)} × {item.quantity}</p>
                                         </div>
                                     </div>
                                 ))}
                             </div>
 
                             {/* Action Buttons */}
-                            <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-600">
+                            <div className={`flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t ${serifTheme.colors.border.secondary}`}>
                                 {(order.status === STATUS_PLACED || order.status === STATUS_PENDING || order.status === STATUS_PROCESSING || order.status === STATUS_SHIPPED || order.status === STATUS_DELIVERED) && (
                                     <button
-                                        className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition flex items-center justify-center text-sm"
+                                        className="px-4 py-2 bg-accent text-white rounded-lg hover:opacity-90 transition flex items-center justify-center text-sm"
                                         onClick={() => onTrackShipping(order.id)}
                                     >
                                         <FaShippingFast className="mr-2" />
@@ -349,7 +320,7 @@ const OrderCard = ({
                                     </button>
                                 )}
                                  <button
-                                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition flex items-center justify-center text-sm"
+                                    className="px-4 py-2 bg-secondary text-white rounded-lg hover:opacity-90 transition flex items-center justify-center text-sm"
                                     onClick={() => onGenerateInvoice(order)}
                                 >
                                     <FiDownload className="mr-2" />
@@ -357,13 +328,11 @@ const OrderCard = ({
                                 </button>
                             </div>
                         </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-        </motion.div>
+                    </div>
+            )}
+        </div>
     );
 };
-
 
 // --- Constants ---
 const WHATSAPP_SUPPORT_NUMBER = "+9779807677391"; // Example number
@@ -404,14 +373,14 @@ const getProductNames = (order) => {
 
 const getStatusClasses = (status) => {
     switch (status) {
-        case STATUS_DELIVERED: return 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-200';
-        case STATUS_PLACED: return 'bg-cyan-100 dark:bg-cyan-900/50 text-cyan-800 dark:text-cyan-200';
-        case STATUS_PENDING: return 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-200';
-        case STATUS_PROCESSING: return 'bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200';
-        case STATUS_SHIPPED: return 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-800 dark:text-indigo-200';
-        case STATUS_CANCELLED: return 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-200';
-        case STATUS_REFUNDED: return 'bg-purple-100 dark:bg-purple-900/50 text-purple-800 dark:text-purple-200';
-        default: return 'bg-gray-100 dark:bg-gray-600 text-gray-800 dark:text-gray-200';
+        case STATUS_DELIVERED: return 'bg-green-100 text-green-800';
+        case STATUS_PLACED: return 'bg-cyan-100 text-cyan-800';
+        case STATUS_PENDING: return 'bg-yellow-100 text-yellow-800';
+        case STATUS_PROCESSING: return 'bg-blue-100 text-blue-800';
+        case STATUS_SHIPPED: return 'bg-indigo-100 text-indigo-800';
+        case STATUS_CANCELLED: return 'bg-red-100 text-red-800';
+        case STATUS_REFUNDED: return 'bg-purple-100 text-purple-800';
+        default: return `${serifTheme.colors.background.secondary} ${serifTheme.colors.text.secondary}`;
     }
 };
 
@@ -1076,12 +1045,12 @@ const UserDashboard = () => {
     if (!user) {
         return (
             <Layout>
-                <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 px-4">
+                <div className={`min-h-screen flex items-center justify-center ${serifTheme.colors.background.secondary} px-4`}>
                     {loading ? <Loader /> : (
-                        <div className="text-center p-6 sm:p-8 bg-white dark:bg-gray-800 rounded-lg shadow-md w-full max-w-md">
-                            <h2 className="text-lg sm:text-xl font-semibold text-red-600 dark:text-red-400 mb-4">Access Denied</h2>
-                            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 mb-6">Please log in to view your dashboard.</p>
-                             <Link to="/login" className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium">
+                        <div className={`text-center ${serifTheme.spacing.cardPadding} ${serifTheme.colors.background.card} ${serifTheme.radius.card} ${serifTheme.colors.shadow.card} w-full max-w-md`}>
+                            <h2 className={`text-lg sm:text-xl font-semibold text-red-600 mb-4`}>Access Denied</h2>
+                            <p className={`text-sm sm:text-base ${serifTheme.colors.text.secondary} mb-6`}>Please log in to view your dashboard.</p>
+                             <Link to="/login" className="inline-flex items-center px-6 py-3 bg-secondary text-white rounded-lg hover:opacity-90 transition text-sm font-medium">
                                 Go to Login
                              </Link>
                         </div>
@@ -1094,138 +1063,73 @@ const UserDashboard = () => {
     // --- Main Render ---
     return (
         <Layout>
-            <div className="min-h-screen bg-black py-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-                {/* Modern Background Pattern */}
-                <div className="absolute inset-0 opacity-3">
-                    <div className="absolute inset-0" style={{
-                        backgroundImage: `radial-gradient(circle at 25% 25%, #1f2937 0%, transparent 50%),
-                                         radial-gradient(circle at 75% 75%, #374151 0%, transparent 50%)`,
-                        backgroundSize: '150px 150px'
-                    }}></div>
-                </div>
-
-                {/* Floating Elements */}
-                <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                    <motion.div
-                        className="absolute top-20 left-10 w-24 h-24 bg-gray-800/20 rounded-full blur-2xl"
-                        animate={{ y: [0, -15, 0], x: [0, 8, 0] }}
-                        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-                    />
-                    <motion.div
-                        className="absolute top-40 right-20 w-20 h-20 bg-gray-700/20 rounded-full blur-2xl"
-                        animate={{ y: [0, 15, 0], x: [0, -10, 0] }}
-                        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-                    />
-                    <motion.div
-                        className="absolute bottom-32 left-1/4 w-32 h-32 bg-gray-600/20 rounded-full blur-2xl"
-                        animate={{ y: [0, -20, 0], x: [0, 15, 0] }}
-                        transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
-                    />
-                </div>
+            <div className={`min-h-screen ${serifTheme.colors.background.primary} pt-32 pb-8 px-4 sm:px-6 lg:px-8 relative`}
+                 style={{ fontFamily: serifTheme.fontFamily.serif }}>
                 
 
 
 
                 <div className="max-w-7xl mx-auto relative z-10 px-2 sm:px-0">
                     {/* Enhanced User Profile Header */}
-                    <motion.div
-                        initial={{ opacity: 0, y: -20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8 }}
-                        className="bg-gradient-to-br from-gray-900/80 to-gray-800/60 backdrop-blur-xl rounded-2xl border border-gray-700/30 shadow-2xl p-6 mb-8 overflow-hidden relative"
-                    >
-                        {/* Background Glow */}
-                        <div className="absolute inset-0 bg-gradient-to-br from-cyan-600/5 to-blue-600/5 rounded-2xl"></div>
+                    <div className={`${serifTheme.colors.background.card} ${serifTheme.radius.card} border ${serifTheme.colors.border.primary} shadow-lg ${serifTheme.spacing.cardPadding} mb-8 relative`}>
                         <div className="relative z-10 flex flex-col sm:flex-row items-center gap-6">
                             <div className="relative flex-shrink-0">
-                                <motion.img
+                                <img
                                     src={user?.photoURL || "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"}
                                     alt="User Profile"
-                                    className="w-24 h-24 rounded-full border-4 border-cyan-400/50 object-cover shadow-xl bg-gray-800"
+                                    className={`w-24 h-24 ${serifTheme.radius.badge} border-4 border-amber-400/50 object-cover shadow-xl ${serifTheme.colors.background.card}`}
                                     onError={(e) => {
                                         e.target.onerror = null;
                                         e.target.src = "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
                                     }}
-                                    whileHover={{ scale: 1.05, rotate: 2 }}
-                                    transition={{ duration: 0.3 }}
                                 />
-                                <motion.div
-                                    className="absolute -bottom-2 -right-2 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full p-2 shadow-lg border-2 border-gray-900"
-                                    whileHover={{ scale: 1.1 }}
-                                >
+                                <div className={`absolute -bottom-2 -right-2 ${serifTheme.colors.accent.primary} ${serifTheme.radius.badge} p-2 shadow-lg border-2 ${serifTheme.colors.background.card}`}>
                                     <FiUser className="text-white text-sm" />
-                                </motion.div>
+                                </div>
 
                                 {/* Status Indicator */}
-                                <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-gray-900 animate-pulse"></div>
+                                <div className={`absolute -top-1 -right-1 w-4 h-4 bg-green-400 ${serifTheme.radius.badge} border-2 ${serifTheme.colors.background.card}`}></div>
                             </div>
                             <div className="text-center sm:text-left flex-1 relative z-10">
-                                <motion.h1
-                                    className="text-3xl md:text-4xl font-black text-white mb-3"
-                                    initial={{ opacity: 0, x: -20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ duration: 0.6, delay: 0.2 }}
-                                >
-                                    Welcome back, <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">{user?.name || 'User'}</span>!
-                                </motion.h1>
+                                <h1 className={`text-3xl md:text-4xl font-bold ${serifTheme.colors.text.primary} mb-3`}>
+                                    Welcome back, <span className={`${serifTheme.colors.accent.text}`}>{user?.name || 'User'}</span>!
+                                </h1>
 
-                                <motion.div
-                                    className="flex flex-col sm:flex-row gap-4 mb-4"
-                                    initial={{ opacity: 0, x: -20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ duration: 0.6, delay: 0.4 }}
-                                >
-                                    <div className="flex items-center gap-2 bg-gray-800/50 px-3 py-2 rounded-full backdrop-blur-sm">
-                                        <FiMail className="text-cyan-400" />
-                                        <span className="text-sm text-gray-300 truncate" title={user?.email}>{user?.email || 'No Email'}</span>
+                                <div className="flex flex-col sm:flex-row gap-4 mb-4">
+                                    <div className={`flex items-center gap-2 ${serifTheme.colors.background.secondary} px-3 py-2 ${serifTheme.radius.badge} backdrop-blur-sm`}>
+                                            <FiMail className={`${serifTheme.colors.text.accent}`} />
+                                        <span className={`text-sm ${serifTheme.colors.text.secondary} truncate`} title={user?.email}>{user?.email || 'No Email'}</span>
                                     </div>
-                                    <div className="flex items-center gap-2 bg-gray-800/50 px-3 py-2 rounded-full backdrop-blur-sm">
-                                        <FiCalendar className="text-green-400" />
-                                        <span className="text-sm text-gray-300">Member since: {user?.date ? new Date(user.date).toLocaleDateString() : 'N/A'}</span>
+                                    <div className={`flex items-center gap-2 ${serifTheme.colors.background.secondary} px-3 py-2 ${serifTheme.radius.badge} backdrop-blur-sm`}>
+                                            <FiCalendar className="text-green-600" />
+                                        <span className={`text-sm ${serifTheme.colors.text.secondary}`}>Member since: {user?.date ? new Date(user.date).toLocaleDateString() : 'N/A'}</span>
                                     </div>
-                                    <div className="flex items-center gap-2 bg-gray-800/50 px-3 py-2 rounded-full backdrop-blur-sm">
-                                        <FiShoppingBag className="text-blue-400" />
-                                        <span className="text-sm text-gray-300 capitalize">{user?.role || 'User'}</span>
+                                    <div className={`flex items-center gap-2 ${serifTheme.colors.background.secondary} px-3 py-2 ${serifTheme.radius.badge} backdrop-blur-sm`}>
+                                        <FiShoppingBag className={`${serifTheme.colors.text.accent}`} />
+                                        <span className={`text-sm ${serifTheme.colors.text.secondary} capitalize`}>{user?.role || 'User'}</span>
                                     </div>
-                                </motion.div>
+                                </div>
 
                                 {/* User Status Badge */}
-                                <motion.div
-                                    className="inline-flex items-center gap-2 bg-gradient-to-r from-green-600/20 to-emerald-600/20 backdrop-blur-sm px-4 py-2 rounded-full border border-green-500/30"
-                                    initial={{ opacity: 0, scale: 0.8 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    transition={{ duration: 0.6, delay: 0.6 }}
-                                >
-                                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                                    <span className="text-green-300 font-medium text-sm">Premium Member</span>
-                                </motion.div>
+                                <div className={`inline-flex items-center gap-2 bg-gradient-to-r from-green-600/20 to-emerald-600/20 backdrop-blur-sm px-4 py-2 ${serifTheme.radius.badge} border border-green-500/30`}>
+                                    <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                                    <span className="text-green-600 font-medium text-sm">Premium Member</span>
+                                </div>
                             </div>
-                            <motion.div
-                                className="flex flex-col sm:flex-row gap-3 mt-4 sm:mt-0 relative z-10"
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.6, delay: 0.8 }}
-                            >
-                                <motion.button
+                            <div className="flex flex-col sm:flex-row gap-3 mt-4 sm:mt-0 relative z-10">
+                                <button
                                     onClick={() => setActiveTab(TAB_SECURITY)}
-                                    className="px-6 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 text-white rounded-xl hover:from-cyan-500 hover:to-blue-500 transition-all duration-300 text-sm flex items-center justify-center shadow-lg"
-                                    whileHover={{ scale: 1.05, boxShadow: "0 10px 25px rgba(6, 182, 212, 0.3)" }}
-                                    whileTap={{ scale: 0.95 }}
+                                    className={`px-6 py-3 ${serifTheme.colors.button.primary} ${serifTheme.colors.button.textPrimary} ${serifTheme.radius.button} ${serifTheme.transitions.default} text-sm flex items-center justify-center shadow-lg`}
                                 >
                                     <FiEdit3 className="mr-2 w-4 h-4"/> Edit Profile
-                                </motion.button>
-                            </motion.div>
+                                </button>
+                            </div>
                         </div>
-                    </motion.div>
+                    </div>
 
                     {/* Enhanced Dashboard Tabs */}
-                    <motion.div
-                                className="mb-6 sm:mb-8"
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.6, delay: 0.4 }}
-                    >
-                        <div className="bg-gradient-to-r from-gray-900/80 to-gray-800/60 backdrop-blur-xl rounded-2xl border border-gray-700/30 p-2 shadow-xl">
+                    <div className="mb-6 sm:mb-8">
+                        <div className={`${serifTheme.colors.background.card} ${serifTheme.radius.card} border ${serifTheme.colors.border.primary} p-2 shadow-lg`}>
                                     <nav className="flex space-x-2 overflow-x-auto scrollbar-hide pb-2 touch-pan-x -mx-1 px-1">
                                 {[
                                     { name: TAB_ORDERS, label: "Orders", icon: BsBoxSeam, count: userOrders.length },
@@ -1237,109 +1141,83 @@ const UserDashboard = () => {
                                     const Icon = tab.icon;
                                     const isActive = activeTab === tab.name;
                                     return (
-                                        <motion.button
+                                        <button
                                             key={tab.name}
                                             onClick={() => setActiveTab(tab.name)}
-                                            className={`relative whitespace-nowrap py-3 px-4 sm:px-6 font-medium text-xs sm:text-sm flex items-center rounded-xl transition-all duration-300 flex-shrink-0 ${
+                                            className={`relative whitespace-nowrap py-3 px-4 sm:px-6 font-medium text-xs sm:text-sm flex items-center ${serifTheme.radius.button} ${serifTheme.transitions.default} flex-shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/60 ${
                                                 isActive
-                                                    ? "bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-lg"
-                                                    : "text-gray-300 hover:text-white hover:bg-gray-700/50"
+                                                    ? `${serifTheme.colors.button.primary} ${serifTheme.colors.button.textPrimary} shadow-lg`
+                                                    : `${serifTheme.colors.text.tertiary} hover:${serifTheme.colors.text.primary} hover:${serifTheme.colors.background.secondary}`
                                             }`}
                                             role="tab"
                                             aria-selected={isActive}
-                                            whileHover={{ scale: 1.05 }}
-                                            whileTap={{ scale: 0.95 }}
                                         >
-                                            <Icon className={`mr-1 sm:mr-2 w-3 h-3 sm:w-4 sm:h-4 ${isActive ? 'text-white' : 'text-gray-400'}`} />
+                                            <Icon className={`mr-1 sm:mr-2 w-3 h-3 sm:w-4 sm:h-4 ${isActive ? 'text-white' : serifTheme.colors.text.muted}`} />
                                             <span className="hidden sm:inline">{tab.label}</span>
                                             <span className="sm:hidden">{tab.label.split(' ')[0]}</span>
                                             {tab.count !== null && tab.count > 0 && (
-                                                <motion.span
-                                                    className={`ml-1 sm:ml-2 text-xs font-medium px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full ${
-                                                        isActive
-                                                            ? 'bg-white/20 text-white'
-                                                            : 'bg-gray-600/50 text-gray-300'
-                                                    }`}
-                                                    initial={{ scale: 0 }}
-                                                    animate={{ scale: 1 }}
-                                                    transition={{ delay: 0.2 }}
-                                                >
+                                                <span className={`ml-1 sm:ml-2 text-xs font-medium px-1.5 sm:px-2 py-0.5 sm:py-1 ${serifTheme.radius.badge} ${
+                                                    isActive
+                                                        ? `${serifTheme.colors.background.overlay} ${serifTheme.colors.text.primary}`
+                                                        : `${serifTheme.colors.background.tertiary} ${serifTheme.colors.text.tertiary}`
+                                                }`}>
                                                     {tab.count}
-                                                </motion.span>
+                                                </span>
                                             )}
 
                                             {/* Active indicator */}
                                             {isActive && (
-                                                <motion.div
-                                                    className="absolute inset-0 bg-gradient-to-r from-cyan-600/20 to-blue-600/20 rounded-xl"
-                                                    layoutId="activeTab"
-                                                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                                                />
+                                                <div className={`absolute inset-0 bg-gradient-to-r from-amber-600/20 to-orange-600/20 ${serifTheme.radius.button}`} />
                                             )}
-                                        </motion.button>
+                                        </button>
                                     );
                                 })}
                             </nav>
                         </div>
-                    </motion.div>
+                    </div>
 
                     {/* Tab Content */}
-                    <AnimatePresence mode="wait">
-                        <motion.div
-                            key={activeTab}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -10 }}
-                            transition={{ duration: 0.25 }}
-                        >
+                    <div>
                             {/* Orders Tab */}
                             {activeTab === TAB_ORDERS && (
                                 <div>
                                     {/* Stats Cards */}
                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
-                                        <motion.div
+                                        <div
                                             onClick={() => setOrderView("all")}
                                             className="cursor-pointer touch-manipulation"
-                                            whileHover={{ scale: 1.02 }}
-                                            whileTap={{ scale: 0.98 }}
                                         >
-                                        <StatsCard title="Total Orders" value={userOrders.length} icon={BsBoxSeam} bgColor="bg-blue-100 dark:bg-blue-900/30" textColor="text-blue-600 dark:text-blue-400" footerText={`Last order: ${lastOrderDate}`} footerIcon={FiCalendar} />
-                                        </motion.div>
-                                        <motion.div
+                                        <StatsCard title="Total Orders" value={userOrders.length} icon={BsBoxSeam} footerText={`Last order: ${lastOrderDate}`} footerIcon={FiCalendar} />
+                                        </div>
+                                        <div
                                             onClick={() => setOrderView("all")}
                                             className="cursor-pointer"
-                                            whileHover={{ scale: 1.02 }}
-                                            whileTap={{ scale: 0.98 }}
                                         >
-                                            <StatsCard title="Total Spent" value={`रु ${totalSpent.toFixed(2)}`} icon={BsCurrencyRupee} bgColor="bg-green-100 dark:bg-green-900/30" textColor="text-green-600 dark:text-green-400" footerText={`Avg: रु ${(totalSpent / (userOrders.length || 1)).toFixed(2)}`} footerIcon={FiCreditCard} />
-                                        </motion.div>
-                                        <motion.div
+                                            <StatsCard title="Total Spent" value={`रु ${totalSpent.toFixed(2)}`} icon={BsCurrencyRupee} footerText={`Avg: रु ${(totalSpent / (userOrders.length || 1)).toFixed(2)}`} footerIcon={FiCreditCard} />
+                                        </div>
+                                        <div
                                             onClick={() => setOrderView("active")}
                                             className="cursor-pointer"
-                                            whileHover={{ scale: 1.02 }}
-                                            whileTap={{ scale: 0.98 }}
                                         >
-                                            <StatsCard title="Active Orders" value={statusStats.active} icon={FiRefreshCw} bgColor={orderView === "active" ? "bg-amber-200 dark:bg-amber-800/50" : "bg-amber-100 dark:bg-amber-900/30"} textColor="text-amber-600 dark:text-amber-400" footerText={`${statusStats.active} order${statusStats.active !== 1 ? 's' : ''} in progress`} />
-                                        </motion.div>
-                                        <motion.div
+                                            <StatsCard title="Active Orders" value={statusStats.active} icon={FiRefreshCw} footerText={`${statusStats.active} order${statusStats.active !== 1 ? 's' : ''} in progress`} />
+                                        </div>
+                                        <div
                                             onClick={() => setOrderView("previous")}
                                             className="cursor-pointer"
-                                            whileHover={{ scale: 1.02 }}
-                                            whileTap={{ scale: 0.98 }}
                                         >
-                                            <StatsCard title="Previous Orders" value={statusStats.previous} icon={FaCheckCircle} bgColor={orderView === "previous" ? "bg-green-200 dark:bg-green-800/50" : "bg-green-100 dark:bg-green-900/30"} textColor="text-green-600 dark:text-green-400" footerText={`${statusStats.previous} completed order${statusStats.previous !== 1 ? 's' : ''}`} />
-                                        </motion.div>
+                                            <StatsCard title="Previous Orders" value={statusStats.previous} icon={FaCheckCircle} footerText={`${statusStats.previous} completed order${statusStats.previous !== 1 ? 's' : ''}`} />
+                                        </div>
                                      </div>
 
                                      {/* Orders List Section */}
-                                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 sm:p-6 transition-colors duration-300">
+                                    <div className={`${serifTheme.colors.background.card} ${serifTheme.radius.card} ${serifTheme.colors.shadow.card} ${serifTheme.spacing.cardPadding} ${serifTheme.transitions.default}`}>
                                         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4 sm:mb-6 gap-4">
                                             <div>
-                                            <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center">
-                                                <BsBoxSeam className="mr-3 text-blue-500" />
+                                            <h2 className={`text-xl font-bold ${serifTheme.colors.text.primary} flex items-center`}>
+                                                <BsBoxSeam className={`mr-3 ${serifTheme.colors.text.accent}`} />
                                                 Order History
                                             </h2>
-                                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                                <p className={`text-sm ${serifTheme.colors.text.tertiary} mt-1`}>
                                                     {orderView === "active" ? "Showing active orders" : orderView === "previous" ? "Showing previous orders" : "Showing all orders"} 
                                                     ({userOrders.length} order{userOrders.length !== 1 ? 's' : ''})
                                                 </p>
@@ -1349,12 +1227,13 @@ const UserDashboard = () => {
                                             <div className="flex flex-col sm:flex-row gap-3 w-full">
                                                 <div className="relative flex-1 min-w-0 sm:min-w-[180px]">
                                                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                        <FiSearch className="text-gray-400 w-4 h-4" />
+                                                        <FiSearch className={`${serifTheme.colors.text.muted} w-4 h-4`} />
                                                     </div>
                                                     <input
                                                         type="text"
                                                         placeholder="Search orders..."
-                                                        className="w-full pl-10 pr-4 py-3 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                                        className={`w-full pl-10 pr-4 py-3 sm:py-2 border ${serifTheme.colors.border.secondary} ${serifTheme.radius.input} ${serifTheme.colors.background.card} ${serifTheme.colors.text.primary} focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-sm`}
+                                                        style={{ fontFamily: serifTheme.fontFamily.serif }}
                                                         value={searchTerm}
                                                         onChange={(e) => setSearchTerm(e.target.value)}
                                                     />
@@ -1362,10 +1241,10 @@ const UserDashboard = () => {
 
                                                 <div className="flex gap-2">
                                                     <select
-                                                        className="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-3 py-3 sm:py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm appearance-none"
+                                                        className={`flex-1 border ${serifTheme.colors.border.secondary} ${serifTheme.radius.input} ${serifTheme.colors.background.card} ${serifTheme.colors.text.primary} px-3 py-3 sm:py-2 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-sm appearance-none`}
+                                                        style={{ fontFamily: serifTheme.fontFamily.serif, backgroundPosition: 'right 0.5rem center', backgroundSize: '1.2em', backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")` }}
                                                         value={sortBy}
                                                         onChange={(e) => setSortBy(e.target.value)}
-                                                         style={{ backgroundPosition: 'right 0.5rem center', backgroundSize: '1.2em', backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")` }}
                                                     >
                                                         <option value="newest">Newest First</option>
                                                         <option value="oldest">Oldest First</option>
@@ -1379,21 +1258,21 @@ const UserDashboard = () => {
                                         {loading && <Loader />}
 
                                         {!loading && userOrders.length === 0 && (
-                                            <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-6 sm:p-8 text-center shadow-inner transition-colors duration-300 my-4 sm:my-6 border border-gray-200 dark:border-gray-600">
-                                                <div className="mx-auto w-16 h-16 sm:w-20 sm:h-20 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center mb-4 sm:mb-6">
-                                                    <BsBoxSeam className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400 dark:text-gray-300" />
+                                            <div className={`${serifTheme.colors.background.secondary} ${serifTheme.radius.card} ${serifTheme.spacing.cardPadding} text-center shadow-inner ${serifTheme.transitions.default} my-4 sm:my-6 border ${serifTheme.colors.border.secondary}`}>
+                                                <div className={`mx-auto w-16 h-16 sm:w-20 sm:h-20 ${serifTheme.colors.background.tertiary} ${serifTheme.radius.badge} flex items-center justify-center mb-4 sm:mb-6`}>
+                                                    <BsBoxSeam className={`w-8 h-8 sm:w-10 sm:h-10 ${serifTheme.colors.text.muted}`} />
                                                 </div>
-                                                <h3 className="text-base sm:text-lg lg:text-xl font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                <h3 className={`text-base sm:text-lg lg:text-xl font-medium ${serifTheme.colors.text.secondary} mb-2`}>
                                                     {searchTerm ? "No orders match your search" : orderView === "active" ? "No active orders" : orderView === "previous" ? "No previous orders" : "No orders found"}
                                                 </h3>
-                                                <p className="text-xs sm:text-sm lg:text-base text-gray-500 dark:text-gray-400 mb-4 sm:mb-6">
+                                                <p className={`text-xs sm:text-sm lg:text-base ${serifTheme.colors.text.tertiary} mb-4 sm:mb-6`}>
                                                     {searchTerm ? "Try adjusting your search terms." : orderView === "active" ? "Click on 'All Orders' to see all your orders." : orderView === "previous" ? "Click on 'All Orders' to see all your orders." : "You haven't placed any orders yet."}
                                                 </p>
                                                 {orderView !== "all" && (
                                                     <div className="mb-3 sm:mb-4">
                                                         <button
                                                             onClick={() => setOrderView("all")}
-                                                            className="inline-flex items-center px-4 py-3 sm:py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium mr-2 touch-manipulation"
+                                                className="inline-flex items-center px-4 py-3 sm:py-2 bg-secondary text-white rounded-lg hover:opacity-90 transition text-sm font-medium mr-2 touch-manipulation"
                                                         >
                                                             View All Orders
                                                         </button>
@@ -1401,7 +1280,7 @@ const UserDashboard = () => {
                                                 )}
                                                 <Link
                                                     to="/" // Link to homepage or products page
-                                                    className="inline-flex items-center px-5 py-3 sm:py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium shadow-sm touch-manipulation"
+                                                    className="inline-flex items-center px-5 py-3 sm:py-2.5 bg-secondary text-white rounded-lg hover:opacity-90 transition text-sm font-medium shadow-sm touch-manipulation"
                                                 >
                                                     Start Shopping
                                                 </Link>
@@ -1410,7 +1289,6 @@ const UserDashboard = () => {
 
                                         {!loading && userOrders.length > 0 && (
                                             <div className="space-y-4">
-                                                <AnimatePresence initial={false}>
                                                     {userOrders.map((order) => (
                                                         <OrderCard
                                                             key={order.id}
@@ -1427,23 +1305,22 @@ const UserDashboard = () => {
                                                             handleAddToCart={handleAddToCart}
                                                         />
                                                     ))}
-                                                </AnimatePresence>
-                                            </div>
-                                        )}
+                                                </div>
+                                            )}
                                     </div>
                                 </div>
                             )}
 
                             {/* Wishlist Tab */}
                              {activeTab === TAB_WISHLIST && (
-                                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 sm:p-6 transition-colors duration-300">
+                                <div className={`${serifTheme.colors.background.card} ${serifTheme.radius.card} ${serifTheme.colors.shadow.card} ${serifTheme.spacing.cardPadding} ${serifTheme.transitions.default}`}>
                                     {/* ... (Wishlist Tab JSX - same as before) ... */}
                                      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
-                                        <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center">
+                                        <h2 className={`text-xl font-bold ${serifTheme.colors.text.primary} flex items-center`}>
                                             <FaHeart className="mr-3 text-red-500" />
                                             Your Wishlist
                                         </h2>
-                                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                                        <p className={`text-sm ${serifTheme.colors.text.tertiary}`}>
                                             {wishlistItems.length} item(s) saved
                                         </p>
                                     </div>
@@ -1454,22 +1331,21 @@ const UserDashboard = () => {
                                             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
                                         </div>
                                     ) : favorites.length === 0 ? (
-                                        <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-6 sm:p-8 text-center shadow-inner transition-colors duration-300 my-4 sm:my-6 border border-gray-200 dark:border-gray-600">
-                                            <div className="mx-auto w-16 h-16 sm:w-20 sm:h-20 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center mb-4 sm:mb-6">
-                                                <FaRegHeart className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400 dark:text-gray-300" />
+                                        <div className={`${serifTheme.colors.background.secondary} ${serifTheme.radius.card} ${serifTheme.spacing.cardPadding} text-center shadow-inner ${serifTheme.transitions.default} my-4 sm:my-6 border ${serifTheme.colors.border.secondary}`}>
+                                            <div className={`mx-auto w-16 h-16 sm:w-20 sm:h-20 ${serifTheme.colors.background.tertiary} ${serifTheme.radius.badge} flex items-center justify-center mb-4 sm:mb-6`}>
+                                                <FaRegHeart className={`w-8 h-8 sm:w-10 sm:h-10 ${serifTheme.colors.text.muted}`} />
                                             </div>
-                                            <h3 className="text-base sm:text-lg lg:text-xl font-medium text-gray-700 dark:text-gray-300 mb-2">Your wishlist is empty</h3>
-                                            <p className="text-xs sm:text-sm lg:text-base text-gray-500 dark:text-gray-400 mb-4 sm:mb-6">Save items you love by clicking the heart icon.</p>
+                                            <h3 className={`text-base sm:text-lg lg:text-xl font-medium ${serifTheme.colors.text.secondary} mb-2`}>Your wishlist is empty</h3>
+                                            <p className={`text-xs sm:text-sm lg:text-base ${serifTheme.colors.text.tertiary} mb-4 sm:mb-6`}>Save items you love by clicking the heart icon.</p>
                                             <Link
                                                 to="/"
-                                                className="inline-flex items-center px-5 py-3 sm:py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium shadow-sm touch-manipulation"
+                                                className="inline-flex items-center px-5 py-3 sm:py-2.5 bg-secondary text-white rounded-lg hover:opacity-90 transition text-sm font-medium shadow-sm touch-manipulation"
                                             >
                                                 Browse Products
                                             </Link>
                                         </div>
                                     ) : (
                                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-                                            <AnimatePresence>
                                                 {wishlistItems.map((item) => (
                                                 <ProductCard
                                                     key={item.id}
@@ -1479,7 +1355,6 @@ const UserDashboard = () => {
                                                     onAddToCart={handleAddToCart}
                                                 />
                                             ))}
-                                            </AnimatePresence>
                                         </div>
                                     )}
                                 </div>
@@ -1487,14 +1362,14 @@ const UserDashboard = () => {
 
                             {/* Recently Viewed Tab */}
                              {activeTab === TAB_RECENT && (
-                                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 sm:p-6 transition-colors duration-300">
+                                <div className={`${serifTheme.colors.background.card} ${serifTheme.radius.card} ${serifTheme.colors.shadow.card} ${serifTheme.spacing.cardPadding} ${serifTheme.transitions.default}`}>
                                      {/* ... (Recently Viewed Tab JSX - same as before) ... */}
                                      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
-                                        <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center">
-                                            <FiRefreshCw className="mr-3 text-blue-500" />
+                                        <h2 className={`text-xl font-bold ${serifTheme.colors.text.primary} flex items-center`}>
+                                            <FiRefreshCw className={`mr-3 ${serifTheme.colors.text.accent}`} />
                                             Recently Viewed Items
                                         </h2>
-                                         <p className="text-sm text-gray-500 dark:text-gray-400">
+                                         <p className={`text-sm ${serifTheme.colors.text.tertiary}`}>
                                             {recentlyViewedItems.length} item(s)
                                         </p>
                                     </div>
@@ -1502,22 +1377,21 @@ const UserDashboard = () => {
                                     {/* {recentLoading && <Loader />} */}
 
                                     {recentlyViewedItems.length === 0 ? (
-                                        <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-6 sm:p-8 text-center shadow-inner transition-colors duration-300 my-4 sm:my-6 border border-gray-200 dark:border-gray-600">
-                                            <div className="mx-auto w-16 h-16 sm:w-20 sm:h-20 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center mb-4 sm:mb-6">
-                                                <BsQuestionCircle className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400 dark:text-gray-300" />
+                                        <div className={`${serifTheme.colors.background.secondary} ${serifTheme.radius.card} ${serifTheme.spacing.cardPadding} text-center shadow-inner ${serifTheme.transitions.default} my-4 sm:my-6 border ${serifTheme.colors.border.secondary}`}>
+                                            <div className={`mx-auto w-16 h-16 sm:w-20 sm:h-20 ${serifTheme.colors.background.tertiary} ${serifTheme.radius.badge} flex items-center justify-center mb-4 sm:mb-6`}>
+                                                <BsQuestionCircle className={`w-8 h-8 sm:w-10 sm:h-10 ${serifTheme.colors.text.muted}`} />
                                             </div>
-                                            <h3 className="text-base sm:text-lg lg:text-xl font-medium text-gray-700 dark:text-gray-300 mb-2">No recently viewed items</h3>
-                                            <p className="text-xs sm:text-sm lg:text-base text-gray-500 dark:text-gray-400 mb-4 sm:mb-6">Your recently viewed products will appear here as you browse.</p>
+                                            <h3 className={`text-base sm:text-lg lg:text-xl font-medium ${serifTheme.colors.text.secondary} mb-2`}>No recently viewed items</h3>
+                                            <p className={`text-xs sm:text-sm lg:text-base ${serifTheme.colors.text.tertiary} mb-4 sm:mb-6`}>Your recently viewed products will appear here as you browse.</p>
                                             <Link
                                                 to="/"
-                                                className="inline-flex items-center px-5 py-3 sm:py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium shadow-sm touch-manipulation"
+                                                className="inline-flex items-center px-5 py-3 sm:py-2.5 bg-secondary text-white rounded-lg hover:opacity-90 transition text-sm font-medium shadow-sm touch-manipulation"
                                             >
                                                 Browse Products
                                             </Link>
                                         </div>
                                     ) : (
                                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-                                             <AnimatePresence>
                                                 {recentlyViewedItems.map((item) => (
                                                     <ProductCard
                                                         key={item.id}
@@ -1527,7 +1401,6 @@ const UserDashboard = () => {
                                                         onAddToCart={handleAddToCart}
                                                     />
                                                 ))}
-                                            </AnimatePresence>
                                         </div>
                                     )}
                                 </div>
@@ -1535,15 +1408,15 @@ const UserDashboard = () => {
 
 
                             {/* Reviews Tab */}
-                            {activeTab === TAB_REVIEWS && (
-                                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 sm:p-6 transition-colors duration-300">
+                             {activeTab === TAB_REVIEWS && (
+                                <div className={`${serifTheme.colors.background.card} ${serifTheme.radius.card} ${serifTheme.colors.shadow.card} ${serifTheme.spacing.cardPadding} ${serifTheme.transitions.default}`}>
                                     <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4 sm:mb-6">
                                         <div>
-                                            <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-                                                <FaStar className="text-yellow-400" />
+                                            <h2 className={`text-xl font-bold ${serifTheme.colors.text.primary} flex items-center gap-3`}>
+                                                <FaStar className="text-yellow-500" />
                                                 My Reviews
                                             </h2>
-                                            <p className="text-gray-600 dark:text-gray-400 mt-1">
+                                            <p className={`${serifTheme.colors.text.secondary} mt-1`}>
                                                 Manage and track your product reviews
                                             </p>
                                         </div>
@@ -1553,7 +1426,8 @@ const UserDashboard = () => {
                                             <select
                                                 value={reviewsFilter}
                                                 onChange={(e) => setReviewsFilter(e.target.value)}
-                                                className="px-4 py-3 sm:py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-700 dark:text-gray-200 text-sm"
+                                                className={`px-4 py-3 sm:py-2 ${serifTheme.colors.background.secondary} border ${serifTheme.colors.border.secondary} ${serifTheme.radius.input} focus:ring-2 focus:ring-amber-500 ${serifTheme.colors.text.secondary} text-sm`}
+                                                style={{ fontFamily: serifTheme.fontFamily.serif }}
                                             >
                                                 <option value="all">All Reviews</option>
                                                 <option value="pending">Pending Approval</option>
@@ -1570,17 +1444,16 @@ const UserDashboard = () => {
                                         </div>
                                     ) : userReviews.length === 0 ? (
                                         <div className="text-center py-12">
-                                            <FaStar className="mx-auto text-4xl text-gray-400 mb-4" />
-                                            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                                            <FaStar className={`mx-auto text-4xl ${serifTheme.colors.text.muted} mb-4`} />
+                                            <h3 className={`text-lg font-medium ${serifTheme.colors.text.primary} mb-2`}>
                                                 No reviews yet
                                             </h3>
-                                            <p className="text-gray-600 dark:text-gray-400">
+                                            <p className={serifTheme.colors.text.secondary}>
                                                 Start reviewing products you've purchased to help others make informed decisions.
                                             </p>
                                         </div>
                                     ) : (
                                         <div className="space-y-4">
-                                            <AnimatePresence>
                                                 {userReviews
                                                     .filter(review => {
                                                         if (reviewsFilter === 'all') return true;
@@ -1590,26 +1463,23 @@ const UserDashboard = () => {
                                                         return true;
                                                     })
                                                     .map((review) => (
-                                                        <motion.div
+                                                        <div
                                                             key={review.id}
-                                                            initial={{ opacity: 0, y: 20 }}
-                                                            animate={{ opacity: 1, y: 0 }}
-                                                            exit={{ opacity: 0, y: -20 }}
-                                                            className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-6"
+                                                            className={`${serifTheme.colors.background.secondary} ${serifTheme.radius.card} p-6`}
                                                         >
                                                             <div className="flex flex-col lg:flex-row lg:items-start gap-4">
                                                                 {/* Review Status */}
                                                                 <div className="flex items-center gap-2">
                                                                     {review.approved === true ? (
-                                                                        <span className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full text-sm font-medium">
+                                                                        <span className={`px-3 py-1 bg-green-100 text-green-700 ${serifTheme.radius.badge} text-sm font-medium`}>
                                                                             Approved
                                                                         </span>
                                                                     ) : review.approved === false ? (
-                                                                        <span className="px-3 py-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-full text-sm font-medium">
+                                                                        <span className={`px-3 py-1 bg-red-100 text-red-700 ${serifTheme.radius.badge} text-sm font-medium`}>
                                                                             Rejected
                                                                         </span>
                                                                     ) : (
-                                                                        <span className="px-3 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 rounded-full text-sm font-medium">
+                                                                        <span className={`px-3 py-1 bg-yellow-100 text-yellow-700 ${serifTheme.radius.badge} text-sm font-medium`}>
                                                                             Pending
                                                                         </span>
                                                                     )}
@@ -1618,7 +1488,7 @@ const UserDashboard = () => {
                                                                 {/* Review Content */}
                                                                 <div className="flex-1">
                                                                     {/* Product Title */}
-                                                                    <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                                                                    <h4 className={`text-lg font-semibold ${serifTheme.colors.text.primary} mb-2`}>
                                                                         {review.productTitle || "Product"}
                                                                     </h4>
 
@@ -1630,19 +1500,19 @@ const UserDashboard = () => {
                                                                                     key={i}
                                                                                     className={`w-4 h-4 ${
                                                                                         i < review.rating
-                                                                                            ? 'text-yellow-400'
-                                                                                            : 'text-gray-300 dark:text-gray-600'
+                                                                                            ? 'text-yellow-500'
+                                                                                            : serifTheme.colors.text.muted
                                                                                     }`}
                                                                                 />
                                                                             ))}
                                                                         </div>
-                                                                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                                                                        <span className={`text-sm ${serifTheme.colors.text.secondary}`}>
                                                                             {new Date(review.timestamp?.seconds * 1000).toLocaleDateString()}
                                                                         </span>
                                                                     </div>
 
                                                                     {/* Review Text */}
-                                                                    <p className="text-gray-700 dark:text-gray-300 mb-4">
+                                                                    <p className={`${serifTheme.colors.text.secondary} mb-4`}>
                                                                         {review.review}
                                                                     </p>
 
@@ -1650,21 +1520,21 @@ const UserDashboard = () => {
                                                                     {(review.pros || review.cons) && (
                                                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                                                             {review.pros && (
-                                                                                <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg">
-                                                                                    <h5 className="font-medium text-green-800 dark:text-green-400 mb-2">
+                                                                                <div className={`bg-green-50 p-3 ${serifTheme.radius.input}`}>
+                                                                                    <h5 className={`font-medium text-green-800 mb-2`}>
                                                                                         👍 Pros
                                                                                     </h5>
-                                                                                    <p className="text-green-700 dark:text-green-300 text-sm">
+                                                                                    <p className={`text-green-700 text-sm`}>
                                                                                         {review.pros}
                                                                                     </p>
                                                                                 </div>
                                                                             )}
                                                                             {review.cons && (
-                                                                                <div className="bg-red-50 dark:bg-red-900/20 p-3 rounded-lg">
-                                                                                    <h5 className="font-medium text-red-800 dark:text-red-400 mb-2">
+                                                                                <div className={`bg-red-50 p-3 ${serifTheme.radius.input}`}>
+                                                                                    <h5 className={`font-medium text-red-800 mb-2`}>
                                                                                         👎 Cons
                                                                                     </h5>
-                                                                                    <p className="text-red-700 dark:text-red-300 text-sm">
+                                                                                    <p className={`text-red-700 text-sm`}>
                                                                                         {review.cons}
                                                                                     </p>
                                                                                 </div>
@@ -1674,16 +1544,15 @@ const UserDashboard = () => {
 
                                                                     {/* Helpful Count */}
                                                                     {review.helpfulCount > 0 && (
-                                                                        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                                                                        <div className={`flex items-center gap-2 text-sm ${serifTheme.colors.text.secondary}`}>
                                                                             <FaThumbsUp className="w-4 h-4" />
                                                                             <span>{review.helpfulCount} found this helpful</span>
                                                                         </div>
                                                                     )}
                                                                 </div>
                                                             </div>
-                                                        </motion.div>
+                                                        </div>
                                                     ))}
-                                            </AnimatePresence>
                                         </div>
                                     )}
                                 </div>
@@ -1691,14 +1560,14 @@ const UserDashboard = () => {
 
                             {/* Edit Profile Tab */}
                              {activeTab === TAB_SECURITY && (
-                                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 sm:p-6 transition-colors duration-300">
+                                <div className={`${serifTheme.colors.background.card} ${serifTheme.radius.card} ${serifTheme.colors.shadow.card} ${serifTheme.spacing.cardPadding} ${serifTheme.transitions.default}`}>
                                     <div className="max-w-4xl mx-auto">
                                         <div className="mb-8">
-                                            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2 flex items-center">
-                                                <FiEdit3 className="mr-3 text-blue-500" />
+                                            <h2 className={`text-2xl font-bold ${serifTheme.colors.text.primary} mb-2 flex items-center`}>
+                                            <FiEdit3 className={`mr-3 ${serifTheme.colors.text.accent}`} />
                                                 Edit Profile
                                             </h2>
-                                            <p className="text-gray-600 dark:text-gray-400">
+                                            <p className={`${serifTheme.colors.text.secondary}`}>
                                                 Update your personal information and account details
                                             </p>
                                         </div>
@@ -1706,9 +1575,9 @@ const UserDashboard = () => {
                                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                                             {/* Profile Information Form */}
                                             <div className="space-y-6">
-                                                <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-6">
-                                                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                                                        <FiUser className="mr-2 text-blue-500" />
+                                                <div className={`${serifTheme.colors.background.secondary} ${serifTheme.radius.card} p-6`}>
+                                                    <h3 className={`text-lg font-semibold ${serifTheme.colors.text.primary} mb-4 flex items-center`}>
+                                                        <FiUser className={`mr-2 ${serifTheme.colors.text.accent}`} />
                                                         Personal Information
                                                     </h3>
                                                     
@@ -1721,11 +1590,12 @@ const UserDashboard = () => {
                                                                 type="text"
                                                                 value={editFormData.name}
                                                                 onChange={(e) => handleInputChange('name', e.target.value)}
-                                                                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white ${
+                                                                className={`w-full px-4 py-3 border ${serifTheme.radius.input} focus:ring-2 focus:ring-amber-500 focus:border-transparent ${serifTheme.colors.background.card} ${serifTheme.colors.text.primary} ${
                                                                     formErrors.name 
-                                                                        ? 'border-red-500 dark:border-red-500' 
-                                                                        : 'border-gray-300 dark:border-gray-600'
+                                                                        ? 'border-red-500' 
+                                                                        : serifTheme.colors.border.secondary
                                                                 }`}
+                                                                style={{ fontFamily: serifTheme.fontFamily.serif }}
                                                                 placeholder="Enter your full name"
                                                             />
                                                             {formErrors.name && (
@@ -1734,7 +1604,7 @@ const UserDashboard = () => {
                                                         </div>
                                                         
                                                         <div>
-                                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                            <label className={`block text-sm font-medium ${serifTheme.colors.text.secondary} mb-2`} style={{ fontFamily: serifTheme.fontFamily.serif }}>
                                                                 Email Address <span className="text-red-500">*</span>
                                                             </label>
                                                             <input
@@ -1796,7 +1666,7 @@ const UserDashboard = () => {
 
                                                 <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-6">
                                                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                                                        <FiMapPin className="mr-2 text-blue-500" />
+                                                        <FiMapPin className="mr-2 text-secondary" />
                                                         Address Information
                                                 </h3>
                                                     
@@ -1866,26 +1736,22 @@ const UserDashboard = () => {
                                             <div className="space-y-6">
                                                 <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-6">
                                                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                                                        <FiCamera className="mr-2 text-blue-500" />
+                                                        <FiCamera className="mr-2 text-secondary" />
                                                         Profile Picture
                                                     </h3>
                                                     
                                                     <div className="text-center">
                                                         <div className="relative inline-block">
-                                                            <motion.img
+                                                            <img
                                                                 src={user?.photoURL || "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"}
                                                                 alt="Profile Picture"
                                                                 className="w-32 h-32 rounded-full border-4 border-gray-200 dark:border-gray-600 object-cover"
-                                                                whileHover={{ scale: 1.05 }}
-                                                                transition={{ duration: 0.2 }}
                                                             />
-                                                            <motion.button
+                                                            <button
                                                                 className="absolute bottom-0 right-0 bg-blue-500 text-white p-2 rounded-full shadow-lg hover:bg-blue-600 transition-colors"
-                                                                whileHover={{ scale: 1.1 }}
-                                                                whileTap={{ scale: 0.9 }}
                                                             >
                                                                 <FiCamera className="w-4 h-4" />
-                                                            </motion.button>
+                                                            </button>
                                                         </div>
                                                         <p className="text-sm text-gray-500 dark:text-gray-400 mt-3">
                                                             Click the camera icon to upload a new photo
@@ -1895,7 +1761,7 @@ const UserDashboard = () => {
 
                                                 <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-6">
                                                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                                                        <FiSettings className="mr-2 text-blue-500" />
+                                                        <FiSettings className="mr-2 text-secondary" />
                                                         Preferences
                                                     </h3>
                                                     
@@ -1975,7 +1841,7 @@ const UserDashboard = () => {
 
                                         {/* Action Buttons */}
                                         <div className="flex flex-col sm:flex-row gap-4 mt-8 pt-6 border-t border-gray-200 dark:border-gray-600">
-                                            <motion.button
+                                            <button
                                                 onClick={handleSaveProfile}
                                                 disabled={!isEditing}
                                                 className={`flex-1 px-6 py-3 rounded-lg transition-colors font-medium flex items-center justify-center ${
@@ -1983,13 +1849,11 @@ const UserDashboard = () => {
                                                         ? 'bg-blue-600 text-white hover:bg-blue-700' 
                                                         : 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
                                                 }`}
-                                                whileHover={isEditing ? { scale: 1.02 } : {}}
-                                                whileTap={isEditing ? { scale: 0.98 } : {}}
                                             >
                                                 <FiSave className="mr-2" />
                                                 {isEditing ? 'Save Changes' : 'No Changes'}
-                                            </motion.button>
-                                            <motion.button
+                                            </button>
+                                            <button
                                                 onClick={handleResetForm}
                                                 disabled={!isEditing}
                                                 className={`flex-1 px-6 py-3 rounded-lg transition-colors font-medium flex items-center justify-center ${
@@ -1997,36 +1861,26 @@ const UserDashboard = () => {
                                                         ? 'bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-500' 
                                                         : 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
                                                 }`}
-                                                whileHover={isEditing ? { scale: 1.02 } : {}}
-                                                whileTap={isEditing ? { scale: 0.98 } : {}}
                                             >
                                                 <FiRotateCcw className="mr-2" />
                                                 Reset Form
-                                            </motion.button>
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
                             )}
 
-                        </motion.div>
-                    </AnimatePresence>
-                </div>
+                        </div>
+                    </div>
             </div>
 
             {/* Tracking Modal */}
-            <AnimatePresence>
-                {trackingModal.isOpen && trackingModal.order && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
+            {trackingModal.isOpen && trackingModal.order && (
+                    <div
                         className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
                         onClick={() => setTrackingModal({ isOpen: false, order: null })}
                     >
-                        <motion.div
-                            initial={{ scale: 0.9, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            exit={{ scale: 0.9, opacity: 0 }}
+                        <div
                             className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto"
                             onClick={(e) => e.stopPropagation()}
                         >
@@ -2224,7 +2078,7 @@ const UserDashboard = () => {
                                         <div>
                                             <p className="text-gray-600 dark:text-gray-400">Order Total</p>
                                             <p className="font-medium text-gray-900 dark:text-white">
-                                                ₹ {calculateTotalAmount(trackingModal.order).toFixed(2)}
+                                                रु {calculateTotalAmount(trackingModal.order).toFixed(2)}
                                             </p>
                                         </div>
                                         <div>
@@ -2251,7 +2105,7 @@ const UserDashboard = () => {
                                 {/* Support Contact */}
                                 <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 border border-blue-200 dark:border-blue-700">
                                     <div className="flex items-center space-x-3">
-                                        <FiMessageCircle className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                                        <FiMessageCircle className="w-5 h-5 text-secondary dark:text-secondary" />
                                         <div>
                                             <h4 className="font-medium text-blue-800 dark:text-blue-200">Need Help?</h4>
                                             <p className="text-sm text-blue-700 dark:text-blue-300">
@@ -2263,17 +2117,16 @@ const UserDashboard = () => {
                                         href={`https://wa.me/${WHATSAPP_SUPPORT_NUMBER.replace('+', '')}`}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="inline-flex items-center mt-3 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
+                                        className="inline-flex items-center mt-3 px-4 py-2 bg-success text-white rounded-lg hover:opacity-90 transition-colors text-sm"
                                     >
                                         <FiMessageCircle className="mr-2" />
                                         WhatsApp Support
                                     </a>
                                 </div>
                             </div>
-                        </motion.div>
-                    </motion.div>
+                        </div>
+                    </div>
                 )}
-            </AnimatePresence>
         </Layout>
     );
 };

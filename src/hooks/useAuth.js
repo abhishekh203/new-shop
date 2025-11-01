@@ -54,6 +54,9 @@ export const useAuth = () => {
             // Store user data
             localStorage.setItem("users", JSON.stringify(userData));
             
+            // Reset rate limiter on successful login
+            rateLimiter.resetAttempts(email);
+            
             setProgress(100);
             toast.success("Login successful! Redirecting...");
 
@@ -178,6 +181,10 @@ export const useAuth = () => {
                 // User already exists, treat as login
                 const userData = userDoc.data();
                 localStorage.setItem("users", JSON.stringify(userData));
+                
+                // Reset rate limiter on successful login
+                rateLimiter.resetAttempts(firebaseUser.email);
+                
                 setProgress(100);
                 toast.success("Welcome back! Logged in successfully.");
                 

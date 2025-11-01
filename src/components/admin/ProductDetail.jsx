@@ -4,7 +4,9 @@ import myContext from "../../context/myContext";
 import Loader from "../loader/Loader"; // Assuming Loader path is correct
 import { deleteDoc, doc, updateDoc } from "firebase/firestore";
 import { fireDB } from "../../firebase/FirebaseConfig"; // Assuming Firebase config path is correct
-import toast from "react-hot-toast"; // Using react-hot-toast
+import { useNotification } from "../../context/NotificationContext";
+import { serifTheme } from "../../design-system/themes/serifTheme";
+import { SerifButton, SerifBadge } from "../../design-system/components";
 import { FiEdit, FiTrash2, FiChevronDown, FiChevronUp, FiSearch, FiFilter, FiX, FiPlus, FiImage, FiPackage, FiDollarSign, FiCalendar, FiTag, FiAlertCircle, FiPlus as FiAdd, FiMinus } from "react-icons/fi"; // Added more icons
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -63,9 +65,10 @@ const formatPrice = (price) => {
 };
 
 // --- Component ---
-const ProductDetail = () => {
+const ProductDetail = ({ globalSearchTerm = "" }) => {
     const context = useContext(myContext);
     const { loading, setLoading, getAllProduct, getAllProductFunction } = context;
+    const notification = useNotification();
 
     const [expandedProduct, setExpandedProduct] = useState(null); // ID of the expanded product
     const [searchQuery, setSearchQuery] = useState("");
@@ -83,43 +86,19 @@ const ProductDetail = () => {
 
     // Delete product function
     const deleteProduct = async (id) => {
-        // Use toast for confirmation instead of window.confirm for better UX
-        toast((t) => (
-            <div className="flex flex-col items-center p-2">
-                <FiAlertCircle className="text-red-500 h-8 w-8 mb-2" />
-                <p className="text-sm font-medium text-gray-900 mb-2">Delete Product?</p>
-                <p className="text-xs text-gray-600 mb-3">This action cannot be undone.</p>
-                <div className="flex gap-3">
-                    <button
-                        onClick={async () => {
-                            toast.dismiss(t.id); // Dismiss the confirmation toast
-                            setLoading(true);
-                            try {
-                                await deleteDoc(doc(fireDB, 'products', id));
-                                toast.success('Product deleted successfully');
-                                getAllProductFunction(); // Refresh product list
-                            } catch (error) {
-                                console.error("Delete error:", error);
-                                toast.error('Failed to delete product');
-                            } finally {
-                                setLoading(false);
-                            }
-                        }}
-                        className="px-3 py-1 bg-red-600 text-white text-xs font-semibold rounded hover:bg-red-700 transition"
-                    >
-                        Delete
-                    </button>
-                    <button
-                        onClick={() => toast.dismiss(t.id)}
-                        className="px-3 py-1 bg-gray-200 text-gray-700 text-xs font-semibold rounded hover:bg-gray-300 transition"
-                    >
-                        Cancel
-                    </button>
-                </div>
-            </div>
-        ), {
-            duration: Infinity, // Keep open until user interacts
-        });
+        if (window.confirm("Are you sure you want to delete this product? This action cannot be undone.")) {
+            setLoading(true);
+            try {
+                await deleteDoc(doc(fireDB, 'products', id));
+                notification.success('Product deleted successfully');
+                getAllProductFunction(); // Refresh product list
+            } catch (error) {
+                console.error("Delete error:", error);
+                notification.error('Failed to delete product');
+            } finally {
+                setLoading(false);
+            }
+        }
     };
 
     // Handle column header click for sorting
@@ -139,13 +118,13 @@ const ProductDetail = () => {
             const productRef = doc(fireDB, "products", productId);
             
             await updateDoc(productRef, { quantity: newQuantity });
-            toast.success(`Stock updated to ${newQuantity}`);
+            notification.success(`Stock updated to ${newQuantity}`);
             
             // Refresh product list to show updated data
             getAllProductFunction();
         } catch (error) {
             console.error("Error updating stock:", error);
-            toast.error("Failed to update stock");
+            notification.error("Failed to update stock");
         }
     };
 
@@ -155,13 +134,13 @@ const ProductDetail = () => {
             const productRef = doc(fireDB, "products", productId);
             
             await updateDoc(productRef, { quantity: newQuantity });
-            toast.success(`Stock ${increment > 0 ? 'increased' : 'decreased'} by ${Math.abs(increment)}`);
+            notification.success(`Stock ${increment > 0 ? 'increased' : 'decreased'} by ${Math.abs(increment)}`);
             
             // Refresh product list to show updated data
             getAllProductFunction();
         } catch (error) {
             console.error("Error updating stock:", error);
-            toast.error("Failed to update stock");
+            notification.error("Failed to update stock");
         }
     };
 
@@ -177,9 +156,10 @@ const ProductDetail = () => {
     const filteredAndSortedProducts = useMemo(() => {
         let products = [...getAllProduct]; // Start with all products
 
-        // 1. Filter by Search Query
-        if (searchQuery) {
-            const query = searchQuery.toLowerCase();
+        // 1. Filter by Search Query (combine local and global search)
+        const combinedSearchQuery = globalSearchTerm || searchQuery;
+        if (combinedSearchQuery) {
+            const query = combinedSearchQuery.toLowerCase();
             products = products.filter(product =>
                 product.title?.toLowerCase().includes(query) ||
                 product.category?.toLowerCase().includes(query) ||
@@ -230,7 +210,7 @@ const ProductDetail = () => {
         }
 
         return products;
-    }, [getAllProduct, searchQuery, categoryFilter, priceRange, sortConfig]);
+    }, [getAllProduct, searchQuery, categoryFilter, priceRange, sortConfig, globalSearchTerm]);
 
     // Get unique categories for the filter dropdown
     const uniqueCategories = useMemo(() => {
@@ -248,7 +228,7 @@ const ProductDetail = () => {
 
     // --- JSX Structure ---
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-950 p-4 md:p-8 text-gray-200">
+        <div className="min-h-full bg-transparent relative" style={{ fontFamily: serifTheme.fontFamily.serif }}>
             {/* Loading Overlay */}
             <AnimatePresence>
                 {loading && (
@@ -269,33 +249,33 @@ const ProductDetail = () => {
                 {/* Header Section */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                     <div>
-                        <h1 className="text-2xl md:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 mb-1">
+                        <h1 className={`text-2xl md:text-3xl font-bold ${serifTheme.gradients.accent} mb-1`}>
                             Product Inventory
                         </h1>
-                        <p className="text-sm text-gray-400">
+                        <p className={`text-sm ${serifTheme.colors.text.tertiary}`}>
                             {filteredAndSortedProducts.length} {filteredAndSortedProducts.length === 1 ? 'product' : 'products'} found
                         </p>
                     </div>
                     <div className="flex items-center gap-3 w-full md:w-auto">
                         {/* Filter Toggle Button */}
-                        <motion.button
+                        <SerifButton
                             onClick={() => setShowFilters(!showFilters)}
-                            className="flex items-center gap-1.5 px-3 py-2 bg-gray-700/50 hover:bg-gray-700 border border-gray-600 rounded-lg text-sm transition duration-150"
-                            whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+                            variant="secondary"
+                            size="small"
+                            icon={<FiFilter />}
                         >
-                            <FiFilter className="h-4 w-4" />
                             Filters
-                            <FiChevronDown className={`h-4 w-4 transition-transform duration-200 ${showFilters ? 'rotate-180' : ''}`} />
-                        </motion.button>
-                         {/* Add Product Button */}
-                        <motion.button
+                            <FiChevronDown className={`ml-1 h-4 w-4 transition-transform duration-200 ${showFilters ? 'rotate-180' : ''}`} />
+                        </SerifButton>
+                        {/* Add Product Button */}
+                        <SerifButton
                             onClick={() => navigate('/addproduct')}
-                            className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-lg shadow-md text-sm font-semibold transition duration-150"
-                            whileHover={{ scale: 1.03, filter: 'brightness(1.1)' }} whileTap={{ scale: 0.97 }}
+                            variant="primary"
+                            size="small"
+                            icon={<FiPlus />}
                         >
-                            <FiPlus className="h-4 w-4" />
                             Add Product
-                        </motion.button>
+                        </SerifButton>
                     </div>
                 </div>
 
@@ -304,26 +284,26 @@ const ProductDetail = () => {
                     {showFilters && (
                         <motion.div
                             variants={filterVariants} initial="hidden" animate="visible" exit="exit"
-                            className="bg-gray-800/50 backdrop-blur-sm p-4 rounded-lg border border-gray-700 mb-6 overflow-hidden"
+                            className={`${serifTheme.gradients.card} ${serifTheme.radius.card} p-4 border ${serifTheme.colors.border.primary} mb-6 overflow-hidden`}
                         >
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                                 {/* Search Input */}
                                 <div className="relative">
-                                    <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                    <FiSearch className={`absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 ${serifTheme.colors.text.tertiary}`} />
                                     <input
                                         type="text" placeholder="Search..."
-                                        className="w-full pl-9 pr-3 py-2 border border-gray-600 rounded-lg bg-gray-700/60 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition duration-150 placeholder-gray-400"
+                                        className={`w-full pl-9 pr-3 py-2 border ${serifTheme.colors.border.secondary} ${serifTheme.radius.button} ${serifTheme.colors.background.card} ${serifTheme.colors.text.primary} text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 ${serifTheme.transitions.default} placeholder-amber-400/50`}
                                         value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
                                     />
                                 </div>
                                 {/* Category Select */}
                                 <select
-                                    className="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700/60 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition duration-150 appearance-none pr-8 bg-no-repeat bg-right"
-                                    style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`, backgroundPosition: 'right 0.5rem center', backgroundSize: '1.2em 1.2em' }}
+                                    className={`w-full px-3 py-2 border ${serifTheme.colors.border.secondary} ${serifTheme.radius.button} ${serifTheme.colors.background.card} ${serifTheme.colors.text.primary} text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 ${serifTheme.transitions.default} appearance-none pr-8 bg-no-repeat bg-right`}
+                                    style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%23d97706' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`, backgroundPosition: 'right 0.5rem center', backgroundSize: '1.2em 1.2em' }}
                                     value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}
                                 >
                                     {uniqueCategories.map((category, index) => (
-                                        <option key={index} value={category} className="capitalize bg-gray-800">
+                                        <option key={index} value={category} className="capitalize">
                                             {category === 'all' ? 'All Categories' : category}
                                         </option>
                                     ))}
@@ -332,39 +312,41 @@ const ProductDetail = () => {
                                 <div className="flex items-center gap-2 col-span-1 sm:col-span-2 md:col-span-1">
                                     <input
                                         type="number" placeholder="Min रु" min="0"
-                                        className="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700/60 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition duration-150 placeholder-gray-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                        className={`w-full px-3 py-2 border ${serifTheme.colors.border.secondary} ${serifTheme.radius.button} ${serifTheme.colors.background.card} ${serifTheme.colors.text.primary} text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 ${serifTheme.transitions.default} placeholder-amber-400/50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
                                         value={priceRange.min} onChange={(e) => setPriceRange({...priceRange, min: e.target.value})}
                                     />
-                                    <span className="text-gray-500">-</span>
+                                    <span className={serifTheme.colors.text.muted}>-</span>
                                     <input
                                         type="number" placeholder="Max रु" min={priceRange.min || "0"}
-                                        className="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700/60 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition duration-150 placeholder-gray-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                        className={`w-full px-3 py-2 border ${serifTheme.colors.border.secondary} ${serifTheme.radius.button} ${serifTheme.colors.background.card} ${serifTheme.colors.text.primary} text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 ${serifTheme.transitions.default} placeholder-amber-400/50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
                                         value={priceRange.max} onChange={(e) => setPriceRange({...priceRange, max: e.target.value})}
                                     />
                                 </div>
                                 {/* Reset Button */}
-                                <button
+                                <SerifButton
                                     onClick={resetFilters}
-                                    className="col-span-1 sm:col-span-2 md:col-span-1 px-3 py-2 text-sm text-indigo-400 hover:text-indigo-300 transition duration-150 text-center border border-indigo-500/30 rounded-lg hover:bg-indigo-500/10"
+                                    variant="secondary"
+                                    size="small"
+                                    className="col-span-1 sm:col-span-2 md:col-span-1"
                                 >
                                     Reset Filters
-                                </button>
+                                </SerifButton>
                             </div>
                         </motion.div>
                     )}
                 </AnimatePresence>
 
                 {/* Product Display Area */}
-                <div className="bg-gray-900/70 backdrop-blur-md rounded-xl shadow-lg border border-gray-700/50 overflow-hidden">
+                <div className={`${serifTheme.gradients.card} ${serifTheme.radius.card} ${serifTheme.colors.shadow.card} border ${serifTheme.colors.border.primary} overflow-hidden`}>
                     {/* Desktop Table */}
                     <div className="hidden md:block overflow-x-auto">
                         <motion.table
-                            className="min-w-full divide-y divide-gray-700"
-                            variants={listVariants} // Use list variant for table body stagger
+                            className={`min-w-full divide-y ${serifTheme.colors.border.secondary}`}
+                            variants={listVariants}
                             initial="hidden"
                             animate="visible"
                         >
-                            <thead className="bg-gray-800/50 sticky top-0 z-10">
+                            <thead className={serifTheme.colors.background.secondary}>
                                 <tr>
                                     {/* Define Table Headers */}
                                     {['#', 'Image', 'Title', 'Price', 'Category', 'Date', 'Actions'].map((header, index) => {
@@ -374,7 +356,7 @@ const ProductDetail = () => {
                                             <th
                                                 key={header}
                                                 scope="col"
-                                                className={`px-5 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider ${canSort ? 'cursor-pointer hover:bg-gray-700/50 transition-colors' : ''}`}
+                                                className={`px-5 py-3 text-left text-xs font-medium ${serifTheme.colors.text.tertiary} uppercase tracking-wider ${canSort ? `cursor-pointer hover:bg-amber-50/50 ${serifTheme.transitions.default}` : ''}`}
                                                 onClick={canSort ? () => requestSort(sortKey) : undefined}
                                             >
                                                 <div className="flex items-center">
@@ -386,7 +368,7 @@ const ProductDetail = () => {
                                     })}
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-700/70">
+                            <tbody className={`divide-y ${serifTheme.colors.border.secondary}`}>
                                 <AnimatePresence initial={false}>
                                     {filteredAndSortedProducts.length > 0 ? (
                                         filteredAndSortedProducts.map((item, index) => {
@@ -396,38 +378,48 @@ const ProductDetail = () => {
                                                 <React.Fragment key={id}>
                                                     {/* Main Table Row */}
                                                     <motion.tr
-                                                        className="hover:bg-gray-800/40 transition-colors cursor-pointer"
+                                                        className={`hover:bg-amber-50/50 ${serifTheme.transitions.default} cursor-pointer`}
                                                         onClick={() => toggleExpand(id)}
-                                                        variants={itemVariants} // Apply item animation
-                                                        layout // Animate layout changes
+                                                        variants={itemVariants}
+                                                        layout
                                                     >
-                                                        <td className="px-5 py-4 whitespace-nowrap text-sm text-gray-400">{index + 1}</td>
+                                                        <td className={`px-5 py-4 whitespace-nowrap text-sm ${serifTheme.colors.text.tertiary}`}>{index + 1}</td>
                                                         <td className="px-5 py-4 whitespace-nowrap">
                                                             <img
-                                                                className="h-10 w-10 rounded-md object-cover border border-gray-600"
+                                                                className={`h-10 w-10 ${serifTheme.radius.button} object-cover border ${serifTheme.colors.border.secondary}`}
                                                                 src={productImageUrl || 'https://placehold.co/40x40/27272a/a1a1aa?text=N/A'}
                                                                 alt={title || 'Product'}
                                                                 onError={(e) => { e.target.onerror = null; e.target.src='https://placehold.co/40x40/27272a/a1a1aa?text=N/A'; }}
                                                             />
                                                         </td>
-                                                        <td className="px-5 py-4 whitespace-nowrap text-sm font-medium text-gray-200 max-w-xs truncate" title={title}>{title}</td>
-                                                        <td className="px-5 py-4 whitespace-nowrap text-sm font-medium text-emerald-400">{formatPrice(price)}</td>
+                                                        <td className={`px-5 py-4 whitespace-nowrap text-sm font-medium ${serifTheme.colors.text.primary} max-w-xs truncate`} title={title}>{title}</td>
+                                                        <td className={`px-5 py-4 whitespace-nowrap text-sm font-medium text-emerald-600`}>{formatPrice(price)}</td>
                                                         <td className="px-5 py-4 whitespace-nowrap">
-                                                            <span className="px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full bg-indigo-900/50 text-indigo-300 capitalize border border-indigo-700/50">
+                                                            <SerifBadge variant="secondary" size="small" className="capitalize">
                                                                 {category}
-                                                            </span>
+                                                            </SerifBadge>
                                                         </td>
-                                                        <td className="px-5 py-4 whitespace-nowrap text-sm text-gray-400">
+                                                        <td className={`px-5 py-4 whitespace-nowrap text-sm ${serifTheme.colors.text.tertiary}`}>
                                                             {new Date(date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                                                         </td>
                                                         <td className="px-5 py-4 whitespace-nowrap text-sm font-medium">
                                                             <div className="flex items-center space-x-3">
                                                                 {/* Edit Button */}
-                                                                <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={(e) => { e.stopPropagation(); navigate(`/updateproduct/${id}`); }} className="text-blue-400 hover:text-blue-300 transition-colors p-1 rounded-full hover:bg-blue-500/10" title="Edit"> <FiEdit className="h-4 w-4" /> </motion.button>
+                                                                <SerifButton
+                                                                    onClick={(e) => { e.stopPropagation(); navigate(`/updateproduct/${id}`); }}
+                                                                    variant="secondary"
+                                                                    size="small"
+                                                                    icon={<FiEdit />}
+                                                                />
                                                                 {/* Delete Button */}
-                                                                <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={(e) => { e.stopPropagation(); deleteProduct(id); }} className="text-red-400 hover:text-red-300 transition-colors p-1 rounded-full hover:bg-red-500/10" title="Delete"> <FiTrash2 className="h-4 w-4" /> </motion.button>
+                                                                <SerifButton
+                                                                    onClick={(e) => { e.stopPropagation(); deleteProduct(id); }}
+                                                                    variant="danger"
+                                                                    size="small"
+                                                                    icon={<FiTrash2 />}
+                                                                />
                                                                 {/* Expand Icon */}
-                                                                <span className={`text-gray-500 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}> <FiChevronDown className="h-5 w-5" /> </span>
+                                                                <span className={`${serifTheme.colors.text.muted} ${serifTheme.transitions.default} ${isExpanded ? 'rotate-180' : ''}`}> <FiChevronDown className="h-5 w-5" /> </span>
                                                             </div>
                                                         </td>
                                                     </motion.tr>
@@ -435,17 +427,17 @@ const ProductDetail = () => {
                                                     {/* Expanded Row Content */}
                                                     <AnimatePresence>
                                                         {isExpanded && (
-                                                            <motion.tr key={`expanded-${id}`} className="bg-gray-800/30">
+                                                            <motion.tr key={`expanded-${id}`} className={serifTheme.colors.background.secondary}>
                                                                 <td colSpan="7" className="p-0">
                                                                     <motion.div
                                                                         variants={expandVariants} initial="hidden" animate="visible" exit="exit"
-                                                                        className="px-5 py-4 overflow-hidden" // Added overflow hidden
+                                                                        className="px-5 py-4 overflow-hidden"
                                                                     >
                                                                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
                                                                             {/* Expanded Image */}
                                                                             <div className="flex justify-center items-center">
                                                                                 <img
-                                                                                    className="h-32 w-32 rounded-lg object-cover border border-gray-600 shadow-md"
+                                                                                    className={`h-32 w-32 ${serifTheme.radius.card} object-cover border ${serifTheme.colors.border.secondary} ${serifTheme.colors.shadow.card}`}
                                                                                     src={productImageUrl || 'https://placehold.co/128x128/27272a/a1a1aa?text=N/A'}
                                                                                     alt={title || 'Product'}
                                                                                     onError={(e) => { e.target.onerror = null; e.target.src='https://placehold.co/128x128/27272a/a1a1aa?text=N/A'; }}
@@ -454,20 +446,20 @@ const ProductDetail = () => {
                                                                             {/* Expanded Details */}
                                                                             <div className="sm:col-span-2 space-y-2">
                                                                                 <div>
-                                                                                    <p className="font-semibold text-gray-400 uppercase tracking-wider">Description</p>
-                                                                                    <p className="text-gray-300 mt-0.5">{description || "No description."}</p>
+                                                                                    <p className={`font-semibold ${serifTheme.colors.text.tertiary} uppercase tracking-wider`}>Description</p>
+                                                                                    <p className={`${serifTheme.colors.text.primary} mt-0.5`}>{description || "No description."}</p>
                                                                                 </div>
                                                                                 <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-                                                                                    <div><p className="font-semibold text-gray-400 uppercase">ID:</p> <p className="text-gray-300 font-mono break-all">{id}</p></div>
-                                                                                    <div><p className="font-semibold text-gray-400 uppercase">Stock:</p> <p className="text-gray-300">{quantity > 0 ? `${quantity} available` : "Out of Stock"}</p></div>
-                                                                                    <div><p className="font-semibold text-gray-400 uppercase">Created:</p> <p className="text-gray-300">{new Date(date).toLocaleString('en-GB')}</p></div>
+                                                                                    <div><p className={`font-semibold ${serifTheme.colors.text.tertiary} uppercase`}>ID:</p> <p className={`${serifTheme.colors.text.primary} font-mono break-all`}>{id}</p></div>
+                                                                                    <div><p className={`font-semibold ${serifTheme.colors.text.tertiary} uppercase`}>Stock:</p> <p className={serifTheme.colors.text.primary}>{quantity > 0 ? `${quantity} available` : "Out of Stock"}</p></div>
+                                                                                    <div><p className={`font-semibold ${serifTheme.colors.text.tertiary} uppercase`}>Created:</p> <p className={serifTheme.colors.text.primary}>{new Date(date).toLocaleString('en-GB')}</p></div>
                                                                                 </div>
                                                                                 
                                                                                 {/* Stock Management Controls */}
-                                                                                <div className="mt-4 p-3 bg-gray-700/30 rounded-lg border border-gray-600/30">
+                                                                                <div className={`mt-4 p-3 ${serifTheme.colors.background.secondary} ${serifTheme.radius.button} border ${serifTheme.colors.border.secondary}`}>
                                                                                     <div className="flex items-center justify-between mb-2">
-                                                                                        <span className="text-sm font-semibold text-gray-300">Stock Management</span>
-                                                                                        <span className="text-xs text-gray-400">Current: {quantity}</span>
+                                                                                        <span className={`text-sm font-semibold ${serifTheme.colors.text.primary}`}>Stock Management</span>
+                                                                                        <span className={`text-xs ${serifTheme.colors.text.tertiary}`}>Current: {quantity}</span>
                                                                                     </div>
                                                                                     <div className="flex items-center gap-2 mb-2">
                                                                                         <motion.button
@@ -527,11 +519,13 @@ const ProductDetail = () => {
                                     ) : (
                                         // No Results Row
                                         <motion.tr variants={itemVariants}>
-                                            <td colSpan="7" className="px-6 py-10 text-center text-sm text-gray-400">
+                                            <td colSpan="7" className={`px-6 py-10 text-center text-sm ${serifTheme.colors.text.tertiary}`}>
                                                 <div className="flex flex-col items-center justify-center">
-                                                    <FiSearch className="h-10 w-10 text-gray-500 mb-2" />
+                                                    <FiSearch className={`h-10 w-10 ${serifTheme.colors.text.muted} mb-2`} />
                                                     No products found matching your criteria.
-                                                    <button onClick={resetFilters} className="mt-2 text-sm text-indigo-400 hover:text-indigo-300"> Reset filters </button>
+                                                    <SerifButton onClick={resetFilters} variant="secondary" size="small" className="mt-2">
+                                                        Reset filters
+                                                    </SerifButton>
                                                 </div>
                                             </td>
                                         </motion.tr>

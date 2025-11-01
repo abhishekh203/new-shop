@@ -3,7 +3,9 @@ import myContext from "../../context/myContext"; // Assuming context path is cor
 import Loader from "../loader/Loader"; // Assuming Loader path is correct
 import { deleteDoc, doc, updateDoc } from "firebase/firestore";
 import { fireDB } from "../../firebase/FirebaseConfig"; // Assuming Firebase config path is correct
-import toast from "react-hot-toast"; // Using react-hot-toast
+import { useNotification } from "../../context/NotificationContext";
+import { serifTheme } from "../../design-system/themes/serifTheme";
+import { SerifButton, SerifBadge } from "../../design-system/components";
 import { FiTrash2, FiEdit, FiSearch, FiFilter, FiChevronDown, FiChevronUp, FiX, FiPackage, FiUser, FiMapPin, FiCalendar, FiHash, FiDollarSign, FiAlertCircle, FiInfo, FiMaximize2, FiUpload, FiCamera } from "react-icons/fi"; // Added FiUpload, FiCamera
 import { format } from "date-fns"; // For date formatting
 import { motion, AnimatePresence } from "framer-motion";
@@ -76,9 +78,10 @@ const getStatusColorClasses = (status) => {
 
 
 // --- Component ---
-const OrderDetail = () => {
+const OrderDetail = ({ globalSearchTerm = "" }) => {
     const context = useContext(myContext);
     const { loading, setLoading, getAllOrder, orderDelete } = context; // Assuming orderDelete exists
+    const notification = useNotification();
 
     // State management
     const [expandedOrder, setExpandedOrder] = useState(null); // ID of expanded order
@@ -117,50 +120,33 @@ const OrderDetail = () => {
             setSelectedStatus(prev => ({ ...prev, [orderId]: status }));
             
             // Show success message
-            toast.success(`Order status updated to ${status}`);
+            notification.success(`Order status updated to ${status}`);
             
             // Refresh orders from context (if needed)
             // You might need to call a refresh function from context here
             
         } catch (error) {
             console.error("Error updating order status:", error);
-            toast.error("Failed to update order status");
+            notification.error("Failed to update order status");
         } finally {
             setLoading(false);
         }
     };
 
-    // Delete order function with confirmation toast
+    // Delete order function with confirmation
     const handleDeleteOrder = async (id) => {
-        toast((t) => (
-            <div className="flex flex-col items-center p-2 bg-white rounded-lg shadow-md">
-                <FiAlertCircle className="text-red-500 h-8 w-8 mb-2" />
-                <p className="text-sm font-medium text-gray-900 mb-2">Delete Order?</p>
-                <p className="text-xs text-gray-600 mb-3">Order <span className="font-mono bg-gray-100 px-1 rounded">{id.slice(0, 8)}</span> will be removed.</p>
-                <div className="flex gap-3">
-                    <button
-                        onClick={async () => {
-                            toast.dismiss(t.id);
-                            setLoading(true);
-                            try {
-                                await orderDelete(id); // Use context function for delete
-                                // No need to call getAllOrderFunction if orderDelete updates the context state
-                            } catch (error) {
-                                console.error("Delete error:", error);
-                                toast.error('Failed to delete order');
-                            } finally {
-                                setLoading(false);
-                            }
-                        }}
-                        className="px-3 py-1 bg-red-600 text-white text-xs font-semibold rounded hover:bg-red-700 transition"
-                    > Delete </button>
-                    <button
-                        onClick={() => toast.dismiss(t.id)}
-                        className="px-3 py-1 bg-gray-200 text-gray-700 text-xs font-semibold rounded hover:bg-gray-300 transition"
-                    > Cancel </button>
-                </div>
-            </div>
-        ), { duration: Infinity });
+        if (window.confirm(`Are you sure you want to delete order ${id.slice(0, 8)}? This action cannot be undone.`)) {
+            setLoading(true);
+            try {
+                await orderDelete(id); // Use context function for delete
+                notification.success('Order deleted successfully');
+            } catch (error) {
+                console.error("Delete error:", error);
+                notification.error('Failed to delete order');
+            } finally {
+                setLoading(false);
+            }
+        }
     };
 
     // Memoized filtering logic
@@ -185,9 +171,10 @@ const OrderDetail = () => {
             } catch (e) { console.error("Date filtering error:", e)} // Handle potential date parsing errors
         }
 
-        // 3. Filter by Search Query
-        if (searchQuery) {
-            const query = searchQuery.toLowerCase().trim();
+        // 3. Filter by Search Query (combine local and global search)
+        const combinedSearchQuery = globalSearchTerm || searchQuery;
+        if (combinedSearchQuery) {
+            const query = combinedSearchQuery.toLowerCase().trim();
             orders = orders.filter(order =>
                 order.id?.toLowerCase().includes(query) ||
                 order.addressInfo?.name?.toLowerCase().includes(query) ||
@@ -207,7 +194,7 @@ const OrderDetail = () => {
 
 
         return orders;
-    }, [getAllOrder, statusFilter, dateFilter, searchQuery]);
+    }, [getAllOrder, statusFilter, dateFilter, searchQuery, globalSearchTerm]);
 
     // Reset all filters
     const resetFilters = () => {
@@ -219,7 +206,7 @@ const OrderDetail = () => {
 
     // --- JSX Structure ---
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-950 p-4 md:p-8 text-gray-200 font-sans">
+        <div className="min-h-full bg-transparent relative" style={{ fontFamily: serifTheme.fontFamily.serif }}>
             {/* Loading Overlay */}
             <AnimatePresence>
                 {loading && (
@@ -234,24 +221,23 @@ const OrderDetail = () => {
                 {/* Header */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                     <div>
-                        <h1 className="text-2xl md:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-violet-500 mb-1">
+                        <h1 className={`text-2xl md:text-3xl font-bold ${serifTheme.gradients.accent} mb-1`}>
                             Order Management
                         </h1>
-                        <p className="text-sm text-gray-400">
+                        <p className={`text-sm ${serifTheme.colors.text.tertiary}`}>
                             {filteredOrders.length} {filteredOrders.length === 1 ? 'order' : 'orders'} found
                         </p>
                     </div>
                     <div className="flex items-center gap-3 w-full md:w-auto">
-                        <motion.button
+                        <SerifButton
                             onClick={() => setShowFilters(!showFilters)}
-                            className="flex items-center gap-1.5 px-3 py-2 bg-gray-700/50 hover:bg-gray-700 border border-gray-600 rounded-lg text-sm transition duration-150"
-                            whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+                            variant="secondary"
+                            size="small"
+                            icon={<FiFilter />}
                         >
-                            <FiFilter className="h-4 w-4" /> Filters
-                            <FiChevronDown className={`h-4 w-4 transition-transform duration-200 ${showFilters ? 'rotate-180' : ''}`} />
-                        </motion.button>
-                        {/* Add Order button if needed */}
-                        {/* <motion.button ... > <FiPlus/> Add Order </motion.button> */}
+                            Filters
+                            <FiChevronDown className={`ml-1 h-4 w-4 transition-transform duration-200 ${showFilters ? 'rotate-180' : ''}`} />
+                        </SerifButton>
                     </div>
                 </div>
 
@@ -260,70 +246,73 @@ const OrderDetail = () => {
                     {showFilters && (
                         <motion.div
                             variants={filterVariants} initial="hidden" animate="visible" exit="exit"
-                            className="bg-gray-800/50 backdrop-blur-sm p-4 rounded-lg border border-gray-700 mb-6 overflow-hidden"
+                            className={`${serifTheme.gradients.card} ${serifTheme.radius.card} p-4 border ${serifTheme.colors.border.primary} mb-6 overflow-hidden`}
                         >
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
                                 {/* Search Input */}
                                 <div className="relative">
-                                    <label htmlFor="order-search" className="block text-xs font-medium text-gray-400 mb-1">Search</label>
-                                    <FiSearch className="absolute left-3 bottom-2.5 h-4 w-4 text-gray-400 pointer-events-none" />
+                                    <label htmlFor="order-search" className={`block text-xs font-medium ${serifTheme.colors.text.tertiary} mb-1`}>Search</label>
+                                    <FiSearch className={`absolute left-3 bottom-2.5 h-4 w-4 ${serifTheme.colors.text.tertiary} pointer-events-none`} />
                                     <input id="order-search" type="text" placeholder="ID, Name, Email, Phone..."
-                                        className="w-full pl-9 pr-3 py-2 border border-gray-600 rounded-lg bg-gray-700/60 text-sm focus:outline-none focus:ring-1 focus:ring-pink-500 focus:border-pink-500 transition duration-150 placeholder-gray-500"
+                                        className={`w-full pl-9 pr-3 py-2 border ${serifTheme.colors.border.secondary} ${serifTheme.radius.button} ${serifTheme.colors.background.card} ${serifTheme.colors.text.primary} text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 ${serifTheme.transitions.default} placeholder-amber-400/50`}
                                         value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
                                     />
                                 </div>
                                 {/* Status Select */}
                                 <div>
-                                    <label htmlFor="status-filter" className="block text-xs font-medium text-gray-400 mb-1">Status</label>
+                                    <label htmlFor="status-filter" className={`block text-xs font-medium ${serifTheme.colors.text.tertiary} mb-1`}>Status</label>
                                     <select id="status-filter"
-                                        className="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700/60 text-sm focus:outline-none focus:ring-1 focus:ring-pink-500 focus:border-pink-500 transition duration-150 appearance-none pr-8 bg-no-repeat bg-right cursor-pointer"
-                                        style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`, backgroundPosition: 'right 0.5rem center', backgroundSize: '1.2em 1.2em' }}
+                                        className={`w-full px-3 py-2 border ${serifTheme.colors.border.secondary} ${serifTheme.radius.button} ${serifTheme.colors.background.card} ${serifTheme.colors.text.primary} text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 ${serifTheme.transitions.default} appearance-none pr-8 bg-no-repeat bg-right cursor-pointer`}
+                                        style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%23d97706' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`, backgroundPosition: 'right 0.5rem center', backgroundSize: '1.2em 1.2em' }}
                                         value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
                                     >
-                                        <option value="all" className="bg-gray-800">All Statuses</option>
-                                        <option value="pending" className="bg-gray-800">Pending</option>
-                                        <option value="processing" className="bg-gray-800">Processing</option>
-                                        <option value="shipped" className="bg-gray-800">Shipped</option>
-                                        <option value="delivered" className="bg-gray-800">Delivered</option>
-                                        <option value="cancelled" className="bg-gray-800">Cancelled</option>
+                                        <option value="all">All Statuses</option>
+                                        <option value="pending">Pending</option>
+                                        <option value="processing">Processing</option>
+                                        <option value="shipped">Shipped</option>
+                                        <option value="delivered">Delivered</option>
+                                        <option value="cancelled">Cancelled</option>
                                     </select>
                                 </div>
                                 {/* Date Range Inputs */}
                                 <div className="lg:col-span-1">
-                                    <label className="block text-xs font-medium text-gray-400 mb-1">Date Range</label>
+                                    <label className={`block text-xs font-medium ${serifTheme.colors.text.tertiary} mb-1`}>Date Range</label>
                                     <div className="flex items-center gap-2">
-                                        <input type="date" value={dateFilter.startDate} onChange={(e) => setDateFilter({...dateFilter, startDate: e.target.value})} className="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700/60 text-sm focus:outline-none focus:ring-1 focus:ring-pink-500 focus:border-pink-500 transition duration-150 text-gray-400" />
-                                        <span className="text-gray-500 text-sm">to</span>
-                                        <input type="date" value={dateFilter.endDate} onChange={(e) => setDateFilter({...dateFilter, endDate: e.target.value})} className="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700/60 text-sm focus:outline-none focus:ring-1 focus:ring-pink-500 focus:border-pink-500 transition duration-150 text-gray-400" min={dateFilter.startDate || undefined} />
+                                        <input type="date" value={dateFilter.startDate} onChange={(e) => setDateFilter({...dateFilter, startDate: e.target.value})} className={`w-full px-3 py-2 border ${serifTheme.colors.border.secondary} ${serifTheme.radius.button} ${serifTheme.colors.background.card} ${serifTheme.colors.text.primary} text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 ${serifTheme.transitions.default}`} />
+                                        <span className={`${serifTheme.colors.text.muted} text-sm`}>to</span>
+                                        <input type="date" value={dateFilter.endDate} onChange={(e) => setDateFilter({...dateFilter, endDate: e.target.value})} className={`w-full px-3 py-2 border ${serifTheme.colors.border.secondary} ${serifTheme.radius.button} ${serifTheme.colors.background.card} ${serifTheme.colors.text.primary} text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 ${serifTheme.transitions.default}`} min={dateFilter.startDate || undefined} />
                                     </div>
                                 </div>
                                 {/* Reset Button */}
-                                <button
+                                <SerifButton
                                     onClick={resetFilters}
-                                    className="self-end px-3 py-2 text-sm text-indigo-400 hover:text-indigo-300 transition duration-150 text-center border border-indigo-500/30 rounded-lg hover:bg-indigo-500/10 h-[42px]" // Match height
-                                > Reset </button>
+                                    variant="secondary"
+                                    size="small"
+                                >
+                                    Reset
+                                </SerifButton>
                             </div>
                         </motion.div>
                     )}
                 </AnimatePresence>
 
                 {/* Order Display Area */}
-                <div className="bg-gray-900/70 backdrop-blur-md rounded-xl shadow-lg border border-gray-700/50 overflow-hidden">
+                <div className={`${serifTheme.gradients.card} ${serifTheme.radius.card} ${serifTheme.colors.shadow.card} border ${serifTheme.colors.border.primary} overflow-hidden`}>
                     {/* Desktop Table */}
                     <div className="hidden md:block overflow-x-auto">
-                        <motion.table className="min-w-full divide-y divide-gray-700" variants={listVariants} initial="hidden" animate="visible">
-                            <thead className="bg-gray-800/50">
+                        <motion.table className={`min-w-full divide-y ${serifTheme.colors.border.secondary}`} variants={listVariants} initial="hidden" animate="visible">
+                            <thead className={serifTheme.colors.background.secondary}>
                                 <tr>
-                                    <th className="px-5 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Order ID</th>
-                                    <th className="px-5 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Customer</th>
-                                    <th className="px-5 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Date</th>
-                                    <th className="px-5 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Items</th>
-                                    <th className="px-5 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Total</th>
-                                    <th className="px-5 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Status</th>
-                                    <th className="px-5 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Actions</th>
+                                    <th className={`px-5 py-3 text-left text-xs font-medium ${serifTheme.colors.text.tertiary} uppercase tracking-wider`}>Order ID</th>
+                                    <th className={`px-5 py-3 text-left text-xs font-medium ${serifTheme.colors.text.tertiary} uppercase tracking-wider`}>Customer</th>
+                                    <th className={`px-5 py-3 text-left text-xs font-medium ${serifTheme.colors.text.tertiary} uppercase tracking-wider`}>Date</th>
+                                    <th className={`px-5 py-3 text-left text-xs font-medium ${serifTheme.colors.text.tertiary} uppercase tracking-wider`}>Items</th>
+                                    <th className={`px-5 py-3 text-left text-xs font-medium ${serifTheme.colors.text.tertiary} uppercase tracking-wider`}>Total</th>
+                                    <th className={`px-5 py-3 text-left text-xs font-medium ${serifTheme.colors.text.tertiary} uppercase tracking-wider`}>Status</th>
+                                    <th className={`px-5 py-3 text-left text-xs font-medium ${serifTheme.colors.text.tertiary} uppercase tracking-wider`}>Actions</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-700/70">
+                            <tbody className={`divide-y ${serifTheme.colors.border.secondary}`}>
                                 <AnimatePresence initial={false}>
                                     {filteredOrders.length > 0 ? (
                                         filteredOrders.map((order) => {
@@ -332,48 +321,53 @@ const OrderDetail = () => {
                                             return (
                                                 <React.Fragment key={order.id}>
                                                     <motion.tr
-                                                        className="hover:bg-gray-800/40 transition-colors cursor-pointer"
+                                                        className={`hover:bg-amber-50/50 ${serifTheme.transitions.default} cursor-pointer`}
                                                         onClick={() => toggleExpand(order.id)}
                                                         variants={itemVariants} layout
                                                     >
-                                                        <td className="px-5 py-4 whitespace-nowrap text-sm font-mono text-gray-400">{order.id.slice(0, 8).toUpperCase()}</td>
+                                                        <td className={`px-5 py-4 whitespace-nowrap text-sm font-mono ${serifTheme.colors.text.tertiary}`}>{order.id.slice(0, 8).toUpperCase()}</td>
                                                         <td className="px-5 py-4 whitespace-nowrap text-sm">
-                                                            <p className="font-medium text-gray-200 truncate max-w-[150px]" title={order.addressInfo.name}>{order.addressInfo.name}</p>
-                                                            <p className="text-gray-400 text-xs truncate max-w-[150px]" title={order.email}>{order.email}</p>
+                                                            <p className={`font-medium ${serifTheme.colors.text.primary} truncate max-w-[150px]`} title={order.addressInfo.name}>{order.addressInfo.name}</p>
+                                                            <p className={`${serifTheme.colors.text.tertiary} text-xs truncate max-w-[150px]`} title={order.email}>{order.email}</p>
                                                         </td>
-                                                        <td className="px-5 py-4 whitespace-nowrap text-sm text-gray-400">{formatDate(order.date)}</td>
-                                                        <td className="px-5 py-4 whitespace-nowrap text-sm text-gray-400 text-center">{order.cartItems.length}</td>
-                                                        <td className="px-5 py-4 whitespace-nowrap text-sm font-medium text-emerald-400">{formatPrice(totalOrderAmount)}</td>
+                                                        <td className={`px-5 py-4 whitespace-nowrap text-sm ${serifTheme.colors.text.tertiary}`}>{formatDate(order.date)}</td>
+                                                        <td className={`px-5 py-4 whitespace-nowrap text-sm ${serifTheme.colors.text.tertiary} text-center`}>{order.cartItems.length}</td>
+                                                        <td className={`px-5 py-4 whitespace-nowrap text-sm font-medium text-emerald-600`}>{formatPrice(totalOrderAmount)}</td>
                                                         <td className="px-5 py-4 whitespace-nowrap">
-                                                            <span className={`px-2.5 py-1 inline-flex text-[11px] leading-4 font-semibold rounded-full border ${getStatusColorClasses(order.status)} capitalize`}>
+                                                            <SerifBadge variant="secondary" size="small" className="capitalize">
                                                                 {order.status}
-                                                            </span>
+                                                            </SerifBadge>
                                                         </td>
                                                         <td className="px-5 py-4 whitespace-nowrap text-sm font-medium">
                                                             <div className="flex items-center space-x-2">
                                                                 {/* Delete Button */}
-                                                                <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={(e) => { e.stopPropagation(); handleDeleteOrder(order.id); }} className="text-red-400 hover:text-red-300 transition-colors p-1 rounded-full hover:bg-red-500/10" title="Delete"> <FiTrash2 className="h-4 w-4" /> </motion.button>
+                                                                <SerifButton
+                                                                    onClick={(e) => { e.stopPropagation(); handleDeleteOrder(order.id); }}
+                                                                    variant="danger"
+                                                                    size="small"
+                                                                    icon={<FiTrash2 />}
+                                                                />
                                                                 {/* Expand Icon */}
-                                                                <span className={`text-gray-500 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}> <FiChevronDown className="h-5 w-5" /> </span>
+                                                                <span className={`${serifTheme.colors.text.muted} ${serifTheme.transitions.default} ${isExpanded ? 'rotate-180' : ''}`}> <FiChevronDown className="h-5 w-5" /> </span>
                                                             </div>
                                                         </td>
                                                     </motion.tr>
                                                     {/* Expanded Row */}
                                                     <AnimatePresence>
                                                         {isExpanded && (
-                                                            <motion.tr key={`expanded-${order.id}`} className="bg-gray-800/30">
+                                                            <motion.tr key={`expanded-${order.id}`} className={serifTheme.colors.background.secondary}>
                                                                 <td colSpan="7" className="p-0">
                                                                     <motion.div variants={expandVariants} initial="hidden" animate="visible" exit="exit" className="px-5 py-4 overflow-hidden">
                                                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
                                                                             {/* Customer & Address */}
                                                                             <div className="space-y-2">
-                                                                                <p className="font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1.5"><FiUser size={12}/>Customer</p>
-                                                                                <p className="text-gray-300">{order.addressInfo.name}</p>
-                                                                                <p className="text-gray-300">{order.email}</p>
-                                                                                <p className="text-gray-300">{order.addressInfo.mobileNumber}</p>
-                                                                                <p className="text-gray-300">{order.addressInfo.whatsappNumber}</p>
-                                                                                <p className="font-semibold text-gray-400 uppercase tracking-wider mt-2 flex items-center gap-1.5"><FiMapPin size={12}/>Address</p>
-                                                                                <p className="text-gray-300">{order.addressInfo.address}, {order.addressInfo.country}</p>
+                                                                                <p className={`font-semibold ${serifTheme.colors.text.tertiary} uppercase tracking-wider flex items-center gap-1.5`}><FiUser size={12}/>Customer</p>
+                                                                                <p className={serifTheme.colors.text.primary}>{order.addressInfo.name}</p>
+                                                                                <p className={serifTheme.colors.text.primary}>{order.email}</p>
+                                                                                <p className={serifTheme.colors.text.primary}>{order.addressInfo.mobileNumber}</p>
+                                                                                <p className={serifTheme.colors.text.primary}>{order.addressInfo.whatsappNumber}</p>
+                                                                                <p className={`font-semibold ${serifTheme.colors.text.tertiary} uppercase tracking-wider mt-2 flex items-center gap-1.5`}><FiMapPin size={12}/>Address</p>
+                                                                                <p className={serifTheme.colors.text.primary}>{order.addressInfo.address}, {order.addressInfo.country}</p>
                                                                             </div>
                                                                             {/* Order Items */}
                                                                             <div className="space-y-2 md:col-span-2">
@@ -471,10 +465,12 @@ const OrderDetail = () => {
                                     ) : (
                                         // No Results Row
                                         <motion.tr variants={itemVariants}>
-                                            <td colSpan="7" className="px-6 py-10 text-center text-sm text-gray-400">
+                                            <td colSpan="7" className={`px-6 py-10 text-center text-sm ${serifTheme.colors.text.tertiary}`}>
                                                 <div className="flex flex-col items-center justify-center">
-                                                    <FiSearch className="h-10 w-10 text-gray-500 mb-2" /> No orders found matching your criteria.
-                                                    <button onClick={resetFilters} className="mt-2 text-sm text-indigo-400 hover:text-indigo-300"> Reset filters </button>
+                                                    <FiSearch className={`h-10 w-10 ${serifTheme.colors.text.muted} mb-2`} /> No orders found matching your criteria.
+                                                    <SerifButton onClick={resetFilters} variant="secondary" size="small" className="mt-2">
+                                                        Reset filters
+                                                    </SerifButton>
                                                 </div>
                                             </td>
                                         </motion.tr>

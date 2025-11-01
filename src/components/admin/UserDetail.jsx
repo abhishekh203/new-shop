@@ -3,7 +3,9 @@ import myContext from "../../context/myContext"; // Assuming context path is cor
 import Loader from "../loader/Loader"; // Assuming Loader path is correct
 import { deleteDoc, doc, updateDoc } from "firebase/firestore"; // Added updateDoc
 import { fireDB } from "../../firebase/FirebaseConfig"; // Assuming Firebase config path is correct
-import toast from "react-hot-toast"; // Using react-hot-toast
+import { useNotification } from "../../context/NotificationContext";
+import { serifTheme } from "../../design-system/themes/serifTheme";
+import { SerifButton, SerifBadge } from "../../design-system/components";
 import {
     FiSearch, FiEdit, FiTrash2, FiUser, FiMail, FiKey, FiCalendar, FiCheck,
     FiX, FiFilter, FiRefreshCw, FiChevronDown, FiChevronUp, FiAlertCircle, FiUsers
@@ -64,10 +66,11 @@ const getRoleColorClasses = (role) => {
 };
 
 // --- Component ---
-const UserDetail = () => {
+const UserDetail = ({ globalSearchTerm = "" }) => {
     const context = useContext(myContext);
     // Use setLoading from context if provided, otherwise manage locally
     const { loading: contextLoading, setLoading: contextSetLoading, getAllUser, getAllUserFunction } = context; // Renamed to avoid conflict
+    const notification = useNotification();
 
     // Local loading state if context doesn't provide setLoading
     const [internalLoading, setInternalLoading] = useState(false);
@@ -92,11 +95,11 @@ const UserDetail = () => {
         try {
             const userRef = doc(fireDB, "users", uid); // Assuming collection name is 'users'
             await updateDoc(userRef, { role: newRole });
-            toast.success(`User role updated to ${newRole}`);
+            notification.success(`User role updated to ${newRole}`);
             getAllUserFunction(); // Refresh user list from context/backend
         } catch (error) {
             console.error("Error updating user role: ", error);
-            toast.error("Failed to update user role.");
+            notification.error("Failed to update user role.");
             throw error; // Re-throw error to handle in calling function if needed
         } finally {
             setLoading(false);
@@ -108,11 +111,11 @@ const UserDetail = () => {
         // Note: setLoading is handled within the confirmation modal's confirmDelete function
         try {
             await deleteDoc(doc(fireDB, "users", uid)); // Assuming collection name is 'users'
-            toast.success(`User ${uid.slice(0,6)}... deleted successfully`);
+            notification.success(`User ${uid.slice(0,6)}... deleted successfully`);
             getAllUserFunction(); // Refresh list
         } catch (error) {
             console.error("Error deleting user: ", error);
-            toast.error("Failed to delete user.");
+            notification.error("Failed to delete user.");
             throw error; // Re-throw to handle in confirmation modal
         }
     };
@@ -122,9 +125,10 @@ const UserDetail = () => {
     const filteredAndSortedUsers = useMemo(() => {
         let result = [...getAllUser];
 
-        // Apply search filter
-        if (searchTerm) {
-            const term = searchTerm.toLowerCase().trim();
+        // Apply search filter (combine local and global search)
+        const combinedSearchTerm = globalSearchTerm || searchTerm;
+        if (combinedSearchTerm) {
+            const term = combinedSearchTerm.toLowerCase().trim();
             result = result.filter(user =>
                 user.name?.toLowerCase().includes(term) ||
                 user.email?.toLowerCase().includes(term) ||
@@ -160,7 +164,7 @@ const UserDetail = () => {
         }
 
         return result;
-    }, [getAllUser, searchTerm, sortConfig, roleFilter]);
+    }, [getAllUser, searchTerm, sortConfig, roleFilter, globalSearchTerm]);
 
     // Toggle user details expansion (for mobile cards)
     const toggleExpand = (userId) => {
@@ -255,7 +259,8 @@ const UserDetail = () => {
 
     // --- JSX Structure ---
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-950 p-4 md:p-8 text-gray-200 font-sans">
+        <div className="min-h-full bg-transparent relative" style={{ fontFamily: serifTheme.fontFamily.serif }}>
+            {/* Removed dark background elements to match main dashboard theme */}
             {/* Loading Overlay */}
             <AnimatePresence>
                 {isLoading && (
@@ -270,35 +275,36 @@ const UserDetail = () => {
                 {/* Header */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                     <div>
-                        <h1 className="text-2xl md:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 mb-1 flex items-center gap-2">
+                        <h1 className={`text-2xl md:text-3xl font-bold ${serifTheme.gradients.accent} mb-1 flex items-center gap-2`}>
                            <FiUsers/> User Management
                         </h1>
-                        <p className="text-sm text-gray-400">
+                        <p className={`text-sm ${serifTheme.colors.text.tertiary}`}>
                             {filteredAndSortedUsers.length} user{filteredAndSortedUsers.length !== 1 ? 's' : ''} found
                             {selectedUsers.length > 0 && ` • ${selectedUsers.length} selected`}
                         </p>
                     </div>
                     <div className="flex items-center gap-3 w-full md:w-auto">
                         {/* Filter Toggle Button */}
-                        <motion.button
+                        <SerifButton
                             onClick={() => setShowFilters(!showFilters)}
-                            className="flex items-center gap-1.5 px-3 py-2 bg-gray-700/50 hover:bg-gray-700 border border-gray-600 rounded-lg text-sm transition duration-150"
-                            whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+                            variant="secondary"
+                            size="small"
+                            icon={<FiFilter />}
                         >
-                            <FiFilter className="h-4 w-4" /> Filters
-                            <FiChevronDown className={`h-4 w-4 transition-transform duration-200 ${showFilters ? 'rotate-180' : ''}`} />
-                        </motion.button>
+                            Filters
+                            <FiChevronDown className={`ml-1 h-4 w-4 transition-transform duration-200 ${showFilters ? 'rotate-180' : ''}`} />
+                        </SerifButton>
                          {/* Bulk Delete Button (conditional) */}
                          <AnimatePresence>
                             {selectedUsers.length > 0 && (
-                                <motion.button
-                                    initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }}
+                                <SerifButton
                                     onClick={() => openDeleteModal(null)} // Pass null for bulk delete
-                                    className="flex items-center gap-1.5 px-3 py-2 bg-red-600/20 hover:bg-red-600/30 border border-red-500/50 text-red-400 rounded-lg text-sm transition duration-150"
-                                    whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+                                    variant="danger"
+                                    size="small"
+                                    icon={<FiTrash2 />}
                                 >
-                                    <FiTrash2 className="h-4 w-4" /> Delete ({selectedUsers.length})
-                                </motion.button>
+                                    Delete ({selectedUsers.length})
+                                </SerifButton>
                             )}
                         </AnimatePresence>
                     </div>

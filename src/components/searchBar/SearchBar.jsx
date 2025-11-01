@@ -3,6 +3,7 @@ import myContext from "../../context/myContext";
 import { useNavigate } from "react-router";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiX, FiMessageSquare, FiSearch } from "react-icons/fi";
+import { createProductUrl } from "../../utils/slugUtils";
 
 const SearchBar = () => {
     const context = useContext(myContext);
@@ -77,8 +78,8 @@ const SearchBar = () => {
         setIsFocused(true);
     };
 
-    const handleResultClick = (itemId) => {
-        navigate(`/productinfo/${itemId}`);
+    const handleResultClick = (item) => {
+        navigate(createProductUrl(item));
         setSearch("");
         setIsFocused(false);
     };
@@ -99,9 +100,9 @@ const SearchBar = () => {
                     onChange={(e) => setSearch(e.target.value)}
                     onFocus={() => setIsFocused(true)}
                     onBlur={() => setTimeout(() => setIsFocused(false), 200)}
-                    className="bg-gray-700/80 placeholder-gray-400 rounded-full px-4 py-2 lg:py-2.5 xl:py-2.5 w-full outline-none text-white
-                    focus:bg-gray-600/90 focus:ring-2 focus:ring-teal-500/60 transition duration-200
-                    border border-gray-600/50 hover:border-teal-400/60 hover:bg-gray-600/80 hover:shadow-sm backdrop-blur-sm
+                    className="bg-white/20 placeholder-gray-500 rounded-xl px-4 py-2 lg:py-2.5 xl:py-2.5 w-full outline-none text-gray-800
+                    focus:bg-white/30 focus:ring-2 focus:ring-blue-500/60 transition duration-200
+                    border border-white/30 hover:border-blue-400/60 hover:bg-white/25 hover:shadow-sm backdrop-blur-sm
                     text-sm md:text-base lg:text-base xl:text-base pr-10 min-w-0
                     lg:placeholder:text-base xl:placeholder:text-base"
                 />
@@ -110,7 +111,7 @@ const SearchBar = () => {
                 {isMobile && !isFocused && (
                     <button
                         onClick={handleSearchClick}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-blue-600 transition-colors"
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-600 hover:text-blue-600 transition-colors"
                         aria-label="Open search"
                     >
                         <FiSearch size={18} />
@@ -121,7 +122,7 @@ const SearchBar = () => {
                 {search && (
                     <motion.button
                         onClick={clearSearch}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-600 hover:text-gray-800 transition-colors"
                         aria-label="Clear search"
                         whileHover={{ scale: 1.2 }}
                         whileTap={{ scale: 0.9 }}
@@ -144,8 +145,10 @@ const SearchBar = () => {
                             damping: 20,
                             duration: 0.2
                         }}
-                        className={`absolute mt-2 w-full bg-white shadow-xl rounded-xl z-50 overflow-hidden border border-gray-100
-                        ${isMobile ? 'fixed inset-x-4 top-24 max-h-[60vh] backdrop-blur-sm bg-white/95' : 'max-h-80 lg:max-h-96 xl:max-h-[28rem]'}`}
+                        className={`absolute mt-2 w-full rounded-2xl z-50 overflow-hidden shadow-2xl border
+                        ${isMobile 
+                            ? 'fixed inset-x-4 top-24 max-h-[60vh] backdrop-blur-2xl bg-gray-900/95 border-gray-700/50' 
+                            : 'max-h-80 lg:max-h-96 xl:max-h-[28rem] bg-gray-900/95 border-gray-700/50 backdrop-blur-2xl'}`}
                     >
                         {filterSearchData.length > 0 ? (
                             <motion.div 
@@ -161,13 +164,13 @@ const SearchBar = () => {
                                         initial={{ opacity: 0, y: 10 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: index * 0.05 }}
-                                        whileHover={{ backgroundColor: "#f5f5ff" }}
+                                        whileHover={{ backgroundColor: "rgba(55, 65, 81, 0.6)" }}
                                         whileTap={{ scale: 0.98 }}
-                                        className="py-3 px-4 lg:py-4 lg:px-5 xl:py-4 xl:px-6 cursor-pointer flex items-center gap-3 transition-colors active:bg-blue-50"
-                                        onClick={() => handleResultClick(item.id)}
+                                        className="py-2 px-3 lg:py-2.5 lg:px-4 xl:py-2.5 xl:px-4 cursor-pointer flex items-center gap-3 transition-colors hover:bg-gray-700/50"
+                                        onClick={() => handleResultClick(item)}
                                     >
                                         <motion.img 
-                                            className="w-10 h-10 lg:w-12 lg:h-12 xl:w-14 xl:h-14 object-cover rounded-lg border border-gray-100"
+                                            className="w-8 h-8 lg:w-10 lg:h-10 xl:w-10 xl:h-10 object-cover rounded-lg border border-gray-700/60"
                                             src={item.productImageUrl} 
                                             alt={item.title}
                                             loading="lazy"
@@ -176,8 +179,8 @@ const SearchBar = () => {
                                             transition={{ type: "spring", stiffness: 500 }}
                                         />
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-sm lg:text-base xl:text-lg font-medium text-gray-800 truncate">{item.title}</p>
-                                            <p className="text-xs lg:text-sm xl:text-base text-blue-600 font-semibold">रु {item.price}</p>
+                                            <p className="text-xs lg:text-sm xl:text-sm font-medium text-gray-100 truncate">{item.title}</p>
+                                            <p className="text-xs lg:text-xs xl:text-xs text-teal-400 font-semibold">NPR {item.price}</p>
                                         </div>
                                     </motion.div>
                                 ))}
@@ -190,16 +193,16 @@ const SearchBar = () => {
                                 transition={{ delay: 0.1 }}
                             >
                                 <motion.div 
-                                    className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-3"
+                                    className="mx-auto w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mb-3"
                                     animate={{ rotate: [0, 5, -5, 0] }}
                                     transition={{ repeat: 1, duration: 0.5 }}
                                 >
-                                    <FiMessageSquare size={24} className="text-gray-400" />
+                                    <FiMessageSquare size={24} className="text-gray-300" />
                                 </motion.div>
-                                <p className="text-gray-500 text-sm mb-2">Product not found</p>
+                                <p className="text-gray-300 text-sm mb-2">Product not found</p>
                                 <p className="text-gray-400 text-xs">Request this item via WhatsApp</p>
                                 <motion.button
-                                    className="mt-3 text-blue-600 text-sm font-medium hover:text-blue-800 transition-colors px-4 py-2 rounded-lg bg-blue-50"
+                                    className="mt-3 text-white text-sm font-medium transition-colors px-4 py-2 rounded-lg bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-500 hover:to-blue-500"
                                     onClick={() => {
                                         window.open("https://wa.me/9807677391", "_blank");
                                         setSearch("");

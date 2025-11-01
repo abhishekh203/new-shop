@@ -76,7 +76,7 @@ const renderStars = (rating) => {
     ));
 };
 
-const ReviewDetail = () => {
+const ReviewDetail = ({ globalSearchTerm = "" }) => {
     const context = useContext(myContext);
     const { loading, getAllReview, reviewDelete, getAllProduct, getAllUser, getAllOrder } = context;
 
@@ -152,9 +152,10 @@ const ReviewDetail = () => {
     const filteredReviews = useMemo(() => {
         let filtered = [...getAllReview];
 
-        // Search filter
-        if (searchQuery.trim()) {
-            const query = searchQuery.toLowerCase();
+        // Search filter (combine local and global search)
+        const combinedSearchQuery = globalSearchTerm || searchQuery;
+        if (combinedSearchQuery.trim()) {
+            const query = combinedSearchQuery.toLowerCase();
             filtered = filtered.filter(review =>
                 review.review?.toLowerCase().includes(query) ||
                 review.userName?.toLowerCase().includes(query) ||
@@ -223,7 +224,7 @@ const ReviewDetail = () => {
         });
 
         return filtered;
-    }, [getAllReview, searchQuery, statusFilter, ratingFilter, typeFilter, responseFilter, dateFilter, sortConfig, getAllProduct]);
+    }, [getAllReview, searchQuery, statusFilter, ratingFilter, typeFilter, responseFilter, dateFilter, sortConfig, getAllProduct, globalSearchTerm]);
 
     // Review actions
     const approveReview = async (reviewId) => {

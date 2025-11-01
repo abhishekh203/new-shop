@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import toast from 'react-hot-toast';
 import { 
   FaUser, 
   FaEnvelope, 
@@ -15,6 +14,9 @@ import {
   FaSpinner
 } from 'react-icons/fa';
 import { useAuth } from '../../hooks/useAuth';
+import { serifTheme } from '../../design-system/themes/serifTheme';
+import { SerifButton, SerifPageWrapper } from '../../design-system/components';
+import { useNotification } from '../../context/NotificationContext';
 
 // ============================================================================
 // CONFIGURATION & CONSTANTS
@@ -190,12 +192,12 @@ const InputField = ({
   disabled 
 }) => (
   <motion.div variants={ANIMATION_VARIANTS.item} className="space-y-2">
-    <label htmlFor={name} className="block text-sm font-medium text-gray-300">
+    <label htmlFor={name} className={`block text-sm font-medium ${serifTheme.colors.text.secondary}`}>
       {placeholder}
     </label>
     <div className="relative">
       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-        <Icon className={`h-5 w-5 transition-colors ${error ? 'text-red-400' : 'text-gray-400'}`} />
+        <Icon className={`h-5 w-5 transition-colors ${error ? 'text-red-400' : serifTheme.colors.text.tertiary}`} />
       </div>
       <input
         id={name}
@@ -206,13 +208,13 @@ const InputField = ({
         placeholder={placeholder}
         disabled={disabled}
         className={`
-          w-full pl-10 pr-${type === 'password' ? '12' : '4'} py-3 
-          border-2 rounded-xl bg-gray-800/50 text-white placeholder-gray-400
+          w-full pl-10 ${type === 'password' ? 'pr-12' : 'pr-4'} py-3 
+          border-2 ${serifTheme.radius.button} ${serifTheme.colors.background.card} ${serifTheme.colors.text.primary} placeholder-amber-400/50
           focus:outline-none focus:ring-2 transition-all duration-200
           disabled:opacity-50 disabled:cursor-not-allowed
           ${error 
             ? 'border-red-500/50 focus:border-red-500 focus:ring-red-500/25' 
-            : 'border-gray-600/50 focus:border-blue-500 focus:ring-blue-500/25'
+            : `${serifTheme.colors.border.secondary} focus:border-amber-500 focus:ring-amber-500/25`
           }
         `}
         autoComplete={type === 'password' ? 'new-password' : name}
@@ -222,7 +224,7 @@ const InputField = ({
           type="button"
           onClick={onTogglePassword}
           disabled={disabled}
-          className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-200 transition-colors disabled:opacity-50"
+          className={`absolute inset-y-0 right-0 pr-3 flex items-center ${serifTheme.colors.text.tertiary} hover:text-amber-800 transition-colors disabled:opacity-50`}
         >
           {showPassword ? <FaEyeSlash /> : <FaEye />}
         </button>
@@ -256,14 +258,14 @@ const PasswordStrengthIndicator = ({ password }) => {
       className="space-y-2"
     >
       <div className="flex items-center justify-between">
-        <span className="text-xs text-gray-400">Password Strength:</span>
+        <span className={`text-xs ${serifTheme.colors.text.tertiary}`}>Password Strength:</span>
         <span className={`text-xs font-medium ${strength.color}`}>
           {strength.label}
         </span>
       </div>
-      <div className="w-full bg-gray-700 rounded-full h-2">
+      <div className={`w-full ${serifTheme.colors.background.tertiary} ${serifTheme.radius.button} h-2`}>
         <motion.div
-          className={`h-2 rounded-full transition-all duration-300 ${
+          className={`h-2 ${serifTheme.radius.button} transition-all duration-300 ${
             strength.score <= 1 ? 'bg-red-500' :
             strength.score === 2 ? 'bg-yellow-500' :
             strength.score === 3 ? 'bg-blue-500' :
@@ -274,7 +276,7 @@ const PasswordStrengthIndicator = ({ password }) => {
           animate={{ width: `${(strength.score / 5) * 100}%` }}
         />
       </div>
-      <div className="flex items-center gap-2 text-xs text-gray-500">
+      <div className={`flex items-center gap-2 text-xs ${serifTheme.colors.text.tertiary}`}>
         <FaShieldAlt />
         <span>Use 8+ characters with uppercase, lowercase, numbers & symbols</span>
       </div>
@@ -289,23 +291,23 @@ const TermsCheckbox = ({ checked, onChange, disabled }) => (
       onClick={() => onChange(!checked)}
       disabled={disabled}
       className={`
-        mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center transition-all
+        mt-0.5 w-5 h-5 ${serifTheme.radius.button} border-2 flex items-center justify-center transition-all
         ${checked 
-          ? 'bg-blue-600 border-blue-600 text-white' 
-          : 'border-gray-400 hover:border-gray-300'
+          ? `${serifTheme.gradients.button} border-amber-500 ${serifTheme.colors.text.buttonPrimary}` 
+          : `${serifTheme.colors.border.secondary} hover:border-amber-400`
         }
         disabled:opacity-50 disabled:cursor-not-allowed
       `}
     >
       {checked && <FaCheck className="h-3 w-3" />}
     </button>
-    <label className="text-sm text-gray-300 leading-relaxed">
+    <label className={`text-sm ${serifTheme.colors.text.secondary} leading-relaxed`}>
       I agree to the{' '}
       <Link 
         to="/terms" 
         target="_blank" 
         rel="noopener noreferrer"
-        className="text-blue-400 hover:text-blue-300 underline font-medium"
+        className={`${serifTheme.colors.text.accent} hover:underline font-medium`}
       >
         Terms of Service
       </Link>
@@ -314,7 +316,7 @@ const TermsCheckbox = ({ checked, onChange, disabled }) => (
         to="/privacy" 
         target="_blank" 
         rel="noopener noreferrer"
-        className="text-blue-400 hover:text-blue-300 underline font-medium"
+        className={`${serifTheme.colors.text.accent} hover:underline font-medium`}
       >
         Privacy Policy
       </Link>
@@ -329,6 +331,7 @@ const Signup = () => {
   const navigate = useNavigate();
   const { signup, signupWithGoogle, loading } = useAuth();
   const isMobile = useResponsiveDesign();
+  const notification = useNotification();
   
   // Form State
   const [formData, setFormData] = useState({
@@ -365,20 +368,20 @@ const Signup = () => {
     });
     
     if (result.success) {
-      toast.success('Account created successfully!');
+      notification.success('Account created successfully!');
       setTimeout(() => navigate('/login'), 1500);
     }
-  }, [formData, isValid, loading, signup, navigate]);
+  }, [formData, isValid, loading, signup, navigate, notification]);
   
   const handleGoogleSignup = useCallback(async () => {
     if (loading) return;
     
     const result = await signupWithGoogle();
     if (result.success) {
-      toast.success('Account created successfully!');
+      notification.success('Account created successfully!');
       setTimeout(() => navigate(result.redirectTo || '/'), 1500);
     }
-  }, [loading, signupWithGoogle, navigate]);
+  }, [loading, signupWithGoogle, navigate, notification]);
   
   const handleKeyPress = useCallback((e) => {
     if (e.key === 'Enter' && isValid && !loading) {
@@ -387,32 +390,26 @@ const Signup = () => {
   }, [isValid, loading, handleSubmit]);
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 flex items-center justify-center p-4">
-      {/* Background Pattern */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-500/20 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-500/20 rounded-full blur-3xl" />
-      </div>
-      
-      <motion.div
-        initial="hidden"
-        animate="visible"
-        variants={ANIMATION_VARIANTS.container}
-        className={`
-          relative w-full max-w-md bg-gray-900/80 backdrop-blur-xl 
-          rounded-2xl shadow-2xl border border-gray-700/50 overflow-hidden
-          ${isMobile ? 'mx-4' : ''}
-        `}
-      >
+    <SerifPageWrapper>
+      <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden" style={{ fontFamily: serifTheme.fontFamily.serif }}>
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={ANIMATION_VARIANTS.container}
+          className={`
+            relative w-full max-w-md ${serifTheme.gradients.card} backdrop-blur-xl 
+            ${serifTheme.radius.card} ${serifTheme.colors.shadow.card} border ${serifTheme.colors.border.primary} overflow-hidden
+            ${isMobile ? 'mx-4' : ''}
+          `}
+        >
         {/* Header */}
         <motion.div 
           variants={ANIMATION_VARIANTS.item}
-          className="bg-gradient-to-r from-blue-600 to-purple-600 p-8 text-center relative overflow-hidden"
+          className={`${serifTheme.gradients.button} p-8 text-center relative overflow-hidden`}
         >
-          <div className="absolute inset-0 bg-black/20" />
           <div className="relative z-10">
-            <h1 className="text-3xl font-bold text-white mb-2">Create Account</h1>
-            <p className="text-blue-100">Join us and start your journey</p>
+            <h1 className={`text-3xl font-bold ${serifTheme.colors.text.buttonPrimary} mb-2`}>Create Account</h1>
+            <p className={`${serifTheme.colors.text.buttonPrimary} opacity-90`}>Join us and start your journey</p>
           </div>
         </motion.div>
         
@@ -420,30 +417,27 @@ const Signup = () => {
         <div className="p-8">
           <motion.form onSubmit={handleSubmit} className="space-y-6" variants={ANIMATION_VARIANTS.container}>
             {/* Google Signup */}
-            <motion.button
+            <SerifButton
               type="button"
               onClick={handleGoogleSignup}
               disabled={loading}
-              variants={ANIMATION_VARIANTS.button}
-              whileHover="hover"
-              whileTap="tap"
-              className="w-full flex items-center justify-center gap-3 py-3 px-4 border-2 border-gray-600 rounded-xl bg-white text-gray-900 font-medium hover:bg-gray-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              variant="secondary"
+              size="large"
+              fullWidth
+              loading={loading}
+              icon={!loading && <FaGoogle className="text-red-500" />}
+              className="bg-white hover:bg-amber-50 text-gray-900 border-2 border-amber-200"
             >
-              {loading ? (
-                <FaSpinner className="animate-spin" />
-              ) : (
-                <FaGoogle className="text-red-500" />
-              )}
               Continue with Google
-            </motion.button>
+            </SerifButton>
             
             {/* Divider */}
             <motion.div variants={ANIMATION_VARIANTS.item} className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-600" />
+                <div className={`w-full border-t ${serifTheme.colors.border.secondary}`} />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-gray-900 text-gray-400">Or continue with email</span>
+                <span className={`px-2 ${serifTheme.colors.background.card} ${serifTheme.colors.text.tertiary}`}>Or continue with email</span>
               </div>
             </motion.div>
             
@@ -486,18 +480,21 @@ const Signup = () => {
               <PasswordStrengthIndicator password={formData.password} />
             </div>
             
-            <InputField
-              type="password"
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleInputChange}
-              placeholder="Confirm Password"
-              icon={FaLock}
-              error={errors.confirmPassword}
-              showPassword={showConfirmPassword}
-              onTogglePassword={() => setShowConfirmPassword(!showConfirmPassword)}
-              disabled={loading}
-            />
+            {/* Confirm Password - Only show after password is filled */}
+            {formData.password && formData.password.length > 0 && (
+              <InputField
+                type="password"
+                name="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={handleInputChange}
+                placeholder="Confirm Password"
+                icon={FaLock}
+                error={errors.confirmPassword}
+                showPassword={showConfirmPassword}
+                onTogglePassword={() => setShowConfirmPassword(!showConfirmPassword)}
+                disabled={loading}
+              />
+            )}
             
             <TermsCheckbox
               checked={formData.terms}
@@ -507,37 +504,25 @@ const Signup = () => {
             />
             
             {/* Submit Button */}
-            <motion.button
+            <SerifButton
               type="submit"
               disabled={!isValid || loading}
-              variants={ANIMATION_VARIANTS.button}
-              whileHover={isValid && !loading ? "hover" : "idle"}
-              whileTap={isValid && !loading ? "tap" : "idle"}
-              className={`
-                w-full py-3 px-4 rounded-xl font-semibold transition-all duration-200 flex items-center justify-center gap-2
-                ${isValid && !loading
-                  ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg'
-                  : 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                }
-              `}
+              variant="primary"
+              size="large"
+              fullWidth
+              loading={loading}
+              icon={!loading && <FaSpinner />}
             >
-              {loading ? (
-                <>
-                  <FaSpinner className="animate-spin" />
-                  Creating Account...
-                </>
-              ) : (
-                'Create Account'
-              )}
-            </motion.button>
+              {loading ? 'Creating Account...' : 'Create Account'}
+            </SerifButton>
             
             {/* Login Link */}
             <motion.div variants={ANIMATION_VARIANTS.item} className="text-center">
-              <p className="text-gray-400">
+              <p className={serifTheme.colors.text.tertiary}>
                 Already have an account?{' '}
                 <Link 
                   to="/login" 
-                  className="text-blue-400 hover:text-blue-300 font-medium hover:underline transition-colors"
+                  className={`${serifTheme.colors.text.accent} font-medium hover:underline transition-colors`}
                 >
                   Sign in
                 </Link>
@@ -546,7 +531,8 @@ const Signup = () => {
           </motion.form>
         </div>
       </motion.div>
-    </div>
+      </div>
+    </SerifPageWrapper>
   );
 };
 

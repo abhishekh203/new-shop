@@ -40,16 +40,16 @@ const getApprovedReviews = async () => {
                               review.status === 'approved' ||
                               review.status === 'Approved' ||
                               review.isApproved === true ||
-                              review.isApproved === 'true';
+                               review.isApproved === 'true';
             return isApproved;
         });
         
-        // If no approved reviews found, return all reviews for debugging
-        if (approvedReviews.length === 0) {
-            return allReviews;
-        }
-        
-        return approvedReviews;
+        // Always return all, but ensure approved reviews come first
+        const ordered = [
+            ...approvedReviews,
+            ...allReviews.filter(r => !approvedReviews.find(a => a.id === r.id))
+        ];
+        return ordered;
     } catch (error) {
         console.error('Error fetching approved reviews:', error);
         return [];
@@ -87,7 +87,7 @@ const HorizontalScrollingGallery = ({ images }) => {
     const [isPaused, setIsPaused] = useState(false);
     
     // Create duplicated images for seamless infinite scroll
-    const duplicatedImages = [...images, ...images, ...images];
+    const duplicatedImages = images.length > 0 ? [...images, ...images, ...images] : [];
     
     return (
         <div className="relative py-20 overflow-hidden">
@@ -97,10 +97,10 @@ const HorizontalScrollingGallery = ({ images }) => {
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                 <div className="text-center mb-16">
                     
-                    <h2 className="text-5xl md:text-7xl font-black text-white mb-6 bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent">
+                    <h2 className="text-5xl md:text-7xl font-black text-white mb-6">
                         Real Customer Moments
                     </h2>
-                    <p className="text-xl md:text-2xl text-gray-300 max-w-4xl mx-auto leading-relaxed">
+                    <p className="text-xl md:text-2xl text-gray-200 max-w-4xl mx-auto leading-relaxed">
                         Experience our digital excellence through real customer interactions and premium services.
                     </p>
                 </div>
@@ -115,17 +115,15 @@ const HorizontalScrollingGallery = ({ images }) => {
                 >
                     <motion.div 
                         className="flex flex-nowrap gap-8 pb-4"
-                        animate={{
-                            x: isPaused ? undefined : [0, -(320 * images.length)]
-                        }}
+                        animate={images.length > 0 ? { x: isPaused ? undefined : [0, -(320 * images.length)] } : {}}
                         transition={{
-                            x: {
-                                duration: images.length * 3, // 3 seconds per image
-                ease: "linear",
-                repeat: Infinity,
-                            }
+                            x: images.length > 0 ? {
+                                duration: Math.max(images.length, 1) * 3,
+                                ease: "linear",
+                                repeat: Infinity,
+                            } : undefined
                         }}
-                        style={{ width: `${320 * duplicatedImages.length}px` }}
+                        style={{ width: `${320 * (duplicatedImages.length || 1)}px` }}
                     >
                         {duplicatedImages.map((image, index) => (
                             <div
@@ -194,7 +192,7 @@ const ApprovedReviewsSection = ({ reviews }) => {
     };
 
     return (
-        <section className="py-20 bg-gradient-to-br from-gray-800/30 to-black">
+        <section className="py-20 bg-black">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -204,9 +202,9 @@ const ApprovedReviewsSection = ({ reviews }) => {
                     className="text-center mb-16"
                 >
                     <h2 className="text-4xl md:text-5xl font-black text-white mb-6">
-                        What Our <span className="text-green-400">Customers Say</span>
+                        What Our <span className="text-teal-400">Customers Say</span>
                     </h2>
-                    <p className="text-lg text-gray-300 max-w-3xl mx-auto">
+                    <p className="text-lg text-gray-200 max-w-3xl mx-auto">
                         Real feedback from satisfied customers across Nepal
                     </p>
                 </motion.div>
@@ -217,7 +215,7 @@ const ApprovedReviewsSection = ({ reviews }) => {
                         animate={{ opacity: 1 }}
                         className="text-center py-12"
                     >
-                        <div className="bg-gradient-to-br from-gray-800/80 to-gray-700/60 backdrop-blur-lg rounded-3xl p-8 border border-gray-600/30">
+                        <div className="bg-gray-900/80 backdrop-blur-lg rounded-3xl p-8 border border-gray-700/50">
                             <FaUsers className="text-6xl text-gray-400 mx-auto mb-4" />
                             <h3 className="text-2xl font-bold text-white mb-2">No Reviews Yet</h3>
                             <p className="text-gray-400">Be the first to share your experience!</p>
@@ -225,8 +223,8 @@ const ApprovedReviewsSection = ({ reviews }) => {
                         </div>
                     </motion.div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {reviews.slice(0, 6).map((review, index) => (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                        {reviews.map((review, index) => (
                                 <motion.div
                                     key={review.id}
                                     whileHover={{ y: -10, scale: 1.02 }}
@@ -357,7 +355,7 @@ const ReviewsPage = () => {
                     "/img/digital.jpg",
                     "/img/hero.png",
                     "/img/hero1.png",
-                    ...galleryImages.slice(0, 10)
+                    ...galleryImages // preload all available images
                 ].map(src => {
                     return new Promise((resolve, reject) => {
                         const img = new Image();
@@ -397,7 +395,23 @@ const ReviewsPage = () => {
 
     return (
         <Layout>
-            <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 relative overflow-hidden">
+            <div className="min-h-screen bg-black relative overflow-hidden">
+                {/* Background Elements - Same as Hero Section */}
+                <div className="absolute inset-0">
+                    {/* Gradient Overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-black via-gray-900 to-black"></div>
+                    
+                    {/* Animated Background Pattern */}
+                    <div className="absolute inset-0 opacity-20">
+                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1)_1px,transparent_1px)] bg-[length:20px_20px]"></div>
+                    </div>
+                    
+                    {/* Floating Orbs */}
+                    <div className="absolute top-20 left-10 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl animate-pulse"></div>
+                    <div className="absolute bottom-20 right-10 w-40 h-40 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+                    <div className="absolute top-1/2 left-1/4 w-24 h-24 bg-green-500/10 rounded-full blur-2xl animate-pulse delay-500"></div>
+                </div>
+
                 {/* Loading indicator */}
                 {isLoading && (
                     <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
@@ -414,7 +428,7 @@ const ReviewsPage = () => {
                 <ApprovedReviewsSection reviews={approvedReviews} />
 
                 {/* Features Section */}
-                <section className="relative py-20 bg-gradient-to-br from-gray-800/30 to-black">
+                <section className="relative py-20 bg-black">
                     <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                         <motion.div
                                 initial={{ opacity: 0, y: 20 }}
@@ -471,7 +485,7 @@ const ReviewsPage = () => {
                 </section>
 
                 {/* Stats Section */}
-                <section className="relative py-20 bg-gradient-to-br from-gray-900 to-black">
+                <section className="relative py-20 bg-black">
                     <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}

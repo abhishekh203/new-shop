@@ -12,13 +12,41 @@ export const nepalSEOKeywords = {
     "Netflix Nepal", "Netflix subscription Nepal", "buy Netflix Nepal", 
     "Netflix premium Nepal", "Netflix account Nepal", "watch Netflix Nepal",
     "Netflix price Nepal", "Netflix NPR", "Netflix Kathmandu", "Netflix streaming Nepal",
-    "how to get Netflix in Nepal", "Netflix without VPN Nepal", "Netflix family plan Nepal"
+    "how to get Netflix in Nepal", "Netflix without VPN Nepal", "Netflix family plan Nepal",
+    "Netflix premium subscription Nepal", "cheap Netflix Nepal", "affordable Netflix Nepal",
+    "Netflix premium account Nepal", "Netflix premium price Nepal", "Netflix premium cheap Nepal",
+    "Netflix premium discount Nepal", "Netflix premium offer Nepal", "Netflix premium deal Nepal",
+    "best Netflix price Nepal", "Netflix premium Kathmandu", "Netflix premium Pokhara",
+    "Netflix premium Lalitpur", "Netflix premium Bhaktapur", "Netflix premium Chitwan",
+    "Netflix without VPN Nepal", "Netflix works Nepal", "Netflix compatible Nepal",
+    "Ultra HD streaming Nepal", "4K movies Nepal", "unlimited movies Nepal",
+    "TV shows streaming Nepal", "Netflix originals Nepal", "high quality streaming Nepal",
+    "Netflix family plan Nepal", "Netflix individual Nepal", "Netflix monthly Nepal", "Netflix yearly Nepal",
+    "instant Netflix Nepal", "genuine Netflix Nepal", "original Netflix Nepal",
+    "Netflix activation Nepal", "Netflix login Nepal", "Netflix access Nepal",
+    "Netflix mobile Nepal", "Netflix TV Nepal", "Netflix laptop Nepal",
+    "Netflix download Nepal", "offline movies Nepal", "Netflix profiles Nepal",
+    "secure Netflix Nepal", "private Netflix Nepal", "PIN protected Netflix Nepal",
+    "Netflix renewal Nepal", "Netflix support Nepal", "Netflix customer service Nepal",
+    "digital entertainment Nepal", "streaming service Nepal", "movie subscription Nepal"
   ],
   
   spotify: [
     "Spotify Nepal", "Spotify premium Nepal", "buy Spotify Nepal",
     "Spotify subscription Nepal", "Spotify music Nepal", "Spotify account Nepal",
-    "Spotify price Nepal", "Spotify NPR", "music streaming Nepal", "Spotify family Nepal"
+    "Spotify price Nepal", "Spotify NPR", "music streaming Nepal", "Spotify family Nepal",
+    "Spotify premium subscription Nepal", "cheap Spotify Nepal", "affordable Spotify Nepal",
+    "Spotify premium account Nepal", "Spotify premium price Nepal", "Spotify premium cheap Nepal",
+    "Spotify premium discount Nepal", "Spotify premium offer Nepal", "Spotify premium deal Nepal",
+    "best Spotify price Nepal", "Spotify premium Kathmandu", "Spotify premium Pokhara",
+    "Spotify premium Lalitpur", "Spotify premium Bhaktapur", "Spotify premium Chitwan",
+    "Spotify without VPN Nepal", "Spotify works Nepal", "Spotify compatible Nepal",
+    "ad-free music Nepal", "offline music Nepal", "unlimited music Nepal",
+    "music download Nepal", "podcast streaming Nepal", "high quality music Nepal",
+    "Spotify family plan Nepal", "Spotify student Nepal", "Spotify duo Nepal",
+    "Spotify individual Nepal", "Spotify monthly Nepal", "Spotify yearly Nepal",
+    "instant Spotify Nepal", "genuine Spotify Nepal", "original Spotify Nepal",
+    "Spotify activation Nepal", "Spotify login Nepal", "Spotify access Nepal"
   ],
   
   primeVideo: [
@@ -143,7 +171,7 @@ export const nepalSEOKeywords = {
 // Generate Nepal-optimized meta descriptions
 export const generateNepalMetaDescription = (service, features = []) => {
   const baseDescriptions = {
-    netflix: `Get Netflix premium subscription in Nepal at best prices. Stream unlimited movies & TV shows with no VPN required. Instant delivery, NPR pricing, local support.`,
+    netflix: `Buy Netflix Premium subscription in Nepal starting from NPR 399. Stream unlimited Ultra HD movies & TV shows, Netflix Originals. No VPN required, instant delivery, secure PIN-protected profiles. Best prices in Kathmandu, Pokhara & all Nepal. eSewa/Khalti accepted.`,
     spotify: `Buy Spotify Premium subscription in Nepal. Enjoy ad-free music streaming, offline downloads. Best prices in NPR with instant activation.`,
     primeVideo: `Amazon Prime Video subscription for Nepal. Watch exclusive content, movies & shows. No VPN needed, NPR pricing, instant access.`,
     youtube: `YouTube Premium Nepal subscription. Ad-free videos, background play, YouTube Music included. Best prices in NPR with local support.`,

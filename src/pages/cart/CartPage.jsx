@@ -6,14 +6,17 @@ import {
   deleteFromCart, 
   incrementQuantity 
 } from "../../redux/cartSlice";
-import toast, { Toaster } from "react-hot-toast";
 import { useEffect, useState } from "react";
 import { Timestamp, addDoc, collection } from "firebase/firestore";
 import { fireDB } from "../../firebase/FirebaseConfig";
 import BuyNowModal from "../../components/buyNowModal/BuyNowModal";
-import { Navigate, useNavigate } from "react-router";
+import { Navigate, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { serifTheme } from "../../design-system/themes/serifTheme";
+import { SerifPageWrapper, SerifButton, SerifEmptyState, SerifBadge } from "../../design-system/components";
+import { useNotification } from "../../context/NotificationContext";
+import { FaShoppingCart, FaTrash } from "react-icons/fa";
 
 // Manual coupon system only
 const validCoupons = {
@@ -27,6 +30,7 @@ const CartPage = () => {
   const cartItems = useSelector((state) => state.cart);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const notification = useNotification();
   const [parent] = useAutoAnimate({ duration: 300 });
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
   const [customCoupon, setCustomCoupon] = useState("");
@@ -114,13 +118,10 @@ const CartPage = () => {
         description: coupon.description
       });
       
-      toast.success(
-        <div className="flex items-center gap-2">
-          <Check className="text-green-400" />
-          <span>Coupon applied! {coupon.discount}% OFF - {coupon.description}</span>
-        </div>,
-        { duration: 3000 }
-      );
+      notification.success(`Coupon applied! ${coupon.discount}% OFF - ${coupon.description}`, {
+        icon: <Check className="text-base" />,
+        duration: 3000
+      });
       
       setIsApplyingCoupon(false);
       setCustomCoupon("");
@@ -135,7 +136,10 @@ const CartPage = () => {
       discountPercentage: 0,
       description: ""
     });
-    toast("Coupon removed", { icon: "🗑️" });
+    notification.success("Coupon removed", {
+      icon: <FaTrash className="text-base" />,
+      duration: 3000
+    });
   };
 
   const handleRemoveItem = (item) => {
@@ -143,7 +147,10 @@ const CartPage = () => {
     setTimeout(() => {
       dispatch(deleteFromCart(item));
       setIsRemovingItem(null);
-      toast.success("Item removed from cart");
+      notification.success("Item removed from cart", {
+        icon: <FaTrash className="text-base" />,
+        duration: 3000
+      });
     }, 300);
   };
 
@@ -152,7 +159,8 @@ const CartPage = () => {
   // Updated buyNowFunction to navigate to purchase page with state
   const buyNowFunction = async () => {
     if (!addressInfo.name || !addressInfo.address || !addressInfo.whatsappNumber || !addressInfo.mobileNumber) {
-      return toast.error("All fields are required");
+      notification.error("All fields are required");
+      return;
     }
 
     const orderInfo = {
@@ -211,12 +219,10 @@ const CartPage = () => {
       
     } catch (error) {
       console.error(error);
-      toast.error(
-        <div className="flex items-center gap-2">
-          <X className="text-red-400" />
-          <span>Failed to place order. Please try again.</span>
-        </div>
-      );
+      notification.error("Failed to place order. Please try again.", {
+        icon: <X className="text-base" />,
+        duration: 4000
+      });
     }
   };
 
@@ -237,31 +243,7 @@ const CartPage = () => {
 
   return (
     <Layout>
-      <Toaster position="top-center" />
-
-      {/* Dark Background with Neon Effects */}
-      <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black relative overflow-hidden">
-        {/* Neon Grid Background */}
-        <div className="absolute inset-0">
-          {/* Animated Neon Lines */}
-          <div className="absolute inset-0" style={{
-            backgroundImage: `
-              linear-gradient(90deg, transparent 98%, rgba(0, 255, 255, 0.3) 100%),
-              linear-gradient(0deg, transparent 98%, rgba(255, 0, 255, 0.3) 100%)
-            `,
-            backgroundSize: '50px 50px'
-          }}></div>
-
-          {/* Floating Neon Orbs */}
-          <div className="absolute top-20 left-20 w-32 h-32 bg-cyan-400/20 rounded-full blur-xl animate-pulse"></div>
-          <div className="absolute top-40 right-32 w-24 h-24 bg-pink-400/20 rounded-full blur-xl animate-bounce"></div>
-          <div className="absolute bottom-32 left-40 w-40 h-40 bg-green-400/20 rounded-full blur-xl animate-pulse"></div>
-          <div className="absolute bottom-20 right-20 w-28 h-28 bg-yellow-400/20 rounded-full blur-xl animate-bounce"></div>
-
-          {/* Scanning Lines Effect */}
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-cyan-500/5 to-transparent animate-pulse"></div>
-        </div>
-
+      <SerifPageWrapper>
         <div className="container mx-auto px-4 max-w-7xl lg:px-0 relative z-10 py-12">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -276,41 +258,36 @@ const CartPage = () => {
               transition={{ duration: 0.6 }}
               className="text-center mb-12"
             >
-              {/* Neon Cart Icon */}
+              {/* Cart Icon */}
               <motion.div
-                className="relative inline-flex items-center justify-center w-24 h-24 mb-6"
+                className="relative inline-flex items-center justify-center w-20 h-20 mb-6"
                 animate={{
                   boxShadow: [
-                    "0 0 20px rgba(0, 255, 255, 0.5)",
-                    "0 0 40px rgba(255, 0, 255, 0.5)",
-                    "0 0 20px rgba(0, 255, 255, 0.5)"
+                    "0 0 20px rgba(251, 191, 36, 0.3)",
+                    "0 0 40px rgba(251, 146, 60, 0.4)",
+                    "0 0 20px rgba(251, 191, 36, 0.3)"
                   ]
                 }}
                 transition={{ duration: 2, repeat: Infinity }}
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-cyan-400 to-pink-400 rounded-2xl blur-sm opacity-75"></div>
-                <div className="relative bg-black/80 backdrop-blur-sm rounded-2xl w-full h-full flex items-center justify-center border border-cyan-400/50">
-                  <ShoppingCart size={40} className="text-cyan-400" />
+                <div className={`absolute inset-0 ${serifTheme.gradients.button} rounded-2xl blur-sm opacity-50`}></div>
+                <div className={`relative ${serifTheme.gradients.card} backdrop-blur-sm ${serifTheme.radius.card} w-full h-full flex items-center justify-center border ${serifTheme.colors.border.secondary}`}>
+                  <ShoppingCart size={36} className={serifTheme.colors.text.accent} />
                 </div>
               </motion.div>
 
               {/* Title */}
-              <h1 className="text-4xl lg:text-6xl font-bold tracking-tight mb-4 relative">
-                <span className="relative inline-block">
-                  <span className="absolute inset-0 bg-gradient-to-r from-cyan-400 to-pink-400 bg-clip-text text-transparent blur-sm">
-                    Shopping Cart
-                  </span>
-                  <span className="relative bg-gradient-to-r from-cyan-400 to-pink-400 bg-clip-text text-transparent">
-                    Shopping Cart
-                  </span>
+              <h1 className={`text-4xl lg:text-5xl font-bold tracking-tight mb-4 ${serifTheme.colors.text.primary}`}>
+                <span className={serifTheme.gradients.accent}>
+                  Shopping Cart
                 </span>
               </h1>
 
               {/* Subtitle */}
               <motion.p
-                className="text-green-400 text-lg max-w-2xl mx-auto"
-                animate={{ opacity: [1, 0.7, 1] }}
-                transition={{ duration: 1.5, repeat: Infinity }}
+                className={`${serifTheme.colors.text.secondary} text-lg max-w-2xl mx-auto`}
+                animate={{ opacity: [1, 0.8, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
               >
                 Review your items and proceed to checkout
               </motion.p>
@@ -325,29 +302,26 @@ const CartPage = () => {
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.2 }}
-                    className="mb-6 p-6 bg-black/60 rounded-2xl border border-cyan-400/30 backdrop-blur-sm relative overflow-hidden"
+                    className={`mb-6 p-6 ${serifTheme.gradients.card} ${serifTheme.radius.card} border ${serifTheme.colors.border.secondary} ${serifTheme.colors.shadow.card} relative overflow-hidden`}
                   >
-                    {/* Neon Border Effect */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/10 to-pink-400/10 rounded-2xl"></div>
-
                     <div className="relative flex items-center gap-3">
                       <motion.div
-                        className="p-2 bg-black border border-green-400 rounded-lg"
+                        className={`p-2 ${serifTheme.colors.background.card} border ${serifTheme.colors.border.secondary} ${serifTheme.radius.button}`}
                         animate={{
                           boxShadow: [
-                            "0 0 10px rgba(34, 197, 94, 0.5)",
-                            "0 0 20px rgba(34, 197, 94, 0.8)",
-                            "0 0 10px rgba(34, 197, 94, 0.5)"
+                            "0 0 10px rgba(251, 191, 36, 0.3)",
+                            "0 0 20px rgba(251, 146, 60, 0.4)",
+                            "0 0 10px rgba(251, 191, 36, 0.3)"
                           ]
                         }}
                         transition={{ duration: 2, repeat: Infinity }}
                       >
-                        <Package size={20} className="text-green-400" />
+                        <Package size={20} className={serifTheme.colors.text.accent} />
                       </motion.div>
-                      <h2 className="text-xl font-bold text-cyan-400">Cart Items</h2>
-                      <span className="text-sm bg-black border border-yellow-400 text-yellow-400 px-3 py-1 rounded">
+                      <h2 className={`text-xl font-bold ${serifTheme.colors.text.accent}`}>Cart Items</h2>
+                      <SerifBadge variant="primary" size="small">
                         {cartItemTotal} {cartItemTotal === 1 ? "item" : "items"}
-                      </span>
+                      </SerifBadge>
                     </div>
                   </motion.div>
                 )}
@@ -367,68 +341,52 @@ const CartPage = () => {
                             layout
                             whileHover={{
                               y: -2,
-                              boxShadow: "0 0 30px rgba(0, 255, 255, 0.3), 0 0 60px rgba(255, 0, 255, 0.2)"
+                              boxShadow: "0 0 30px rgba(251, 191, 36, 0.2), 0 0 60px rgba(251, 146, 60, 0.15)"
                             }}
-                            className={`flex flex-col sm:flex-row items-center py-6 px-6 bg-black/80 backdrop-blur-xl rounded-2xl border border-cyan-400/30 shadow-xl relative overflow-hidden ${
+                            className={`flex flex-col sm:flex-row items-center py-6 px-6 ${serifTheme.gradients.card} backdrop-blur-xl ${serifTheme.radius.card} border ${serifTheme.colors.border.secondary} ${serifTheme.colors.shadow.cardHover} relative overflow-hidden ${
                               isRemovingItem === id ? "opacity-0 scale-95" : "opacity-100 scale-100"
-                            } transition-all duration-300`}
+                            } ${serifTheme.transitions.default}`}
                           >
-                            {/* Neon Accent Line */}
-                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-cyan-400 to-pink-400"></div>
+                            {/* Accent Line */}
+                            <div className={`absolute left-0 top-0 bottom-0 w-1 ${serifTheme.gradients.button}`}></div>
                             <div className="flex-shrink-0 mb-4 sm:mb-0 sm:mr-6">
                               <motion.div
                                 whileHover={{ scale: 1.05, rotateZ: 1 }}
                                 className="relative group"
                               >
-                                {/* Holographic Effect */}
-                                <div className="absolute -inset-1 bg-gradient-to-r from-cyan-400 to-pink-400 rounded-xl blur opacity-50 group-hover:opacity-100 transition duration-500"></div>
-                                <div className="absolute -inset-0.5 bg-gradient-to-r from-green-400 to-yellow-400 rounded-xl blur-sm opacity-30 group-hover:opacity-60 transition duration-500"></div>
+                                {/* Hover Effect */}
+                                <div className={`absolute -inset-1 ${serifTheme.gradients.button} ${serifTheme.radius.button} blur opacity-30 group-hover:opacity-50 ${serifTheme.transitions.default}`}></div>
                                 <img
                                   src={productImageUrl}
                                   alt="Product"
-                                  className="relative h-24 w-24 rounded-xl object-contain bg-black/80 border border-cyan-400/50 shadow-lg"
-                                />
-                                {/* Scanning Line Effect */}
-                                <motion.div
-                                  className="absolute inset-0 bg-gradient-to-b from-transparent via-cyan-400/30 to-transparent h-1"
-                                  animate={{ y: [0, 96, 0] }}
-                                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                                  className={`relative h-24 w-24 ${serifTheme.radius.button} object-contain ${serifTheme.colors.background.tertiary} border ${serifTheme.colors.border.secondary} ${serifTheme.colors.shadow.card}`}
                                 />
                               </motion.div>
                             </div>
                             <div className="flex-1 flex flex-col text-center sm:text-left mr-4">
-                              <h3 className="text-lg font-bold text-cyan-400 mb-1">{title}</h3>
-                              <p className="text-sm text-green-400 mb-2 uppercase tracking-wider">{category}</p>
-                              <p className="text-2xl font-bold">
-                                <span className="text-yellow-400">₹</span>
-                                <span className="bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">
-                                  {price}
-                                </span>
+                              <h3 className={`text-lg font-bold ${serifTheme.colors.text.accent} mb-1`}>{title}</h3>
+                              <p className={`text-sm ${serifTheme.colors.text.secondary} mb-2 uppercase tracking-wider`}>{category}</p>
+                              <p className={`text-2xl font-bold ${serifTheme.colors.text.accent}`}>
+                                ₹{price}
                               </p>
                             </div>
                             <div className="flex items-center space-x-3 mt-4 sm:mt-0">
                               {/* Decrease Button */}
-                              <motion.button
-                                whileTap={{ scale: 0.85 }}
-                                whileHover={{
-                                  scale: 1.1,
-                                  boxShadow: "0 0 20px rgba(239, 68, 68, 0.5)"
-                                }}
+                              <SerifButton
+                                variant={quantity <= 1 ? "ghost" : "outline"}
+                                size="small"
                                 onClick={() => dispatch(decrementQuantity(id))}
-                                className={`h-10 w-10 bg-black border border-red-400 hover:bg-red-400/20 text-red-400 rounded-lg flex items-center justify-center transition-all duration-200 ${
-                                  quantity <= 1 ? 'opacity-50 cursor-not-allowed border-gray-600 text-gray-600' : ''
-                                }`}
                                 disabled={quantity <= 1}
-                              >
-                                <Minus size={18} />
-                              </motion.button>
+                                icon={<Minus size={16} />}
+                                className="h-10 w-10 p-0"
+                              />
 
-                              {/* Digital Display */}
-                              <div className="w-16 text-center border border-cyan-400 rounded-lg bg-black text-cyan-400 px-3 py-2 text-lg font-bold shadow-lg">
+                              {/* Quantity Display */}
+                              <div className={`w-16 text-center border ${serifTheme.colors.border.secondary} ${serifTheme.radius.button} ${serifTheme.colors.background.card} ${serifTheme.colors.text.accent} px-3 py-2 text-lg font-bold ${serifTheme.colors.shadow.card}`}>
                                 <motion.span
                                   key={quantity}
-                                  initial={{ scale: 1.2, color: "#00ff00" }}
-                                  animate={{ scale: 1, color: "#00ffff" }}
+                                  initial={{ scale: 1.2 }}
+                                  animate={{ scale: 1 }}
                                   transition={{ duration: 0.3 }}
                                 >
                                   {quantity.toString().padStart(2, '0')}
@@ -436,80 +394,34 @@ const CartPage = () => {
                               </div>
 
                               {/* Increase Button */}
-                              <motion.button
-                                whileTap={{ scale: 0.85 }}
-                                whileHover={{
-                                  scale: 1.1,
-                                  boxShadow: "0 0 20px rgba(34, 197, 94, 0.5)"
-                                }}
+                              <SerifButton
+                                variant="primary"
+                                size="small"
                                 onClick={() => dispatch(incrementQuantity(id))}
-                                className="h-10 w-10 bg-black border border-green-400 hover:bg-green-400/20 text-green-400 rounded-lg flex items-center justify-center transition-all duration-200"
-                              >
-                                <Plus size={18} />
-                              </motion.button>
+                                icon={<Plus size={16} />}
+                                className="h-10 w-10 p-0"
+                              />
 
                               {/* Delete Button */}
-                              <motion.button
-                                whileHover={{
-                                  scale: 1.1,
-                                  rotateZ: -5,
-                                  boxShadow: "0 0 30px rgba(255, 0, 0, 0.6)"
-                                }}
-                                whileTap={{ scale: 0.9 }}
+                              <SerifButton
+                                variant="danger"
+                                size="small"
                                 onClick={() => handleRemoveItem(item)}
-                                className="ml-2 p-3 bg-black border border-red-500 hover:bg-red-500/20 text-red-500 rounded-lg flex items-center justify-center transition-all duration-200"
-                              >
-                                <Trash size={18} />
-                              </motion.button>
+                                icon={<Trash size={16} />}
+                                className="ml-2 h-10 w-10 p-0"
+                              />
                             </div>
                           </motion.div>
                         );
                       })
                     ) : (
-                      <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="text-center py-16 text-gray-400 flex flex-col items-center bg-black/80 backdrop-blur-xl rounded-2xl border border-red-400/30 relative overflow-hidden"
-                      >
-                        {/* Error/Warning Effect */}
-                        <div className="absolute inset-0 bg-gradient-to-br from-red-500/10 to-yellow-500/10 rounded-2xl"></div>
-
-                        <motion.div
-                          animate={{
-                            y: [0, -10, 0],
-                            boxShadow: [
-                              "0 0 20px rgba(239, 68, 68, 0.5)",
-                              "0 0 40px rgba(239, 68, 68, 0.8)",
-                              "0 0 20px rgba(239, 68, 68, 0.5)"
-                            ]
-                          }}
-                          transition={{
-                            duration: 2,
-                            repeat: Infinity,
-                            ease: "easeInOut"
-                          }}
-                          className="relative w-24 h-24 bg-black border border-red-400 rounded-2xl flex items-center justify-center mb-6"
-                        >
-                          <ShoppingCart size={48} className="text-red-400" strokeWidth={1.5} />
-                        </motion.div>
-
-                        <h3 className="text-2xl font-bold text-red-400 mb-2">Your cart is empty</h3>
-                        <p className="text-green-400 mb-6">
-                          Add some items to get started
-                        </p>
-
-                        <motion.button
-                          whileHover={{
-                            scale: 1.05,
-                            boxShadow: "0 0 30px rgba(34, 197, 94, 0.6)"
-                          }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => navigate('/')}
-                          className="px-6 py-3 bg-black border border-green-400 hover:bg-green-400/20 text-green-400 font-bold rounded-xl transition-all duration-200"
-                        >
-                          Start Shopping
-                        </motion.button>
-                      </motion.div>
+                      <SerifEmptyState
+                        icon={<ShoppingCart size={48} />}
+                        title="Your cart is empty"
+                        description="Add some items to get started"
+                        actionLabel="Start Shopping"
+                        onAction={() => navigate('/allproduct')}
+                      />
                     )}
                   </AnimatePresence>
                 </div>
@@ -522,63 +434,61 @@ const CartPage = () => {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.3 }}
                   layout
-                  className="lg:w-1/3 rounded-2xl bg-black/80 backdrop-blur-xl p-6 shadow-2xl border border-cyan-400/30 h-fit sticky top-10 relative overflow-hidden"
+                  className={`lg:w-1/3 ${serifTheme.gradients.card} backdrop-blur-xl p-6 ${serifTheme.colors.shadow.card} border ${serifTheme.colors.border.secondary} ${serifTheme.radius.card} h-fit sticky top-10 relative overflow-hidden`}
                 >
-                  {/* Neon Border Effect */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-cyan-400/10 to-pink-400/10 rounded-2xl"></div>
-
                   <div className="relative z-10">
-                    <div className="flex items-center gap-3 mb-6 pb-4 border-b border-cyan-400/30">
+                    <div className={`flex items-center gap-3 mb-6 pb-4 border-b ${serifTheme.colors.border.primary}`}>
                       <motion.div
-                        className="p-2 bg-black border border-yellow-400 rounded-lg"
+                        className={`p-2 ${serifTheme.colors.background.card} border ${serifTheme.colors.border.accent} ${serifTheme.radius.button}`}
                         animate={{
                           boxShadow: [
-                            "0 0 10px rgba(234, 179, 8, 0.5)",
-                            "0 0 20px rgba(234, 179, 8, 0.8)",
-                            "0 0 10px rgba(234, 179, 8, 0.5)"
+                            "0 0 10px rgba(251, 191, 36, 0.3)",
+                            "0 0 20px rgba(251, 146, 60, 0.4)",
+                            "0 0 10px rgba(251, 191, 36, 0.3)"
                           ]
                         }}
                         transition={{ duration: 2, repeat: Infinity }}
                       >
-                        <Star size={20} className="text-yellow-400" />
+                        <Star size={20} className={serifTheme.colors.text.accent} />
                       </motion.div>
-                      <h2 className="text-xl font-bold text-cyan-400">Order Summary</h2>
+                      <h2 className={`text-xl font-bold ${serifTheme.colors.text.accent}`}>Order Summary</h2>
                     </div>
 
                     <div className="space-y-4">
-                    <div className="flex justify-between items-center text-green-400 bg-black/50 p-3 rounded-lg border border-green-400/30">
+                    <div className={`flex justify-between items-center ${serifTheme.colors.text.secondary} p-3 ${serifTheme.radius.button} border ${serifTheme.colors.border.primary} ${serifTheme.colors.background.card}`}>
                       <span className="flex items-center gap-2">
                         <Package size={16} />
                         Subtotal ({cartItemTotal} {cartItemTotal === 1 ? "item" : "items"})
                       </span>
-                      <span className="font-bold text-lg">₹{cartSubtotal.toFixed(2)}</span>
+                      <span className={`font-bold text-lg ${serifTheme.colors.text.primary}`}>₹{cartSubtotal.toFixed(2)}</span>
                     </div>
 
                     {/* Estimated Delivery */}
-                    <div className="flex justify-between items-center text-blue-400 bg-black/50 p-3 rounded-lg border border-blue-400/30">
+                    <div className={`flex justify-between items-center ${serifTheme.colors.text.secondary} ${serifTheme.colors.background.card} p-3 ${serifTheme.radius.button} border ${serifTheme.colors.border.secondary}`}>
                       <span className="flex items-center gap-2">
                         <Package size={16} />
                         Estimated Delivery
                       </span>
-                      <span className="font-bold text-sm">{getEstimatedDelivery()}</span>
+                      <span className={`font-bold text-sm ${serifTheme.colors.text.accent}`}>{getEstimatedDelivery()}</span>
                     </div>
 
                     {/* Manual Coupon Section */}
-                    <div className="mt-6 pt-6 border-t border-cyan-400/30">
+                    <div className={`mt-6 pt-6 border-t ${serifTheme.colors.border.primary}`}>
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-2">
-                          <Sparkles size={16} className="text-yellow-400" />
-                          <p className="text-yellow-400 font-bold">Coupon Discount</p>
+                          <Sparkles size={16} className={serifTheme.colors.text.accent} />
+                          <p className={`${serifTheme.colors.text.accent} font-bold`}>Coupon Discount</p>
                         </div>
                         {couponState.applied && (
-                          <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
+                          <SerifButton
+                            variant="ghost"
+                            size="small"
                             onClick={removeCoupon}
-                            className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-red-500/10 transition-all duration-200"
+                            icon={<X size={14} />}
+                            className="text-xs"
                           >
-                            <X size={14} /> Remove Coupon
-                          </motion.button>
+                            Remove Coupon
+                          </SerifButton>
                         )}
                       </div>
 
@@ -587,21 +497,21 @@ const CartPage = () => {
                         <motion.div
                           initial={{ opacity: 0, scale: 0.9 }}
                           animate={{ opacity: 1, scale: 1 }}
-                          className="bg-gradient-to-r from-purple-900/40 to-pink-900/40 border border-purple-600/50 rounded-xl p-4 flex items-center justify-between backdrop-blur-sm mb-4"
+                          className={`${serifTheme.gradients.card} border ${serifTheme.colors.border.accent} ${serifTheme.radius.card} p-4 flex items-center justify-between backdrop-blur-sm mb-4`}
                         >
                           <div className="flex items-center gap-3">
-                            <div className="p-1 bg-purple-500 rounded-full">
+                            <div className={`p-1 ${serifTheme.gradients.button} ${serifTheme.radius.badge}`}>
                               <Check className="text-white" size={16} />
                             </div>
                             <div>
-                              <span className="font-semibold text-white">{couponState.code}</span>
-                              <p className="text-xs text-purple-300 mt-1">{couponState.description}</p>
+                              <span className={`font-semibold ${serifTheme.colors.text.primary}`}>{couponState.code}</span>
+                              <p className={`text-xs ${serifTheme.colors.text.secondary} mt-1`}>{couponState.description}</p>
                             </div>
-                            <span className="text-xs bg-gradient-to-r from-purple-500 to-pink-500 text-white px-3 py-1 rounded-full font-semibold">
+                            <SerifBadge variant="primary" size="small">
                               {couponState.discountPercentage}% OFF
-                            </span>
+                            </SerifBadge>
                           </div>
-                          <span className="text-purple-400 font-bold text-lg">- ₹{couponState.discount.toFixed(2)}</span>
+                          <span className={`${serifTheme.colors.text.accent} font-bold text-lg`}>- ₹{couponState.discount.toFixed(2)}</span>
                         </motion.div>
                       )}
 
@@ -610,24 +520,22 @@ const CartPage = () => {
                         <div className="space-y-4">
                           <div className="grid grid-cols-2 gap-2">
                             {Object.keys(validCoupons).map((code) => (
-                              <motion.button
+                              <SerifButton
                                 key={code}
-                                whileHover={{ y: -2, scale: 1.02 }}
-                                whileTap={{ scale: 0.95 }}
+                                variant="secondary"
+                                size="small"
                                 onClick={() => applyCoupon(code)}
                                 disabled={isApplyingCoupon}
-                                className={`px-3 py-3 text-xs rounded-xl transition-all ${
-                                  isApplyingCoupon ? "bg-gray-700/50 cursor-not-allowed" : "bg-gradient-to-r from-gray-700 to-gray-600 hover:from-gray-600 hover:to-gray-500"
-                                } text-white border border-gray-600/50 backdrop-blur-sm`}
+                                className="text-xs py-3 flex flex-col items-center"
                               >
                                 <div className="font-semibold">{code}</div>
-                                <div className="text-yellow-400 text-[0.6rem] mt-1 font-medium">
+                                <div className={`${serifTheme.colors.text.accent} text-[0.6rem] mt-1 font-medium`}>
                                   {validCoupons[code].discount}% OFF
                                 </div>
-                                <div className="text-gray-400 text-[0.5rem] mt-1">
+                                <div className={`${serifTheme.colors.text.muted} text-[0.5rem] mt-1`}>
                                   Min ₹{validCoupons[code].minAmount}
                                 </div>
-                              </motion.button>
+                              </SerifButton>
                             ))}
                           </div>
 
@@ -637,21 +545,17 @@ const CartPage = () => {
                               placeholder="Enter coupon code"
                               value={customCoupon}
                               onChange={(e) => setCustomCoupon(e.target.value.toUpperCase())}
-                              className="w-full bg-gray-800/50 border border-gray-600 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 backdrop-blur-sm transition-all duration-200"
+                              className={`w-full ${serifTheme.colors.background.card} border ${serifTheme.colors.border.secondary} ${serifTheme.radius.input} px-4 py-3 text-sm ${serifTheme.colors.text.primary} placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-400/80 backdrop-blur-sm ${serifTheme.transitions.default}`}
                             />
-                            <motion.button
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
+                            <SerifButton
+                              variant="primary"
+                              size="small"
                               onClick={() => applyCoupon(customCoupon)}
                               disabled={isApplyingCoupon || !customCoupon}
-                              className={`absolute right-2 top-1/2 -translate-y-1/2 px-4 py-2 text-xs rounded-lg font-semibold transition-all duration-200 ${
-                                isApplyingCoupon || !customCoupon
-                                  ? "bg-gray-600 cursor-not-allowed text-gray-400"
-                                  : "bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white shadow-lg"
-                              }`}
+                              className="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-2 text-xs"
                             >
                               {isApplyingCoupon ? "Applying..." : "Apply"}
-                            </motion.button>
+                            </SerifButton>
                           </div>
                         </div>
                       )}
@@ -660,7 +564,7 @@ const CartPage = () => {
                         <motion.div
                           initial={{ opacity: 0, y: -10 }}
                           animate={{ opacity: 1, y: 0 }}
-                          className="mt-3 text-red-400 text-sm flex items-center gap-2 p-3 bg-red-500/10 rounded-lg border border-red-500/20"
+                          className={`mt-3 text-red-600 text-sm flex items-center gap-2 p-3 bg-red-50 rounded-lg border border-red-200`}
                         >
                           <Info size={14} />
                           <span>{couponError}</span>
@@ -671,7 +575,7 @@ const CartPage = () => {
 
                     <div className="mt-6 space-y-4">
                       {couponState.discount > 0 && (
-                        <div className="flex justify-between text-green-400 bg-black/50 p-3 rounded-lg border border-green-400/30">
+                        <div className={`flex justify-between ${serifTheme.colors.text.secondary} p-3 ${serifTheme.radius.button} border ${serifTheme.colors.border.primary} ${serifTheme.colors.background.card}`}>
                           <span className="flex items-center gap-2">
                             <Sparkles size={16} />
                             Coupon Discount
@@ -680,14 +584,14 @@ const CartPage = () => {
                         </div>
                       )}
 
-                      <div className="flex justify-between border-t border-cyan-400/30 pt-4 font-bold text-xl bg-black/50 p-4 rounded-lg border border-cyan-400/30">
-                        <span className="text-cyan-400">Total Amount</span>
+                      <div className={`flex justify-between border-t ${serifTheme.colors.border.primary} pt-4 font-bold text-xl ${serifTheme.colors.background.card} p-4 ${serifTheme.radius.button} border ${serifTheme.colors.border.secondary}`}>
+                        <span className={serifTheme.colors.text.accent}>Total Amount</span>
                         <motion.span
                           key={finalPrice}
-                          initial={{ scale: 1.2, color: "#00ff00" }}
-                          animate={{ scale: 1, color: "#fbbf24" }}
+                          initial={{ scale: 1.2 }}
+                          animate={{ scale: 1 }}
                           transition={{ duration: 0.5, type: "spring" }}
-                          className="font-bold text-2xl text-yellow-400"
+                          className={`font-bold text-2xl ${serifTheme.colors.text.accent}`}
                         >
                           ₹{finalPrice.toFixed(2)}
                         </motion.span>
@@ -697,34 +601,34 @@ const CartPage = () => {
                         <motion.div
                           initial={{ opacity: 0, scale: 0.9 }}
                           animate={{ opacity: 1, scale: 1 }}
-                          className="text-center text-green-400 text-sm p-3 bg-green-500/10 rounded-lg border border-green-500/20"
+                          className={`text-center ${serifTheme.colors.text.secondary} text-sm p-3 ${serifTheme.radius.button} border ${serifTheme.colors.border.secondary} ${serifTheme.colors.background.tertiary}`}
                         >
                           🎉 You saved ₹{couponState.discount.toFixed(2)} with coupon {couponState.code}!
                         </motion.div>
                       )}
 
                       {/* Order Summary */}
-                      <div className="bg-black/30 p-4 rounded-lg border border-gray-600/30">
-                        <h4 className="text-sm font-semibold text-gray-300 mb-3">Order Summary:</h4>
+                      <div className={`${serifTheme.colors.background.card} p-4 ${serifTheme.radius.button} border ${serifTheme.colors.border.primary}`}>
+                        <h4 className={`text-sm font-semibold ${serifTheme.colors.text.primary} mb-3`}>Order Summary:</h4>
                         <div className="space-y-2 text-xs">
                           {cartItems.map((item, index) => (
-                            <div key={index} className="flex justify-between text-gray-400">
+                            <div key={index} className={`flex justify-between ${serifTheme.colors.text.tertiary}`}>
                               <span className="truncate">{item.title} x{item.quantity}</span>
                               <span>₹{(item.price * item.quantity).toFixed(2)}</span>
                             </div>
                           ))}
-                          <div className="border-t border-gray-600/30 pt-2 mt-2">
-                            <div className="flex justify-between text-gray-300 font-semibold">
+                          <div className={`border-t ${serifTheme.colors.border.primary} pt-2 mt-2`}>
+                            <div className={`flex justify-between ${serifTheme.colors.text.secondary} font-semibold`}>
                               <span>Subtotal:</span>
                               <span>₹{cartSubtotal.toFixed(2)}</span>
                             </div>
                             {couponState.discount > 0 && (
-                              <div className="flex justify-between text-green-400">
+                              <div className={`flex justify-between ${serifTheme.colors.text.secondary}`}>
                                 <span>Coupon Discount:</span>
                                 <span>- ₹{couponState.discount.toFixed(2)}</span>
                               </div>
                             )}
-                            <div className="flex justify-between text-yellow-400 font-bold">
+                            <div className={`flex justify-between ${serifTheme.colors.text.accent} font-bold`}>
                               <span>Total:</span>
                               <span>₹{finalPrice.toFixed(2)}</span>
                             </div>
@@ -752,7 +656,7 @@ const CartPage = () => {
             </div>
           </motion.div>
         </div>
-      </div>
+      </SerifPageWrapper>
     </Layout>
   );
 };

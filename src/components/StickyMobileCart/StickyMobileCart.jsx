@@ -88,15 +88,15 @@ const StickyMobileCart = () => {
           whileHover={{ 
             scale: 1.03,
             y: -2,
-            boxShadow: "0 12px 30px rgba(34, 197, 94, 0.4), 0 0 0 2px rgba(34, 197, 94, 0.2)"
+            boxShadow: "0 12px 30px var(--color-glow-primary), 0 0 0 2px var(--color-primary-20)"
           }}
           whileTap={{ scale: 0.97 }}
           animate={{
             y: [0, -3, 0],
             boxShadow: [
-              "0 6px 20px rgba(34, 197, 94, 0.3), 0 0 0 1px rgba(34, 197, 94, 0.1)",
-              "0 8px 25px rgba(34, 197, 94, 0.4), 0 0 0 1px rgba(34, 197, 94, 0.15)",
-              "0 6px 20px rgba(34, 197, 94, 0.3), 0 0 0 1px rgba(34, 197, 94, 0.1)"
+              "0 6px 20px var(--color-glow-primary), 0 0 0 1px var(--color-primary-10)",
+              "0 8px 25px var(--color-glow-primary), 0 0 0 1px var(--color-primary-20)",
+              "0 6px 20px var(--color-glow-primary), 0 0 0 1px var(--color-primary-10)"
             ],
             // More dramatic shrink then expand effect when cart changes
             scale: shouldBounce ? [1, 0.6, 1.4, 0.9, 1.2, 1] : 1,
@@ -111,7 +111,7 @@ const StickyMobileCart = () => {
             rotate: shouldBounce ? { duration: 1.2, ease: "easeInOut" } : {},
             filter: shouldBounce ? { duration: 1.2, ease: "easeInOut" } : {}
           }}
-          className="relative w-full max-w-sm mx-auto bg-gradient-to-r from-green-500 via-green-600 to-emerald-600 hover:from-green-600 hover:via-green-700 hover:to-emerald-700 text-white rounded-2xl shadow-xl transition-all duration-300 overflow-hidden"
+          className="relative w-full max-w-sm mx-auto bg-gradient-success text-white rounded-2xl shadow-xl transition-all duration-300 overflow-hidden"
         >
           {/* Animated background gradient */}
           <motion.div
@@ -183,7 +183,7 @@ const StickyMobileCart = () => {
                     initial={{ scale: 0, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     whileHover={{ scale: 1.1 }}
-                    className="absolute -top-1 -right-1 bg-white text-green-600 text-[8px] font-bold rounded-full min-w-[14px] h-3.5 flex items-center justify-center shadow-lg"
+                    className="absolute -top-1 -right-1 bg-white text-primary text-[8px] font-bold rounded-full min-w-[14px] h-3.5 flex items-center justify-center shadow-lg"
                   >
                     <motion.span
                       key={totalItems}
@@ -214,7 +214,7 @@ const StickyMobileCart = () => {
                   View cart
                 </motion.span>
                 <motion.span 
-                  className="text-green-100 text-[10px] font-medium leading-tight"
+                  className="text-custom-white opacity-80 text-[10px] font-medium leading-tight"
                   initial={{ x: -6, opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
                   transition={{ delay: 0.1 }}
@@ -257,7 +257,7 @@ const StickyMobileCart = () => {
                     {totalPrice.toLocaleString('en-IN')}
                   </motion.span>
                 </div>
-                <span className="text-green-100 text-[8px] leading-tight">Total</span>
+                <span className="text-custom-white opacity-80 text-[8px] leading-tight">Total</span>
               </motion.div>
 
               {/* Arrow icon */}

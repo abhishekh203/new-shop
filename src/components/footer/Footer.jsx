@@ -12,18 +12,12 @@ import {
   Phone,
   LocationOn,
   CheckCircle,
-  ArrowUpward
 } from "@mui/icons-material";
+import { serifTheme } from "../../design-system/themes";
 
 const Footer = () => {
     const navigate = useNavigate();
 
-    const scrollToTop = () => {
-        window.scrollTo({
-            top: 0,
-            behavior: "smooth"
-        });
-    };
 
     const socialLinks = [
         { 
@@ -60,17 +54,17 @@ const Footer = () => {
 
     const contactInfo = [
         {
-            icon: <Email className="text-orange-400" />,
+            icon: <Email className="text-amber-600" />,
             text: "digitalshopnepal@gmail.com",
             link: "mailto:digitalshopnepal@gmail.com"
         },
         {
-            icon: <Phone className="text-orange-400" />,
+            icon: <Phone className="text-amber-600" />,
             text: "+977 9807677391",
             link: "tel:+9779807677391"
         },
         {
-            icon: <LocationOn className="text-orange-400" />,
+            icon: <LocationOn className="text-amber-600" />,
             text: "Kathmandu, Nepal",
             link: "https://maps.google.com/?q=Kathmandu"
         }
@@ -84,7 +78,7 @@ const Footer = () => {
                     <motion.p 
                         initial={{ opacity: 0 }}
                         whileInView={{ opacity: 1 }}
-                        className="text-sm text-gray-300 mb-4"
+                        className={`text-sm ${serifTheme.colors.text.secondary} mb-4`}
                     >
                         Digital Shop Nepal is your trusted provider of premium digital subscriptions since 2019, serving 20,000+ satisfied customers.
                     </motion.p>
@@ -148,8 +142,8 @@ const Footer = () => {
                             whileInView={{ opacity: 1, x: 0 }}
                             transition={{ delay: index * 0.1 }}
                         >
-                            <CheckCircle className="text-green-500 mr-2 text-sm" />
-                            <span className="text-gray-300 text-sm">{feature}</span>
+                            <CheckCircle className="text-green-600 mr-2 text-sm" />
+                            <span className={`${serifTheme.colors.text.secondary} text-sm`}>{feature}</span>
                         </motion.li>
                     ))}
                 </ul>
@@ -173,19 +167,19 @@ const Footer = () => {
                                     href={info.link} 
                                     target="_blank" 
                                     rel="noopener noreferrer"
-                                    className="text-gray-300 hover:text-yellow-400 text-sm transition-colors"
+                                    className={`${serifTheme.colors.text.secondary} hover:text-amber-800 text-sm ${serifTheme.transitions.default}`}
                                 >
                                     {info.text}
                                 </a>
                             </motion.div>
                         ))}
                     </div>
-                    <motion.a 
+                    <motion.a
                         href="https://wa.me/9779807677391"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center bg-green-500 text-white font-medium py-2 px-4 rounded-lg hover:bg-green-600 transition"
-                        whileHover={{ y: -2 }}
+                        className={`inline-flex items-center ${serifTheme.colors.button.primary} ${serifTheme.colors.button.textPrimary} font-medium py-2 px-4 ${serifTheme.radius.button} ${serifTheme.transitions.default} ${serifTheme.colors.shadow.button}`}
+                        whileHover={{ y: -2, scale: 1.02 }}
                         whileTap={{ scale: 0.95 }}
                         initial={{ opacity: 0 }}
                         whileInView={{ opacity: 1 }}
@@ -199,8 +193,23 @@ const Footer = () => {
     ];
 
     return (
-        <footer className="bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white pt-16 pb-8 px-4 sm:px-6">
-            <div className="max-w-7xl mx-auto">
+        <footer className={`${serifTheme.gradients.background} pt-16 pb-8 px-4 sm:px-6 relative overflow-hidden`} style={{ fontFamily: serifTheme.fontFamily.serif }}>
+            {/* Background Elements - Serif Theme */}
+            <div className="absolute inset-0 pointer-events-none">
+                {/* Gradient Overlay */}
+                <div className={`absolute inset-0 ${serifTheme.gradients.overlay}`}></div>
+                
+                {/* Animated Background Pattern */}
+                <div className="absolute inset-0 opacity-10">
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(180,83,9,0.2)_1px,transparent_1px)] bg-[length:20px_20px]"></div>
+                </div>
+                
+                {/* Floating Orbs - Warm Amber/Orange Tones */}
+                <div className="absolute top-20 left-10 w-32 h-32 bg-amber-500/20 rounded-full blur-3xl animate-pulse"></div>
+                <div className="absolute bottom-20 right-10 w-40 h-40 bg-orange-500/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
+                <div className="absolute top-1/2 left-1/4 w-24 h-24 bg-yellow-500/20 rounded-full blur-2xl animate-pulse delay-500"></div>
+            </div>
+            <div className="max-w-7xl mx-auto relative z-10">
                 {/* Main Footer Content */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8 mb-12">
                     {footerSections.map((section, index) => (
@@ -211,7 +220,7 @@ const Footer = () => {
                             transition={{ duration: 0.5, delay: index * 0.1 }}
                             className="space-y-4"
                         >
-                            <h5 className="text-lg font-bold text-yellow-400">{section.title}</h5>
+                            <h5 className={`text-lg font-bold ${serifTheme.colors.text.accent}`}>{section.title}</h5>
                             
                             {section.content}
                             
@@ -227,8 +236,7 @@ const Footer = () => {
                                         >
                                             <Link 
                                                 to={link.path} 
-                                                className="text-gray-300 hover:text-yellow-400 text-sm transition-colors"
-                                                onClick={link.path.startsWith('/') ? scrollToTop : undefined}
+                                                className={`${serifTheme.colors.text.secondary} hover:text-amber-800 text-sm ${serifTheme.transitions.default}`}
                                                 target={link.path.startsWith('http') ? '_blank' : undefined}
                                             >
                                                 {link.name}
@@ -246,31 +254,28 @@ const Footer = () => {
                     initial={{ opacity: 0 }}
                     whileInView={{ opacity: 1 }}
                     transition={{ duration: 0.5 }}
-                    className="border-t border-gray-800 pt-6 text-center"
+                    className={`border-t ${serifTheme.colors.border.primary} pt-6 text-center`}
                 >
                     <div className="flex flex-col md:flex-row justify-between items-center">
-                        <p className="text-gray-400 text-sm mb-4 md:mb-0">
+                        <p className={`${serifTheme.colors.text.muted} text-sm mb-4 md:mb-0`}>
                             © {new Date().getFullYear()} Digital Shop Nepal. All Rights Reserved| Registered in Kathmandu, Nepal 
                         </p>
                         <div className="flex space-x-4">
                             <Link 
                                 to="/privacy-policy" 
-                                className="text-gray-400 hover:text-yellow-400 text-sm transition-colors"
-                                onClick={scrollToTop}
+                                className={`${serifTheme.colors.text.muted} hover:text-amber-800 text-sm ${serifTheme.transitions.default}`}
                             >
                                 Privacy Policy
                             </Link>
                             <Link 
                                 to="/terms" 
-                                className="text-gray-400 hover:text-yellow-400 text-sm transition-colors"
-                                onClick={scrollToTop}
+                                className={`${serifTheme.colors.text.muted} hover:text-amber-800 text-sm ${serifTheme.transitions.default}`}
                             >
                                 Terms of Service
                             </Link>
                             <Link 
                                 to="/refund-policy" 
-                                className="text-gray-400 hover:text-yellow-400 text-sm transition-colors"
-                                onClick={scrollToTop}
+                                className={`${serifTheme.colors.text.muted} hover:text-amber-800 text-sm ${serifTheme.transitions.default}`}
                             >
                                 Refund Policy
                             </Link>
@@ -285,19 +290,6 @@ const Footer = () => {
                     </motion.p> */}
                 </motion.div>
 
-                {/* Back to Top Button - Only visible on large devices */}
-                <motion.button
-                    onClick={scrollToTop}
-                    className="fixed bottom-6 right-6 bg-gradient-to-r from-orange-500 to-orange-600 text-white p-3 rounded-full shadow-lg hover:shadow-orange-500/30 z-50 hidden md:block"
-                    whileHover={{ scale: 1.1, y: -5 }}
-                    whileTap={{ scale: 0.9 }}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5 }}
-                    aria-label="Back to top"
-                >
-                    <ArrowUpward />
-                </motion.button>
             </div>
         </footer>
     );

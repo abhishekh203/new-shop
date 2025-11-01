@@ -23,8 +23,23 @@ class ErrorBoundary extends React.Component {
     render() {
         if (this.state.hasError) {
             // You can render any custom fallback UI
-            return (
-                <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-950 flex items-center justify-center p-4">
+                return (
+        <div className="min-h-screen bg-black flex items-center justify-center p-4 relative overflow-hidden">
+            {/* Background Elements - Same as Hero Section */}
+            <div className="absolute inset-0">
+                {/* Gradient Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-br from-black via-gray-900 to-black"></div>
+                
+                {/* Animated Background Pattern */}
+                <div className="absolute inset-0 opacity-20">
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1)_1px,transparent_1px)] bg-[length:20px_20px]"></div>
+                </div>
+                
+                {/* Floating Orbs */}
+                <div className="absolute top-20 left-10 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl animate-pulse"></div>
+                <div className="absolute bottom-20 right-10 w-40 h-40 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+                <div className="absolute top-1/2 left-1/4 w-24 h-24 bg-green-500/10 rounded-full blur-2xl animate-pulse delay-500"></div>
+            </div>
                     <div className="max-w-md w-full bg-gray-800 rounded-lg shadow-xl p-6 text-center">
                         <div className="mb-4">
                             <div className="text-6xl mb-4">⚠️</div>

@@ -1,28 +1,17 @@
 import React, { useContext, useEffect, useState, useCallback, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { doc, getDoc, increment, updateDoc } from "firebase/firestore";
-import toast from "react-hot-toast";
-import { motion, AnimatePresence } from "framer-motion";
+import { doc, getDoc, increment, updateDoc, collection, query, where, getDocs } from "firebase/firestore";
 import clsx from "clsx";
+import { Helmet } from "react-helmet-async";
+import { isProductId, createSlug } from "../../utils/slugUtils";
+import { useNotification } from "../../context/NotificationContext";
+import { serifTheme } from "../../design-system/themes";
+import { SerifPageWrapper, SerifButton, SerifBadge } from "../../design-system/components";
+import { FaHeart, FaRegHeart, FaShareAlt, FaArrowLeft, FaPlus, FaMinus, FaCopy, FaTimes, FaShoppingCart, FaTrash } from "react-icons/fa";
 
-// MUI Components (kept for specific functionalities, styled heavily)
-import { Rating, Dialog } from "@mui/material";
-import { styled } from '@mui/material/styles';
-
-// MUI Icons (or use another icon library if preferred)
-import {
-    AddShoppingCart,
-    RemoveShoppingCart,
-    Favorite,
-    FavoriteBorder,
-    Share,
-    ArrowBack,
-    Add,
-    Remove,
-    ContentCopy,
-    Close,
-} from "@mui/icons-material";
+// MUI Components (kept for Dialog functionality only)
+import { Dialog } from "@mui/material";
 
 // Local Components & Config (Assuming these paths are correct in the user's project)
 import Layout from "../../components/layout/Layout";
@@ -30,60 +19,9 @@ import myContext from "../../context/myContext";
 import { fireDB } from "../../firebase/FirebaseConfig"; // Assuming fireDB is exported from here
 import { addToCart, deleteFromCart } from "../../redux/cartSlice"; // Assuming Redux slices are defined here
 import ProductReviews from "../../components/productReviews/ProductReviews";
+import RelatedProducts from "../../components/relatedProducts/RelatedProducts";
+// import AIChat from "../../components/aiChat/AiChat"; // Disabled AI Chat
 
-// --- Framer Motion Variants ---
-
-// Variants for page-level transitions
-const pageTransition = {
-    type: "spring",
-    damping: 20,
-    stiffness: 100
-};
-
-// Variants for the main content container
-const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-        opacity: 1,
-        transition: {
-            staggerChildren: 0.1, // Stagger animation for child elements
-            delayChildren: 0.2,   // Delay before child animations start
-            ...pageTransition
-        }
-    }
-};
-
-// Variants for individual items within the container
-const itemVariants = {
-    hidden: { opacity: 0, y: 30 },
-    visible: {
-        opacity: 1,
-        y: 0,
-        transition: { ...pageTransition }
-    }
-};
-
-// Variants for the product image
-const imageVariants = {
-    hidden: { opacity: 0, scale: 0.8 },
-    visible: {
-        opacity: 1,
-        scale: 1,
-        transition: { type: 'spring', stiffness: 120, damping: 15, delay: 0.1 }
-    }
-};
-
-// --- Styled MUI Components (Override default styles with Tailwind-compatible colors) ---
-
-const StyledRating = styled(Rating)(({ theme }) => ({
-    '& .MuiRating-iconFilled': {
-        color: '#ffc107', // Brighter gold for filled stars
-        filter: 'drop-shadow(0 0 3px rgba(255, 193, 7, 0.7))', // Subtle glow effect
-    },
-    '& .MuiRating-iconEmpty': {
-        color: 'rgba(255, 255, 255, 0.3)', // Lighter color for empty stars
-    },
-}));
 
 // --- ProductInfo Component ---
 
@@ -91,7 +29,13 @@ const ProductInfo = () => {
     // Access context for global state (e.g., user info)
     const context = useContext(myContext);
     // Get current user from localStorage
-    const user = JSON.parse(localStorage.getItem('users'));
+    const user = useMemo(() => {
+        try {
+            return JSON.parse(localStorage.getItem('users'));
+        } catch {
+            return null;
+        }
+    }, []);
     
     // State variables for product data, loading, quantity, and UI interactions
     const [product, setProduct] = useState(null);
@@ -100,97 +44,144 @@ const ProductInfo = () => {
     const [isFavorite, setIsFavorite] = useState(false);
     const [openShareDialog, setOpenShareDialog] = useState(false);
     const [shareLink, setShareLink] = useState("");
-    const [showFullDescription, setShowFullDescription] = useState(false); // New state for description visibility
+    const [activeTab, setActiveTab] = useState("description"); // "description" or "reviews"
 
-    // Hook for getting URL parameters (product ID)
-    const { id } = useParams();
+    // Hook for getting URL parameters (product slug or ID)
+    const { slug } = useParams();
     // Hook for programmatic navigation
     const navigate = useNavigate();
     // Redux selector to get cart items from the store
     const cartItems = useSelector((state) => state.cart);
     // Redux dispatch hook
     const dispatch = useDispatch();
+    // Notification hook
+    const notification = useNotification();
 
     // Load favorite status from localStorage on component mount
     useEffect(() => {
-        if (user?.uid && id) {
+        if (user?.uid && product?.id) {
             const savedFavorites = localStorage.getItem(`favorites_${user.uid}`);
             if (savedFavorites) {
                 try {
                     const favorites = JSON.parse(savedFavorites);
-                    setIsFavorite(favorites.includes(id));
+                    setIsFavorite(favorites.includes(product.id));
                 } catch (e) {
                     console.error("Failed to parse favorites from localStorage");
                 }
             }
         }
-    }, [user?.uid, id]);
+    }, [user?.uid, product?.id]);
 
     // --- Data Fetching Function ---
     const getProductData = useCallback(async () => {
-        // Check if product ID is available
-        if (!id) {
-            toast.error("Product ID missing.");
-            navigate("/"); // Redirect to home if ID is missing
+        // Check if slug parameter is available
+        if (!slug) {
+            notification.error("Product not found.");
+            navigate("/"); // Redirect to home if slug is missing
             return;
         }
+        
         setIsLoading(true); // Set loading state to true
+        
         try {
-            // Reference to the product document in Firestore
-            const productDocRef = doc(fireDB, "products", id);
-            // Fetch the product document
-            const productDoc = await getDoc(productDocRef);
+            let productData = null;
+            let productId = null;
 
-            if (productDoc.exists()) {
-                // If product exists, set product data and generate share link
-                const productData = { id: productDoc.id, ...productDoc.data() };
+            // Check if the slug is actually a direct product ID (for backward compatibility)
+            if (isProductId(slug)) {
+                productId = slug;
+                const productDocRef = doc(fireDB, "products", productId);
+                const productDoc = await getDoc(productDocRef);
+                
+                if (productDoc.exists()) {
+                    productData = { id: productDoc.id, ...productDoc.data() };
+                }
+            } else {
+                // Search for product by matching title with slug
+                const productsRef = collection(fireDB, "products");
+                const querySnapshot = await getDocs(productsRef);
+                
+                // Find product where the slug matches the generated slug from title
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    if (data.title) {
+                        const productSlug = createSlug(data.title);
+                        
+                        if (productSlug === slug) {
+                            productData = { id: doc.id, ...data };
+                            productId = doc.id;
+                        }
+                    }
+                });
+            }
+
+            if (productData) {
                 setProduct(productData);
-                setShareLink(`${window.location.origin}/productinfo/${id}`);
+                // Generate share link with SEO-optimized slug
+                const properSlug = createSlug(productData.title);
+                setShareLink(`${window.location.origin}/productinfo/${properSlug}`);
 
                 // Increment view count (non-critical, fire-and-forget)
+                const productDocRef = doc(fireDB, "products", productId);
                 updateDoc(productDocRef, { views: increment(1) }).catch(err => console.warn("Failed to update views", err));
-
             } else {
                 // If product not found, show error and redirect
-                toast.error("Product not found");
+                notification.error("Product not found");
                 navigate("/");
             }
         } catch (error) {
             // Log and show error if fetching fails
             console.error("Error fetching product:", error);
-            toast.error("Failed to load product details.");
+            notification.error("Failed to load product details.");
             navigate("/");
         } finally {
-            // Add a small delay to ensure loading animation is visible for fast loads
-            setTimeout(() => setIsLoading(false), 300);
+            setIsLoading(false);
         }
-    }, [id, navigate]); // Dependencies for useCallback
+    }, [slug, navigate, notification]); // Dependencies for useCallback
 
-    // Effect hook to fetch product data on component mount or ID change
+    // Effect hook to fetch product data on component mount or slug change only
     useEffect(() => {
+        // Only fetch if we have a slug and product hasn't been loaded yet or slug changed
+        if (slug) {
         getProductData();
-    }, [getProductData]); // Dependency array includes the memoized function
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [slug]); // Only depend on slug to prevent re-fetching on cart/notification changes
 
     // --- Action Handlers ---
 
     // Adds product to cart
-    const addCart = useCallback((item) => {
+    const addCart = useCallback((item, e) => {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
         if (!item) return;
         dispatch(addToCart({ ...item, quantity })); // Dispatch action with item and selected quantity
-        toast.success(`Added ${quantity} x ${item.title} to cart`);
-    }, [dispatch, quantity]);
+        notification.success(`Added ${quantity} x ${item.title} to cart`, {
+            icon: <FaShoppingCart />,
+            duration: 3000
+        });
+    }, [dispatch, quantity, notification]);
 
     // Removes product from cart
-    const deleteCart = useCallback((item) => {
+    const deleteCart = useCallback((item, e) => {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
         if (!item) return;
         dispatch(deleteFromCart(item)); // Dispatch action to remove item
-        toast.success("Removed from cart");
-    }, [dispatch]);
+        notification.success("Removed from cart", {
+            icon: <FaTrash />,
+            duration: 3000
+        });
+    }, [dispatch, notification]);
 
     // Toggles favorite status
     const toggleFavorite = useCallback(() => {
         if (!user?.uid) {
-            toast.error("Please log in to save items to your wishlist");
+            notification.error("Please log in to save items to your wishlist");
             return;
         }
 
@@ -202,20 +193,30 @@ const ProductInfo = () => {
             const favorites = savedFavorites ? JSON.parse(savedFavorites) : [];
             
             const newFavorites = isFavorite
-                ? favorites.filter(favId => favId !== id)
-                : [...favorites, id];
+                ? favorites.filter(favId => favId !== product.id)
+                : [...favorites, product.id];
             
             localStorage.setItem(`favorites_${user.uid}`, JSON.stringify(newFavorites));
             
-        toast.success(!isFavorite ? "Added to favorites" : "Removed from favorites");
+            notification.success(!isFavorite ? "Added to favorites" : "Removed from favorites", {
+                icon: !isFavorite ? <FaHeart /> : <FaRegHeart />,
+                duration: 3000
+            });
         } catch (e) {
             console.error("Failed to update favorites in localStorage");
-            toast.error("Failed to update wishlist");
+            notification.error("Failed to update wishlist");
         }
-    }, [isFavorite, user?.uid, id]);
+    }, [isFavorite, user?.uid, product?.id, notification]);
 
     // Opens the share dialog
-    const handleShare = useCallback(() => setOpenShareDialog(true), []);
+    const handleShare = useCallback(() => {
+        if (!product || !product.title) {
+            notification.error("Product information not loaded yet. Please wait a moment.");
+            return;
+        }
+        console.log("Opening share dialog with product:", product);
+        setOpenShareDialog(true);
+    }, [product, notification]);
     // Closes the share dialog
     const closeShareDialog = useCallback(() => setOpenShareDialog(false), []);
 
@@ -224,19 +225,22 @@ const ProductInfo = () => {
         // Using navigator.clipboard.writeText for modern browsers
         navigator.clipboard.writeText(shareLink)
             .then(() => {
-                toast.success("Link copied!");
+                notification.success("Link copied!", {
+                    icon: <FaCopy />,
+                    duration: 3000
+                });
                 closeShareDialog(); // Close dialog after copying
             })
             .catch(err => {
                 console.error("Clipboard copy failed:", err);
-                toast.error("Could not copy link.");
+                notification.error("Could not copy link.");
             });
-    }, [shareLink, closeShareDialog]);
+    }, [shareLink, closeShareDialog, notification]);
 
     // Admin Stock Management Functions
     const updateStock = useCallback(async (change) => {
         if (!user || user.role?.trim()?.toLowerCase() !== "admin") {
-            toast.error("Admin access required");
+            notification.error("Admin access required");
             return;
         }
 
@@ -247,19 +251,19 @@ const ProductInfo = () => {
             const productRef = doc(fireDB, "products", product.id);
             
             await updateDoc(productRef, { quantity: newQuantity });
-            toast.success(`Stock ${change > 0 ? 'increased' : 'decreased'} successfully`);
+            notification.success(`Stock ${change > 0 ? 'increased' : 'decreased'} successfully`);
             
             // Update local state immediately for better UX
             setProduct(prev => prev ? { ...prev, quantity: newQuantity } : null);
         } catch (error) {
             console.error("Error updating stock:", error);
-            toast.error("Failed to update stock");
+            notification.error("Failed to update stock");
         }
-    }, [user, product]);
+    }, [user, product, notification]);
 
     const setStockToZero = useCallback(async () => {
         if (!user || user.role?.trim()?.toLowerCase() !== "admin") {
-            toast.error("Admin access required");
+            notification.error("Admin access required");
             return;
         }
 
@@ -268,15 +272,15 @@ const ProductInfo = () => {
         try {
             const productRef = doc(fireDB, "products", product.id);
             await updateDoc(productRef, { quantity: 0 });
-            toast.success("Stock set to zero");
+            notification.success("Stock set to zero");
             
             // Update local state immediately for better UX
             setProduct(prev => prev ? { ...prev, quantity: 0 } : null);
         } catch (error) {
             console.error("Error setting stock to zero:", error);
-            toast.error("Failed to set stock to zero");
+            notification.error("Failed to set stock to zero");
         }
-    }, [user, product]);
+    }, [user, product, notification]);
 
     // Handles "Buy Now" action: adds to cart and navigates to cart page
     const handleBuyNow = useCallback((item) => {
@@ -296,13 +300,11 @@ const ProductInfo = () => {
         [cartItems, product] // Recalculate if cartItems or product changes
     );
 
-    // Logic for "Read More" functionality
-    const descriptionText = product?.description || "No description available.";
-    const DESCRIPTION_LIMIT = 200; // Character limit for truncation
-    const isLongDescription = descriptionText.length > DESCRIPTION_LIMIT;
-    const displayedDescription = showFullDescription || !isLongDescription
-        ? descriptionText
-        : `${descriptionText.substring(0, DESCRIPTION_LIMIT)}...`;
+    // Product description - full text and truncated version
+    const fullDescription = product?.description || "No description available.";
+    const truncatedDescription = fullDescription.length > 200 
+        ? fullDescription.substring(0, 200) + "..."
+        : fullDescription;
 
     // --- Render Logic ---
 
@@ -310,14 +312,11 @@ const ProductInfo = () => {
     if (isLoading) {
         return (
             <Layout>
-                <div className="flex items-center justify-center min-h-[calc(100vh-80px)] bg-gradient-to-br from-gray-900 via-black to-gray-800">
-                    {/* Simple loading spinner with Framer Motion animation */}
-                    <motion.div
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                        className="w-16 h-16 border-t-4 border-b-4 border-purple-500 rounded-full"
-                    />
-                </div>
+                <SerifPageWrapper>
+                    <div className="flex items-center justify-center min-h-[calc(100vh-80px)] w-full">
+                        <div className="w-16 h-16 border-t-4 border-b-4 border-amber-600 rounded-full animate-spin" />
+                    </div>
+                </SerifPageWrapper>
             </Layout>
         );
     }
@@ -326,24 +325,17 @@ const ProductInfo = () => {
     if (!product) {
         return (
             <Layout>
-                <div className="flex flex-col items-center justify-center min-h-[calc(100vh-80px)] bg-gray-900 text-white p-6">
-                    <motion.h2
-                        initial={{ opacity: 0, y: -20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="text-2xl font-semibold mb-4"
-                    >
+                <SerifPageWrapper className="flex flex-col items-center justify-center min-h-[calc(100vh-80px)] p-6">
+                    <h2 className={`text-2xl font-semibold mb-4 ${serifTheme.colors.text.primary}`}>
                         Product Not Found
-                    </motion.h2>
-                    <motion.button
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.2 }}
+                    </h2>
+                    <SerifButton
                         onClick={() => navigate('/')}
-                        className="px-6 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg shadow-md transition duration-300"
+                        variant="primary"
                     >
                         Go Home
-                    </motion.button>
-                </div>
+                    </SerifButton>
+                </SerifPageWrapper>
             </Layout>
         );
     }
@@ -351,685 +343,480 @@ const ProductInfo = () => {
     // Main Product Display UI
     return (
         <Layout>
-            {/* Modern Hero Section with Enhanced Background */}
-            <motion.section
-                variants={containerVariants}
-                initial="hidden"
-                animate="visible"
-                className="relative min-h-screen overflow-hidden bg-gradient-to-br from-gray-950 via-black to-blue-950 text-gray-100"
-            >
-                {/* Animated Background Elements */}
-                <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                    <motion.div
-                        className="absolute top-[-10%] left-[-5%] w-72 h-72 md:w-96 md:h-96 bg-purple-600 rounded-full filter blur-3xl opacity-20"
-                        animate={{
-                            x: [0, 50, 0, -50, 0],
-                            y: [0, -30, 0, 30, 0],
-                            scale: [1, 1.1, 1, 0.9, 1]
-                        }}
-                        transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
-                    />
-                    <motion.div
-                        className="absolute bottom-[-15%] right-[-10%] w-80 h-80 md:w-[500px] md:h-[500px] bg-orange-500 rounded-full filter blur-3xl opacity-30"
-                        animate={{
-                            x: [0, -40, 0, 40, 0],
-                            y: [0, 20, 0, -20, 0],
-                            rotate: [0, 10, 0, -10, 0]
-                        }}
-                        transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
-                    />
-                    <motion.div
-                        className="absolute top-[30%] right-[40%] w-40 h-40 md:w-60 md:h-60 bg-teal-500 rounded-full filter blur-2xl opacity-25"
-                        animate={{
-                            x: [0, 20, 0, -20, 0],
-                            y: [0, -15, 0, 15, 0]
-                        }}
-                        transition={{ duration: 20, repeat: Infinity, ease: "circInOut" }}
-                    />
-                </div>
-
-                {/* Enhanced Back Button */}
-                <motion.button
-                    variants={itemVariants}
+            {/* Dynamic SEO and Social Media Meta Tags */}
+            {product && (
+                <Helmet>
+                    {/* Basic Meta Tags */}
+                    <title>{product.title} - Digital Shop Nepal</title>
+                    <meta name="description" content={`Buy ${product.title} at best price NPR ${product.price}. ${(product.description || 'Premium digital subscription with instant delivery and 24/7 support.').substring(0, 160)}${product.description && product.description.length > 160 ? '...' : ''}`} />
+                    
+                    {/* Open Graph Meta Tags for Social Media (WhatsApp, Facebook) */}
+                    <meta property="og:title" content={`${product.title} - Digital Shop Nepal`} />
+                    <meta property="og:description" content={`Buy ${product.title} at best price NPR ${product.price}. Premium digital subscription with instant delivery. In stock now!`} />
+                    <meta property="og:image" content={product.productImageUrl || 'https://digitalshopnepal.com/img/logo.png'} />
+                    <meta property="og:image:secure_url" content={product.productImageUrl || 'https://digitalshopnepal.com/img/logo.png'} />
+                    <meta property="og:image:width" content="1200" />
+                    <meta property="og:image:height" content="630" />
+                    <meta property="og:image:alt" content={`${product.title} - Digital Shop Nepal`} />
+                    <meta property="og:url" content={shareLink} />
+                    <meta property="og:type" content="product" />
+                    <meta property="og:site_name" content="Digital Shop Nepal" />
+                    <meta property="og:locale" content="en_US" />
+                    <meta property="og:updated_time" content={new Date().toISOString()} />
+                    
+                    {/* Product Specific Open Graph */}
+                    <meta property="product:price:amount" content={product.price} />
+                    <meta property="product:price:currency" content="NPR" />
+                    <meta property="product:availability" content={product.quantity > 0 ? "in stock" : "out of stock"} />
+                    <meta property="product:condition" content="new" />
+                    <meta property="product:brand" content={product.brand || "Digital Shop Nepal"} />
+                    
+                    {/* Twitter Card Meta Tags */}
+                    <meta name="twitter:card" content="summary_large_image" />
+                    <meta name="twitter:site" content="@digitalshopnepal" />
+                    <meta name="twitter:title" content={`${product.title} - Digital Shop Nepal`} />
+                    <meta name="twitter:description" content={`Buy ${product.title} at best price NPR ${product.price}. Premium digital subscription with instant delivery.`} />
+                    <meta name="twitter:image" content={product.productImageUrl || 'https://digitalshopnepal.com/img/logo.png'} />
+                    <meta name="twitter:image:alt" content={product.title} />
+                    
+                    {/* Additional Meta Tags for Better Social Sharing */}
+                    <meta property="article:author" content="Digital Shop Nepal" />
+                    <meta property="article:publisher" content="Digital Shop Nepal" />
+                    
+                    {/* Canonical URL */}
+                    <link rel="canonical" href={shareLink} />
+                    
+                    {/* Cache Control for Social Media */}
+                    <meta httpEquiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+                    <meta httpEquiv="Pragma" content="no-cache" />
+                    <meta httpEquiv="Expires" content="0" />
+                </Helmet>
+            )}
+            {/* Main Product Section with Serif Theme */}
+            <SerifPageWrapper className="relative min-h-screen py-8 lg:py-12">
+                {/* Back Button - Arrow Only */}
+                <button
                     onClick={() => navigate(-1)}
-                    whileHover={{ scale: 1.05, x: -5 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="absolute top-6 left-6 z-20 flex items-center gap-2 px-4 py-2.5 text-sm bg-gray-800/60 hover:bg-gray-700/80 backdrop-blur-lg rounded-2xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-teal-400 border border-gray-700/50 hover:border-teal-400/50 text-gray-200 hover:text-white shadow-lg"
+                    className={`absolute top-6 left-6 z-20 p-2 ${serifTheme.colors.text.secondary} hover:${serifTheme.colors.text.primary} ${serifTheme.transitions.default} focus:outline-none focus:ring-2 focus:ring-amber-400`}
                     aria-label="Go back"
                 >
-                    <ArrowBack fontSize="small" />
-                    <span className="font-medium">Back</span>
-                </motion.button>
+                    <FaArrowLeft size={24} />
+                </button>
 
-                {/* Main Content Grid: Image and Info Columns */}
-                <div className="relative z-10 max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center mt-16 lg:mt-20 px-4 md:px-8">
-
-                    {/* --- Enhanced Image Column --- */}
-                    <motion.div variants={imageVariants} className="relative group">
-                        {/* Modern Image Container with Glass Morphism */}
-                        <div className="relative aspect-square rounded-3xl overflow-hidden shadow-2xl shadow-black/60 bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-xl border border-gray-700/30">
-                            {/* Gradient Overlay for Better Image Contrast */}
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-black/10 z-10" />
-
-                            <motion.img
+                {/* Main Content Grid: Image Left, Info Right */}
+                <div className="relative z-10 max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start mt-16 lg:mt-20 px-4 md:px-8">
+                    
+                    {/* Product Image Column - Left */}
+                    <div className="relative group lg:sticky lg:top-24">
+                        {/* Image Container - No Background */}
+                        <div className={`relative w-full aspect-square ${serifTheme.radius.card} overflow-hidden flex items-center justify-center bg-transparent`}>
+                            {/* Product Image */}
+                            <img
                                 src={product.productImageUrl}
                                 alt={product.title}
-                                className="block w-full h-full object-contain p-6 relative z-20"
-                                whileHover={{ scale: 1.05 }}
-                                transition={{ duration: 0.4, ease: "easeOut" }}
-                            />
-
-                            {/* Animated Border Glow */}
-                            <motion.div
-                                className="absolute inset-0 rounded-3xl border-2 border-transparent bg-gradient-to-r from-teal-400/50 via-purple-500/50 to-orange-400/50 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                                style={{
-                                    background: 'linear-gradient(45deg, rgba(20, 184, 166, 0.3), rgba(168, 85, 247, 0.3), rgba(251, 146, 60, 0.3))',
-                                    mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-                                    maskComposite: 'xor'
+                                className={`block max-w-[80%] max-h-[80%] object-contain p-4 relative z-20`}
+                                onError={(e) => {
+                                    e.target.onerror = null;
+                                    e.target.src = "/img/hero.png";
+                                    console.warn(`Failed to load main product image: ${product.productImageUrl}`);
                                 }}
                             />
-                        </div>
 
-                        {/* Enhanced Action Icons */}
-                        <div className="absolute top-6 right-6 flex flex-col gap-3">
-                            <motion.button
+                            {/* Action Icons */}
+                            <div className="absolute top-4 right-4 flex gap-2 z-30">
+                                <button
                                 onClick={toggleFavorite}
-                                whileHover={{ scale: 1.15, rotate: 5 }}
-                                whileTap={{ scale: 0.9 }}
                                 className={clsx(
-                                    "p-3 rounded-2xl backdrop-blur-lg transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-transparent shadow-lg border",
+                                        `p-2.5 ${serifTheme.radius.button} backdrop-blur-lg ${serifTheme.transitions.default} focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-transparent ${serifTheme.colors.shadow.button} border`,
                                     isFavorite
-                                        ? 'bg-red-500/80 text-white focus:ring-red-400 border-red-400/50 shadow-red-500/25'
-                                        : 'bg-gray-800/60 hover:bg-gray-700/80 text-gray-200 hover:text-white focus:ring-teal-400 border-gray-600/50 hover:border-teal-400/50'
+                                            ? 'bg-red-500/80 text-white focus:ring-red-400 border-red-400/50'
+                                            : `${serifTheme.colors.button.secondary} ${serifTheme.colors.text.secondary} hover:text-red-500 hover:bg-red-50 focus:ring-amber-400 ${serifTheme.colors.border.secondary} hover:border-amber-400/50`
                                 )}
                                 aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
                             >
-                                <AnimatePresence mode="wait">
-                                    <motion.span
-                                        key={isFavorite ? 'fav' : 'nofav'}
-                                        initial={{ opacity: 0, scale: 0.5, rotate: -180 }}
-                                        animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                                        exit={{ opacity: 0, scale: 0.5, rotate: 180 }}
-                                        transition={{ duration: 0.3 }}
-                                    >
-                                        {isFavorite ? <Favorite fontSize="small" /> : <FavoriteBorder fontSize="small" />}
-                                    </motion.span>
-                                </AnimatePresence>
-                            </motion.button>
+                                    {isFavorite ? <FaHeart size={16} /> : <FaRegHeart size={16} />}
+                                </button>
 
-                            <motion.button
+                                <button
                                 onClick={handleShare}
-                                whileHover={{ scale: 1.15, rotate: -5 }}
-                                whileTap={{ scale: 0.9 }}
-                                className="p-3 bg-gray-800/60 hover:bg-gray-700/80 backdrop-blur-lg text-gray-200 hover:text-white rounded-2xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-transparent focus:ring-teal-400 shadow-lg border border-gray-600/50 hover:border-teal-400/50"
+                                    className={`p-2.5 ${serifTheme.colors.button.secondary} backdrop-blur-lg ${serifTheme.colors.text.secondary} hover:text-blue-600 hover:bg-blue-50 ${serifTheme.radius.button} ${serifTheme.transitions.default} focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-transparent focus:ring-amber-400 ${serifTheme.colors.shadow.button} border ${serifTheme.colors.border.secondary} hover:border-amber-400/50`}
                                 aria-label="Share product"
                             >
-                                <Share fontSize="small" />
-                            </motion.button>
+                                    <FaShareAlt size={16} />
+                                </button>
+                        </div>
+                            </div>
+                    </div>
+
+                    {/* Product Info Column - Right */}
+                    <div className="flex flex-col gap-6 md:gap-8" style={{ fontFamily: serifTheme.fontFamily.serif }}>
+                        
+                        {/* Category and Title Section */}
+                        <div className="flex flex-col gap-4">
+                            {/* Category Badge */}
+                            <div>
+                                <SerifBadge
+                                    variant="primary"
+                                    size="large"
+                                    className="uppercase tracking-wide"
+                                >
+                                    <span className="w-2 h-2 bg-amber-600 rounded-full mr-2"></span>
+                                {product.category}
+                                </SerifBadge>
+                            </div>
+
+                            {/* Product Title */}
+                            <h1 className={`text-3xl md:text-4xl lg:text-5xl font-bold ${serifTheme.gradients.accent} leading-tight tracking-tight`}>
+                            {product.title}
+                            </h1>
                         </div>
 
-                        {/* Floating Badge for Stock Status */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.5 }}
-                            className="absolute bottom-6 left-6"
-                        >
-                            <div className={clsx(
-                                "px-4 py-2 rounded-2xl backdrop-blur-lg text-sm font-semibold border shadow-lg",
-                                product.quantity > 0
-                                    ? 'bg-green-500/20 text-green-300 border-green-400/30'
-                                    : 'bg-red-500/20 text-red-300 border-red-400/30'
-                            )}>
-                                {product.quantity > 0 ? '✓ In Stock' : '✗ Out of Stock'}
-                            </div>
-                        </motion.div>
-                    </motion.div>
-
-                    {/* --- Enhanced Info Column --- */}
-                    <motion.div variants={itemVariants} className="flex flex-col gap-6 md:gap-8 lg:pl-8">
-
-                        {/* Modern Category Badge */}
-                        <motion.div variants={itemVariants}>
-                            <motion.span
-                                className="inline-flex items-center px-4 py-2 text-sm font-semibold tracking-wide uppercase bg-gradient-to-r from-purple-500/20 to-blue-500/20 text-purple-300 rounded-2xl border border-purple-400/30 backdrop-blur-sm"
-                                whileHover={{ scale: 1.05, y: -2 }}
-                                transition={{ duration: 0.2 }}
-                            >
-                                <span className="w-2 h-2 bg-purple-400 rounded-full mr-2 animate-pulse"></span>
-                                {product.category}
-                            </motion.span>
-                        </motion.div>
-
-                        {/* Enhanced Product Title */}
-                        <motion.h1
-                            variants={itemVariants}
-                            className="text-4xl md:text-5xl lg:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-100 to-gray-300 leading-tight tracking-tight"
-                        >
-                            {product.title}
-                        </motion.h1>
-
-                        {/* Enhanced Rating & Price Section */}
-                        <motion.div variants={itemVariants} className="space-y-4">
+                        {/* Price and Stock Section */}
+                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 py-4">
                             {/* Price Section */}
-                            <div className="flex items-center justify-between p-6 bg-gradient-to-r from-gray-800/60 to-gray-900/60 backdrop-blur-lg rounded-2xl border border-gray-700/50">
-                                <div className="flex items-baseline gap-3">
-                                    {product.oldPrice && (
-                                        <span className="text-lg text-gray-500 line-through font-medium">
-                                            रु{product.oldPrice}
-                                        </span>
-                                    )}
-                                    <span className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-cyan-400">
-                                        रु{product.price}
+                                    <div className="flex flex-col gap-2">
+                                        {product.oldPrice && (
+                                    <span className={`text-lg ${serifTheme.colors.text.tertiary} line-through font-medium`}>
+                                                NPR {product.oldPrice}
                                     </span>
+                                )}
+                                <div className="flex items-baseline gap-3">
+                                    <span className={`text-4xl md:text-5xl font-black ${serifTheme.gradients.accent}`}>
+                                                NPR {product.price}
+                                            </span>
+                                    <span className={`text-sm ${serifTheme.colors.text.tertiary} font-medium`}>Best Price</span>
+                                    {product.oldPrice && (
+                                        <SerifBadge variant="danger" size="small">
+                                            {Math.round(((product.oldPrice - product.price) / product.oldPrice) * 100)}% OFF
+                                        </SerifBadge>
+                                    )}
                                 </div>
-                                {product.oldPrice && (
-                                    <div className="text-right">
-                                        <div className="text-sm text-gray-400">You save</div>
-                                        <div className="text-lg font-semibold text-green-400">
-                                            रु{product.oldPrice - product.price}
-                                        </div>
                                     </div>
-                                )}
-                            </div>
-                        </motion.div>
-
-                        {/* Enhanced Product Description */}
-                        <motion.div variants={itemVariants} className="space-y-4">
-                            <div className="flex items-center gap-3 mb-4">
-                                <h3 className="text-xl font-bold text-white">Product Details</h3>
-                                <div className="flex-1 h-px bg-gradient-to-r from-gray-600 to-transparent"></div>
-                            </div>
-                            <div className="p-6 bg-gray-800/40 backdrop-blur-sm rounded-2xl border border-gray-700/50">
-                                <div className={clsx(
-                                    "text-gray-300 leading-relaxed text-base",
-                                    {
-                                        "max-h-32 overflow-y-auto custom-scrollbar": !showFullDescription && isLongDescription
-                                    }
-                                )}>
-                                    <p className="whitespace-pre-line">{displayedDescription}</p>
+                                    
+                                        {/* Stock Status */}
+                            <div className="min-w-[180px]">
+                                <div className={`text-xs ${serifTheme.colors.text.tertiary} mb-2 font-medium`}>Stock Status</div>
+                                            <div className={clsx(
+                                    "text-base font-semibold mb-1",
+                                    product.quantity > 0 ? 'text-green-600' : 'text-red-600'
+                                            )}>
+                                                {product.quantity > 0 ? '✓ In Stock' : '✗ Out of Stock'}
+                                            </div>
+                                            {product.quantity > 0 && (
+                                    <div className={`text-xs ${serifTheme.colors.text.muted}`}>
+                                                    {product.quantity} units available
+                                                </div>
+                                            )}
+                                    </div>
                                 </div>
-                                {isLongDescription && (
-                                    <motion.button
-                                        onClick={() => setShowFullDescription(prev => !prev)}
-                                        whileHover={{ scale: 1.02 }}
-                                        whileTap={{ scale: 0.98 }}
-                                        className="mt-4 px-4 py-2 text-teal-400 hover:text-teal-300 text-sm font-semibold bg-teal-500/10 hover:bg-teal-500/20 rounded-xl border border-teal-400/30 hover:border-teal-400/50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-teal-400"
+                                
+                        {/* Product Description Preview (Limited to 200 chars) */}
+                        {fullDescription && (
+                            <div className="py-4">
+                                <h3 className={`text-xl font-bold ${serifTheme.colors.text.primary} mb-4`}>Product Details</h3>
+                                <div className={`${serifTheme.colors.text.secondary} leading-relaxed text-base`}>
+                                    <p className="whitespace-pre-line">{truncatedDescription}</p>
+                                    </div>
+                                {fullDescription.length > 200 && (
+                                    <SerifButton
+                                        onClick={() => {
+                                            setActiveTab("description");
+                                            // Scroll to description section after tab change
+                                            setTimeout(() => {
+                                                const descriptionSection = document.getElementById('description-reviews-section');
+                                                if (descriptionSection) {
+                                                    descriptionSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                                }
+                                            }, 100);
+                                        }}
+                                        variant="outline"
+                                        size="small"
+                                        className="mt-4"
                                     >
-                                        {showFullDescription ? "Show Less ↑" : "Read More ↓"}
-                                    </motion.button>
+                                        Read More →
+                                    </SerifButton>
                                 )}
                             </div>
-                        </motion.div>
+                        )}
 
-                        {/* Enhanced Quantity Selector */}
-                        <motion.div variants={itemVariants} className="space-y-4">
-                            <div className="flex items-center gap-3">
-                                <label htmlFor="quantity" className="text-xl font-bold text-white">Quantity</label>
-                                <div className="flex-1 h-px bg-gradient-to-r from-gray-600 to-transparent"></div>
-                            </div>
-                            <div className="flex items-center gap-4 p-4 bg-gray-800/40 backdrop-blur-sm rounded-2xl border border-gray-700/50 w-fit">
-                                <motion.button
+                        {/* Quantity and Actions Section */}
+                        <div className="py-6">
+                            {/* Quantity Selector */}
+                            <div className="flex items-center gap-4 mb-6">
+                                <label htmlFor="quantity" className={`text-base font-semibold ${serifTheme.colors.text.primary}`}>Quantity:</label>
+                                <div className={`flex items-center gap-3 p-2 ${serifTheme.colors.background.tertiary} ${serifTheme.radius.button} border ${serifTheme.colors.border.secondary}`}>
+                                    <SerifButton
                                     onClick={() => handleQuantityChange(-1)}
                                     disabled={quantity <= 1}
-                                    whileHover={{ scale: 1.1 }}
-                                    whileTap={{ scale: 0.9 }}
-                                    className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-gray-600 to-gray-700 text-white hover:from-gray-500 hover:to-gray-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-teal-400 border border-gray-600/50 hover:border-teal-400/50"
-                                    aria-label="Decrease quantity"
-                                >
-                                    <Remove fontSize="medium" />
-                                </motion.button>
-
-                                <div className="px-6 py-3 bg-gray-700/50 rounded-xl border border-gray-600/50 min-w-[80px] text-center">
-                                    <AnimatePresence mode="wait">
-                                        <motion.span
-                                            key={quantity}
-                                            initial={{ y: -20, opacity: 0, scale: 0.8 }}
-                                            animate={{ y: 0, opacity: 1, scale: 1 }}
-                                            exit={{ y: 20, opacity: 0, scale: 0.8 }}
-                                            transition={{ duration: 0.2, type: "spring", stiffness: 300 }}
-                                            className="text-2xl font-bold text-white"
-                                        >
+                                        variant="secondary"
+                                        size="small"
+                                        icon={<FaMinus />}
+                                        className="w-10 h-10"
+                                    />
+                                    <div className={`px-6 py-2 ${serifTheme.colors.background.card} ${serifTheme.radius.button} min-w-[60px] text-center`}>
+                                        <span className={`text-xl font-bold ${serifTheme.colors.text.primary}`}>
                                             {quantity}
-                                        </motion.span>
-                                    </AnimatePresence>
+                                        </span>
                                 </div>
-
-                                <motion.button
+                                    <SerifButton
                                     onClick={() => handleQuantityChange(1)}
-                                    whileHover={{ scale: 1.1 }}
-                                    whileTap={{ scale: 0.9 }}
-                                    className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-gray-600 to-gray-700 text-white hover:from-gray-500 hover:to-gray-600 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-teal-400 border border-gray-600/50 hover:border-teal-400/50"
-                                    aria-label="Increase quantity"
-                                >
-                                    <Add fontSize="medium" />
-                                </motion.button>
+                                        variant="secondary"
+                                        size="small"
+                                        icon={<FaPlus />}
+                                        className="w-10 h-10"
+                                    />
                             </div>
-                        </motion.div>
-
-                        {/* Enhanced Action Buttons */}
-                        <motion.div variants={itemVariants} className="space-y-4 mt-8">
-                            <div className="flex items-center gap-3 mb-4">
-                                <h3 className="text-xl font-bold text-white">Actions</h3>
-                                <div className="flex-1 h-px bg-gradient-to-r from-gray-600 to-transparent"></div>
                             </div>
 
-                            <div className="flex flex-col sm:flex-row gap-4">
-                                <motion.button
-                                    onClick={() => isInCart ? deleteCart(product) : addCart(product)}
-                                    whileHover={{
-                                        scale: 1.02,
-                                        y: -3,
-                                        boxShadow: isInCart
-                                            ? "0 20px 40px rgba(239, 68, 68, 0.3)"
-                                            : "0 20px 40px rgba(34, 197, 94, 0.3)"
-                                    }}
-                                    whileTap={{ scale: 0.98 }}
-                                    className={clsx(
-                                        "flex-1 flex items-center justify-center gap-3 px-8 py-4 rounded-2xl text-lg font-bold text-white transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-transparent border-2 backdrop-blur-sm",
-                                        isInCart
-                                            ? 'bg-gradient-to-r from-red-500/80 to-red-600/80 hover:from-red-400/90 hover:to-red-500/90 focus:ring-red-400 border-red-400/50 hover:border-red-300/70'
-                                            : 'bg-gradient-to-r from-green-500/80 to-emerald-600/80 hover:from-green-400/90 hover:to-emerald-500/90 focus:ring-green-400 border-green-400/50 hover:border-green-300/70'
-                                    )}
-                                >
-                                    <motion.span
-                                        animate={{ rotate: isInCart ? 0 : 360 }}
-                                        transition={{ duration: 0.3 }}
-                                    >
-                                        {isInCart ? <RemoveShoppingCart fontSize="medium" /> : <AddShoppingCart fontSize="medium" />}
-                                    </motion.span>
-                                    <span>
-                                        {isInCart ? 'Remove from Cart' : `Add ${quantity} to Cart`}
-                                    </span>
-                                </motion.button>
-
-                                <motion.button
-                                    onClick={() => handleBuyNow(product)}
-                                    whileHover={{
-                                        scale: 1.02,
-                                        y: -3,
-                                        boxShadow: "0 20px 40px rgba(168, 85, 247, 0.4)"
-                                    }}
-                                    whileTap={{ scale: 0.98 }}
-                                    className="flex-1 flex items-center justify-center gap-3 px-8 py-4 rounded-2xl text-lg font-bold bg-gradient-to-r from-purple-500/80 to-indigo-600/80 hover:from-purple-400/90 hover:to-indigo-500/90 text-white transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-transparent focus:ring-purple-400 border-2 border-purple-400/50 hover:border-purple-300/70 backdrop-blur-sm"
-                                >
-                                    <motion.span
-                                        animate={{ x: [0, 5, 0] }}
-                                        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                                    >
-                                        ⚡
-                                    </motion.span>
-                                    <span>Buy Now</span>
-                                </motion.button>
-                            </div>
-
-                            {/* Trust Indicators */}
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.8 }}
-                                className="flex items-center justify-center gap-6 mt-6 p-4 bg-gray-800/30 backdrop-blur-sm rounded-2xl border border-gray-700/30"
-                            >
-                                <div className="flex items-center gap-2 text-sm text-gray-300">
-                                    <span className="text-green-400">✓</span>
-                                    <span>Instant Delivery</span>
-                                </div>
-                                <div className="w-px h-4 bg-gray-600"></div>
-                                <div className="flex items-center gap-2 text-sm text-gray-300">
-                                    <span className="text-blue-400">🔒</span>
-                                    <span>Secure Payment</span>
-                                </div>
-                                <div className="w-px h-4 bg-gray-600"></div>
-                                <div className="flex items-center gap-2 text-sm text-gray-300">
-                                    <span className="text-purple-400">💬</span>
-                                    <span>24/7 Support</span>
-                                </div>
-                            </motion.div>
-                        </motion.div>
-
-                    </motion.div>
-                </div>
-
-                {/* Enhanced Additional Info Section */}
-                <motion.div
-                    initial={{ opacity: 0, y: 50 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, amount: 0.3 }}
-                    transition={{ duration: 0.8, delay: 0.2 }}
-                    className="max-w-7xl mx-auto mt-20 lg:mt-32 px-4 md:px-8"
-                >
-                    {/* Section Header */}
-                    <div className="text-center mb-12">
-                        <motion.h2
-                            initial={{ opacity: 0, y: 20 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            transition={{ duration: 0.6 }}
-                            className="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-300 mb-4"
-                        >
-                            Product Information
-                        </motion.h2>
-                        <motion.div
-                            initial={{ scaleX: 0 }}
-                            whileInView={{ scaleX: 1 }}
-                            viewport={{ once: true }}
-                            transition={{ duration: 0.8, delay: 0.3 }}
-                            className="w-24 h-1 bg-gradient-to-r from-teal-400 to-purple-500 mx-auto rounded-full"
-                        />
-                    </div>
-
-                    {/* Info Cards Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {/* Specifications Card */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 30 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            transition={{ duration: 0.6, delay: 0.1 }}
-                            whileHover={{ y: -5, scale: 1.02 }}
-                            className="p-6 bg-gradient-to-br from-gray-800/60 to-gray-900/60 backdrop-blur-lg rounded-2xl border border-gray-700/50 hover:border-teal-400/50 transition-all duration-300"
-                        >
-                            <div className="flex items-center gap-3 mb-4">
-                                <div className="w-10 h-10 bg-gradient-to-br from-teal-400 to-cyan-500 rounded-xl flex items-center justify-center">
-                                    <span className="text-white font-bold">📋</span>
-                                </div>
-                                <h3 className="text-lg font-bold text-white">Specifications</h3>
-                            </div>
-                            <div className="space-y-3 text-sm">
-                                <div className="flex justify-between items-center py-2 border-b border-gray-700/50">
-                                    <span className="text-gray-400">Category</span>
-                                    <span className="text-white font-medium">{product.category}</span>
-                                </div>
-                                <div className="flex justify-between items-center py-2 border-b border-gray-700/50">
-                                    <span className="text-gray-400">Brand</span>
-                                    <span className="text-white font-medium">{product.brand || "Digital Shop Nepal"}</span>
-                                </div>
-                                <div className="flex justify-between items-center py-2">
-                                    <span className="text-gray-400">Stock Status</span>
-                                    <span className={clsx(
-                                        "px-3 py-1 rounded-full text-xs font-semibold",
-                                        product.quantity > 0
-                                            ? 'bg-green-500/20 text-green-300 border border-green-400/30'
-                                            : 'bg-red-500/20 text-red-300 border border-red-400/30'
-                                    )}>
-                                        {user && user?.role?.trim()?.toLowerCase() === "admin" 
-                                            ? (product.quantity > 0 ? "✓ In Stock" : "✗ Out of Stock")
-                                            : `${product.quantity} units available`
+                            {/* Action Buttons */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <SerifButton
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        if (isInCart) {
+                                            deleteCart(product, e);
+                                        } else {
+                                            addCart(product, e);
                                         }
-                                    </span>
-                                </div>
-                                
-                                {/* Admin Stock Management */}
-                                
-                                {user && user?.role?.trim()?.toLowerCase() === "admin" && (
-                                    <div className="mt-4 p-4 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-xl border border-blue-500/20">
-                                        <div className="flex items-center gap-2 mb-3">
-                                            <span className="text-blue-400 text-sm font-semibold">🔧 Admin Stock Control</span>
-                                        </div>
-                                        <div className="flex items-center gap-3">
-                                            <span className="text-gray-300 text-sm">Current Stock:</span>
-                                            <span className="text-white font-bold">{product.quantity}</span>
-                                            <div className="flex items-center gap-2">
-                                                <motion.button
-                                                    onClick={() => updateStock(-1)}
-                                                    whileHover={{ scale: 1.1 }}
-                                                    whileTap={{ scale: 0.9 }}
-                                                    className="w-8 h-8 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg border border-red-500/30 flex items-center justify-center transition-all duration-200"
-                                                    title="Decrease Stock"
-                                                >
-                                                    <Remove fontSize="small" />
-                                                </motion.button>
-                                                <motion.button
-                                                    onClick={() => updateStock(1)}
-                                                    whileHover={{ scale: 1.1 }}
-                                                    whileTap={{ scale: 0.9 }}
-                                                    className="w-8 h-8 bg-green-500/20 hover:bg-green-500/30 text-green-400 rounded-lg border border-green-500/30 flex items-center justify-center transition-all duration-200"
-                                                    title="Increase Stock"
-                                                >
-                                                    <Add fontSize="small" />
-                                                </motion.button>
-                                            </div>
-                                        </div>
-                                        <div className="mt-2 flex gap-2">
-                                            <motion.button
-                                                onClick={() => updateStock(5)}
-                                                whileHover={{ scale: 1.05 }}
-                                                whileTap={{ scale: 0.95 }}
-                                                className="px-3 py-1 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-lg border border-blue-500/30 text-xs transition-all duration-200"
-                                            >
-                                                +5
-                                            </motion.button>
-                                            <motion.button
-                                                onClick={() => updateStock(10)}
-                                                whileHover={{ scale: 1.05 }}
-                                                whileTap={{ scale: 0.95 }}
-                                                className="px-3 py-1 bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 rounded-lg border border-purple-500/30 text-xs transition-all duration-200"
-                                            >
-                                                +10
-                                            </motion.button>
-                                            <motion.button
-                                                onClick={() => setStockToZero()}
-                                                whileHover={{ scale: 1.05 }}
-                                                whileTap={{ scale: 0.95 }}
-                                                className="px-3 py-1 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg border border-red-500/30 text-xs transition-all duration-200"
-                                            >
-                                                Set to 0
-                                            </motion.button>
+                                    }}
+                                    variant={isInCart ? "danger" : "outline"}
+                                    size="large"
+                                    icon={isInCart ? <FaTrash /> : <FaShoppingCart />}
+                                    className={`w-full h-14 text-base font-semibold ${!isInCart ? 'bg-gradient-to-r from-amber-700 to-orange-700 hover:from-amber-800 hover:to-orange-800 text-white border-none shadow-lg' : ''}`}
+                                >
+                                    {isInCart ? 'Remove from Cart' : 'Add to Cart'}
+                                </SerifButton>
+
+                                <SerifButton
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        handleBuyNow(product);
+                                    }}
+                                    variant="primary"
+                                    size="large"
+                                    className="w-full h-14 text-base font-semibold"
+                                >
+                                    Buy Now
+                                </SerifButton>
+                            </div>
+                    </div>
+                            
+                            {/* Admin Stock Management */}
+                            {user && user?.role?.trim()?.toLowerCase() === "admin" && (
+                            <div className="py-4">
+                                    <div className="flex items-center gap-2 mb-3">
+                                    <span className={`text-amber-600 text-sm font-semibold`}>🔧 Admin Stock Control</span>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                    <span className={`${serifTheme.colors.text.secondary} text-sm`}>Current Stock:</span>
+                                    <span className={`${serifTheme.colors.text.primary} font-bold`}>{product.quantity}</span>
+                                        <div className="flex items-center gap-2">
+                                        <SerifButton
+                                                onClick={() => updateStock(-1)}
+                                            variant="danger"
+                                            size="small"
+                                            icon={<FaMinus />}
+                                            className="w-8 h-8"
+                                                title="Decrease Stock"
+                                        />
+                                        <SerifButton
+                                                onClick={() => updateStock(1)}
+                                            variant="success"
+                                            size="small"
+                                            icon={<FaPlus />}
+                                            className="w-8 h-8"
+                                                title="Increase Stock"
+                                        />
                                         </div>
                                     </div>
-                                )}
+                                    <div className="mt-2 flex gap-2">
+                                    <SerifButton
+                                            onClick={() => updateStock(5)}
+                                        variant="secondary"
+                                        size="small"
+                                        >
+                                            +5
+                                    </SerifButton>
+                                    <SerifButton
+                                            onClick={() => updateStock(10)}
+                                        variant="secondary"
+                                        size="small"
+                                        >
+                                            +10
+                                    </SerifButton>
+                                    <SerifButton
+                                            onClick={() => setStockToZero()}
+                                        variant="danger"
+                                        size="small"
+                                        >
+                                            Set to 0
+                                    </SerifButton>
+                                    </div>
                             </div>
-                        </motion.div>
+                            )}
+                </div>
+                </div>
+            </SerifPageWrapper>
 
-                        {/* Delivery & Support Card */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 30 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            transition={{ duration: 0.6, delay: 0.2 }}
-                            whileHover={{ y: -5, scale: 1.02 }}
-                            className="p-6 bg-gradient-to-br from-gray-800/60 to-gray-900/60 backdrop-blur-lg rounded-2xl border border-gray-700/50 hover:border-purple-400/50 transition-all duration-300"
-                        >
-                            <div className="flex items-center gap-3 mb-4">
-                                <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-500 rounded-xl flex items-center justify-center">
-                                    <span className="text-white font-bold">🚀</span>
-                                </div>
-                                <h3 className="text-lg font-bold text-white">Delivery & Support</h3>
-                            </div>
-                            <div className="space-y-3 text-sm">
-                                <div className="flex justify-between items-center py-2 border-b border-gray-700/50">
-                                    <span className="text-gray-400">Delivery Time</span>
-                                    <span className="text-green-400 font-medium">⚡ Instant - 2 mins</span>
-                                </div>
-                                <div className="flex justify-between items-center py-2 border-b border-gray-700/50">
-                                    <span className="text-gray-400">Returns</span>
-                                    <span className="text-white font-medium">Replacement Only</span>
-                                </div>
-                                <div className="flex justify-between items-center py-2">
-                                    <span className="text-gray-400">Support</span>
-                                    <span className="text-blue-400 font-medium">🔵 24/7 Available</span>
-                                </div>
-                            </div>
-                        </motion.div>
-
-                        {/* Security & Trust Card */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 30 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            transition={{ duration: 0.6, delay: 0.3 }}
-                            whileHover={{ y: -5, scale: 1.02 }}
-                            className="p-6 bg-gradient-to-br from-gray-800/60 to-gray-900/60 backdrop-blur-lg rounded-2xl border border-gray-700/50 hover:border-orange-400/50 transition-all duration-300 md:col-span-2 lg:col-span-1"
-                        >
-                            <div className="flex items-center gap-3 mb-4">
-                                <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-red-500 rounded-xl flex items-center justify-center">
-                                    <span className="text-white font-bold">🔒</span>
-                                </div>
-                                <h3 className="text-lg font-bold text-white">Security & Trust</h3>
-                            </div>
-                            <div className="space-y-3 text-sm">
-                                <div className="flex justify-between items-center py-2 border-b border-gray-700/50">
-                                    <span className="text-gray-400">Payment</span>
-                                    <span className="text-green-400 font-medium">🔐 100% Secure</span>
-                                </div>
-                                <div className="flex justify-between items-center py-2 border-b border-gray-700/50">
-                                    <span className="text-gray-400">Verification</span>
-                                    <span className="text-blue-400 font-medium">✓ Verified Seller</span>
-                                </div>
-                                <div className="flex justify-between items-center py-2">
-                                    <span className="text-gray-400">Guarantee</span>
-                                    <span className="text-purple-400 font-medium">💎 Quality Assured</span>
-                                </div>
-                            </div>
-                        </motion.div>
-                    </div>
-                </motion.div>
-
-            </motion.section>
-
-            {/* --- Enhanced Share Dialog --- */}
+            {/* Share Dialog */}
             <Dialog
                 open={openShareDialog}
                 onClose={closeShareDialog}
                 PaperProps={{
-                    className: 'bg-gradient-to-br from-gray-800/95 to-gray-900/95 text-white rounded-3xl shadow-2xl border border-gray-600/50 backdrop-blur-xl !max-w-lg'
+                    className: `${serifTheme.gradients.card} ${serifTheme.colors.text.primary} ${serifTheme.radius.card} ${serifTheme.colors.shadow.card} border ${serifTheme.colors.border.primary} backdrop-blur-xl !max-w-lg`,
+                    style: { fontFamily: serifTheme.fontFamily.serif }
                 }}
             >
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                    transition={{ duration: 0.3, type: "spring", stiffness: 300 }}
-                    className="p-8 relative"
-                >
-                    {/* Enhanced Close Button */}
-                    <motion.button
+                <div className="p-8 relative">
+                    {/* Close Button */}
+                    <button
                         onClick={closeShareDialog}
-                        whileHover={{ scale: 1.1, rotate: 90 }}
-                        whileTap={{ scale: 0.9 }}
-                        className="absolute top-4 right-4 p-2 text-gray-400 hover:text-white hover:bg-gray-700/50 rounded-xl transition-all duration-200"
+                        className={`absolute top-4 right-4 p-2 ${serifTheme.colors.text.tertiary} hover:${serifTheme.colors.text.primary} hover:bg-amber-100 ${serifTheme.radius.button} ${serifTheme.transitions.default}`}
                         aria-label="Close share dialog"
                     >
-                        <Close fontSize="medium" />
-                    </motion.button>
+                        <FaTimes size={20} />
+                    </button>
 
                     {/* Dialog Header */}
                     <div className="text-center mb-6">
-                        <div className="w-16 h-16 bg-gradient-to-br from-teal-400 to-purple-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                            <Share fontSize="large" className="text-white" />
+                        <div className={`w-16 h-16 ${serifTheme.gradients.button} ${serifTheme.radius.card} flex items-center justify-center mx-auto mb-4`}>
+                            <FaShareAlt size={24} className="text-white" />
                         </div>
-                        <h3 className="text-2xl font-bold text-white mb-2">Share this Product</h3>
-                        <p className="text-gray-400 text-sm">Share with friends and family</p>
+                        <h3 className={`text-2xl font-bold ${serifTheme.colors.text.primary} mb-2`}>Share this Product</h3>
+                        <p className={`${serifTheme.colors.text.tertiary} text-sm`}>Share with friends and family</p>
                     </div>
 
                     {/* Product Preview */}
-                    <div className="flex items-center gap-4 p-4 bg-gray-700/30 rounded-2xl border border-gray-600/30 mb-6">
+                    <div className={`flex items-center gap-4 p-4 ${serifTheme.colors.background.tertiary} ${serifTheme.radius.card} border ${serifTheme.colors.border.secondary} mb-6`}>
                         <img
                             src={product.productImageUrl}
                             alt={product.title}
-                            className="w-16 h-16 object-contain bg-gray-800 rounded-xl"
+                            className={`w-16 h-16 object-contain ${serifTheme.colors.background.card} ${serifTheme.radius.button}`}
+                                                            onError={(e) => {
+                                    e.target.onerror = null;
+                                    e.target.src = "/img/hero.png";
+                                    console.warn(`Failed to load product image in share dialog: ${product.productImageUrl}`);
+                                }}
                         />
                         <div className="flex-1 min-w-0">
-                            <h4 className="text-white font-semibold truncate">{product.title}</h4>
-                            <p className="text-teal-400 font-bold">रु{product.price}</p>
+                            <h4 className={`${serifTheme.colors.text.primary} font-semibold truncate`}>{product.title || "Product"}</h4>
+                            <p className={`${serifTheme.colors.text.accent} font-bold`}>रु{product.price || "0"}</p>
                         </div>
                     </div>
 
                     {/* Share Link Section */}
                     <div className="space-y-4">
-                        <label className="block text-sm font-medium text-gray-300">Product Link</label>
+                        <label className={`block text-sm font-medium ${serifTheme.colors.text.secondary}`}>Product Link</label>
                         <div className="relative">
                             <input
                                 type="text"
                                 readOnly
                                 value={shareLink}
-                                className="w-full px-4 py-3 pr-14 bg-gray-700/50 border border-gray-600/50 rounded-2xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all duration-200"
+                                className={`w-full px-4 py-3 pr-14 ${serifTheme.colors.background.card} border ${serifTheme.colors.border.secondary} ${serifTheme.radius.card} text-sm ${serifTheme.colors.text.primary} focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent ${serifTheme.transitions.default}`}
                                 onClick={(e) => e.target.select()}
                             />
-                            <motion.button
+                            <button
                                 onClick={copyToClipboard}
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                className="absolute inset-y-0 right-0 flex items-center px-4 text-teal-400 hover:text-teal-300 hover:bg-teal-500/10 rounded-r-2xl transition-all duration-200"
+                                className={`absolute inset-y-0 right-0 flex items-center px-4 ${serifTheme.colors.text.accent} hover:text-amber-800 hover:bg-amber-100 rounded-r-2xl ${serifTheme.transitions.default}`}
                                 aria-label="Copy link"
                             >
-                                <ContentCopy fontSize="small" />
-                            </motion.button>
+                                <FaCopy size={16} />
+                            </button>
                         </div>
                     </div>
 
                     {/* Quick Share Options */}
                     <div className="mt-6">
-                        <p className="text-sm font-medium text-gray-300 mb-3">Quick Share</p>
+                        <p className={`text-sm font-medium ${serifTheme.colors.text.secondary} mb-3`}>Quick Share</p>
                         <div className="flex gap-3">
-                            <motion.button
-                                whileHover={{ scale: 1.05, y: -2 }}
-                                whileTap={{ scale: 0.95 }}
-                                onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(`Check out this product: ${product.title} - रु${product.price}\n${shareLink}`)}`)}
-                                className="flex-1 flex items-center justify-center gap-2 p-3 bg-green-600/20 hover:bg-green-600/30 text-green-400 rounded-xl border border-green-500/30 transition-all duration-200"
+                            <SerifButton
+                                onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(`Check out this product: ${product.title || "Product"} - रु${product.price || "0"}\n${shareLink}`)}`)}
+                                variant="success"
+                                size="small"
+                                className="flex-1"
                             >
-                                <span className="text-lg">📱</span>
-                                <span className="text-sm font-medium">WhatsApp</span>
-                            </motion.button>
-                            <motion.button
-                                whileHover={{ scale: 1.05, y: -2 }}
-                                whileTap={{ scale: 0.95 }}
+                                📱 WhatsApp
+                            </SerifButton>
+                            <SerifButton
                                 onClick={() => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareLink)}`)}
-                                className="flex-1 flex items-center justify-center gap-2 p-3 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 rounded-xl border border-blue-500/30 transition-all duration-200"
+                                variant="secondary"
+                                size="small"
+                                className="flex-1"
                             >
-                                <span className="text-lg">📘</span>
-                                <span className="text-sm font-medium">Facebook</span>
-                            </motion.button>
-                            <motion.button
-                                whileHover={{ scale: 1.05, y: -2 }}
-                                whileTap={{ scale: 0.95 }}
+                                📘 Facebook
+                            </SerifButton>
+                            <SerifButton
                                 onClick={() => window.open(`https://www.instagram.com/?url=${encodeURIComponent(shareLink)}`)}
-                                className="flex-1 flex items-center justify-center gap-2 p-3 bg-pink-600/20 hover:bg-pink-600/30 text-pink-400 rounded-xl border border-pink-500/30 transition-all duration-200"
+                                variant="secondary"
+                                size="small"
+                                className="flex-1"
                             >
-                                <span className="text-lg">📷</span>
-                                <span className="text-sm font-medium">Instagram</span>
-                            </motion.button>
+                                📷 Instagram
+                            </SerifButton>
                         </div>
                     </div>
-                </motion.div>
+
+                </div>
             </Dialog>
 
-            {/* Product Reviews Section */}
-            <motion.div
-                initial={{ opacity: 0, y: 50 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.1 }}
-                transition={{ duration: 0.8, delay: 0.2 }}
-                className="max-w-7xl mx-auto mt-20 lg:mt-32 px-4 md:px-8 pb-20"
-            >
-                {/* Reviews Section Header */}
-                <div className="text-center mb-12">
-                    <motion.h2
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.6 }}
-                        className="text-4xl font-bold text-white mb-4"
+            {/* Description and Reviews Tabs Section */}
+            <div id="description-reviews-section" className="max-w-7xl mx-auto mt-16 lg:mt-24 px-4 md:px-8 pb-20" style={{ fontFamily: serifTheme.fontFamily.serif }}>
+                {/* Tabs Navigation */}
+                <div className={`flex gap-2 mb-6 border-b ${serifTheme.colors.border.primary}`}>
+                    <button
+                        type="button"
+                        onClick={() => setActiveTab("description")}
+                        className={clsx(
+                            "px-6 py-3 text-base font-semibold border-b-2 transition-all",
+                            activeTab === "description"
+                                ? `${serifTheme.colors.text.accent} border-amber-600 bg-amber-50/50`
+                                : `${serifTheme.colors.text.tertiary} border-transparent hover:text-amber-800 hover:border-amber-300`
+                        )}
                     >
-                        Customer Reviews
-                    </motion.h2>
-                    <motion.p
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.6, delay: 0.2 }}
-                        className="text-gray-400 text-lg"
+                        Description
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setActiveTab("reviews")}
+                        className={clsx(
+                            "px-6 py-3 text-base font-semibold border-b-2 transition-all",
+                            activeTab === "reviews"
+                                ? `${serifTheme.colors.text.accent} border-amber-600 bg-amber-50/50`
+                                : `${serifTheme.colors.text.tertiary} border-transparent hover:text-amber-800 hover:border-amber-300`
+                        )}
                     >
-                        See what customers are saying about this product
-                    </motion.p>
+                        Reviews
+                    </button>
                 </div>
 
-                <ProductReviews 
-                    productId={product?.id} 
-                    productTitle={product?.title}
-                    showReviewForm={true}
-                />
-            </motion.div>
+                {/* Tab Content */}
+                {activeTab === "description" ? (
+                    <div className={`${serifTheme.radius.card} ${serifTheme.gradients.card} p-6 border ${serifTheme.colors.border.primary}`}>
+                        <h3 className={`text-xl font-bold ${serifTheme.colors.text.primary} mb-4`}>Product Details</h3>
+                        <div className={`${serifTheme.colors.text.secondary} leading-relaxed text-base`}>
+                            <p className="whitespace-pre-line">{fullDescription}</p>
+                        </div>
+                    </div>
+                ) : (
+                    <div className={`${serifTheme.radius.card} ${serifTheme.gradients.card} p-1 border ${serifTheme.colors.border.primary}`}>
+                    <ProductReviews 
+                        productId={product?.id} 
+                        productTitle={product?.title}
+                        showReviewForm={true}
+                    />
+                </div>
+                )}
+            </div>
+
+            {/* Related Products */}
+            <RelatedProducts currentProduct={product} allProducts={context.getAllProduct} />
+
+            {/* AI Chat with Product Context - DISABLED */}
+            {/* <AIChat productContext={product} /> */}
 
             {/* Custom Scrollbar CSS for the description overflow */}
             {/* This CSS can be placed in a global stylesheet or directly here for demonstration */}

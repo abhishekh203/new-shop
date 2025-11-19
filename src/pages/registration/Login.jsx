@@ -1,10 +1,10 @@
 import React, { useContext, useState, useEffect, useCallback } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import myContext from "../../context/myContext";
 import Loader from "../../components/loader/Loader";
 import { FaEnvelope, FaLock, FaEye, FaEyeSlash, FaArrowRight, FaSpinner, FaShieldAlt } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
-import { useAuth } from "../../hooks/useAuth";
+import { useAuth } from "../../hooks/auth/useAuth";
 import { validateEmail, validatePassword } from "../../utils/validation";
 import { serifTheme } from "../../design-system/themes/serifTheme";
 import { SerifButton, SerifPageWrapper } from "../../design-system/components";
@@ -50,6 +50,7 @@ const Login = () => {
     const context = useContext(myContext);
     const { loading: pageLoading, setLoading: setPageLoading } = context;
     const navigate = useNavigate();
+    const location = useLocation();
     const { login, resetPassword, loading: authLoading, progress, getRemainingAttempts, isLockedOut } = useAuth();
     const notification = useNotification();
 
@@ -59,6 +60,16 @@ const Login = () => {
     const [isFormValid, setIsFormValid] = useState(false);
     const [remainingAttempts, setRemainingAttempts] = useState(5);
     const [touchedFields, setTouchedFields] = useState({ email: false, password: false });
+
+    // --- Check for email verification success ---
+    useEffect(() => {
+        const searchParams = new URLSearchParams(location.search);
+        if (searchParams.get('verified') === 'true') {
+            notification.success('Email verified successfully! You can now log in to your account.');
+            // Clean up the URL
+            navigate('/login', { replace: true });
+        }
+    }, [location.search, notification, navigate]);
 
     // --- Form Validation Effect ---
     useEffect(() => {
@@ -159,28 +170,31 @@ const Login = () => {
             // Navigate immediately without delay
             navigate(result.redirectTo);
         } else {
-            // Handle specific errors - Firebase now uses auth/invalid-credential for wrong password
-            if (result.error === 'auth/user-not-found') {
-                setErrors(prev => ({ ...prev, email: result.message || "No account found with this email" }));
-            } else if (result.error === 'auth/invalid-email') {
-                setErrors(prev => ({ ...prev, email: result.message || "Invalid email format" }));
-            } else if (result.error === 'auth/wrong-password') {
-                setErrors(prev => ({ ...prev, password: result.message || "Incorrect password. Please try again." }));
-            } else if (result.error === 'auth/invalid-credential') {
-                // Firebase returns invalid-credential for both wrong email and wrong password
-                // Since we've validated email format, this is likely wrong password
-                // But we'll show it on password field since email format is valid
+            // Handle specific errors - Supabase auth error handling
+            const errorMessage = result.message || "Login failed. Please try again.";
+            
+            if (result.error === 'invalid_credentials' || errorMessage.includes('Invalid login credentials')) {
+                // Supabase returns invalid_credentials for both wrong email and wrong password
                 const emailValid = validateEmail(userLogin.email) === "";
                 if (emailValid) {
                     // Email format is valid, so it's likely wrong password
-                    setErrors(prev => ({ ...prev, password: result.message || "Incorrect password. Please try again." }));
+                    setErrors(prev => ({ ...prev, password: "Incorrect password. Please try again." }));
                 } else {
                     // Email format is invalid, show on email
-                    setErrors(prev => ({ ...prev, email: result.message || "Invalid email or password" }));
+                    setErrors(prev => ({ ...prev, email: "Invalid email or password" }));
                 }
+            } else if (result.error === 'email_not_confirmed' || errorMessage.includes('Email not confirmed')) {
+                setErrors(prev => ({ ...prev, email: "Please verify your email before logging in" }));
+                notification.info("Check your email for a verification link");
+            } else if (result.error === 'user_not_found' || errorMessage.includes('User not found')) {
+                setErrors(prev => ({ ...prev, email: "No account found with this email" }));
+            } else if (result.error === 'email_address_invalid' || errorMessage.includes('Invalid email')) {
+                setErrors(prev => ({ ...prev, email: "Invalid email format" }));
+            } else if (result.error === 'too_many_requests' || errorMessage.includes('Too many requests')) {
+                notification.error("Too many login attempts. Please try again later.");
             } else {
                 // Generic error - show notification
-                notification.error(result.message || "Login failed. Please try again.");
+                notification.error(errorMessage);
             }
         }
     };
@@ -193,7 +207,24 @@ const Login = () => {
                 className="flex justify-center items-center min-h-screen p-4 relative overflow-hidden"
                 style={{ fontFamily: serifTheme.fontFamily.serif }}
             >
-                {pageLoading && <Loader />}
+                {pageLoading && (
+                    <motion.div
+                        initial={{ x: '-100%', opacity: 0 }}
+                        animate={{ x: 0, opacity: 1 }}
+                        exit={{ x: '-100%', opacity: 0 }}
+                        transition={{ duration: 0.3, ease: 'easeInOut' }}
+                        className="fixed left-0 top-0 h-full w-80 bg-black/90 backdrop-blur-lg border-r border-gray-700 z-50 flex items-center justify-center"
+                    >
+                        <div className="text-center">
+                            <motion.div
+                                animate={{ rotate: 360 }}
+                                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                                className="w-12 h-12 border-4 border-amber-500/30 border-t-amber-500 rounded-full mx-auto mb-4"
+                            />
+                            <p className="text-amber-400 font-medium">Loading...</p>
+                        </div>
+                    </motion.div>
+                )}
 
                 <motion.div
                     variants={cardVariants}
@@ -270,24 +301,40 @@ const Login = () => {
                         <AnimatePresence> {errors.password && ( <motion.p id="password-error" className="mt-1.5 text-xs text-red-400" variants={errorVariants} initial="hidden" animate="visible" exit="exit"> {errors.password} </motion.p> )} </AnimatePresence>
                     </motion.div>
 
-                    {/* Progress Indicator */}
-                    {authLoading && progress > 0 && (
-                        <motion.div 
-                            initial={{ opacity: 0, height: 0 }} 
-                            animate={{ opacity: 1, height: 'auto' }}
-                            className="w-full bg-gray-700 rounded-full h-2 mb-4"
+                    {/* Side Loading Indicator for Auth */}
+                    {authLoading && (
+                        <motion.div
+                            initial={{ x: '-100%', opacity: 0 }}
+                            animate={{ x: 0, opacity: 1 }}
+                            exit={{ x: '-100%', opacity: 0 }}
+                            transition={{ duration: 0.4, ease: 'easeOut' }}
+                            className="fixed left-4 top-1/2 -translate-y-1/2 bg-gradient-to-r from-amber-500/20 to-orange-500/20 backdrop-blur-lg border border-amber-400/30 rounded-lg p-4 z-40"
                         >
-                            <motion.div 
-                                className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full"
-                                initial={{ width: 0 }}
-                                animate={{ width: `${progress}%` }}
-                                transition={{ duration: 0.3 }}
-                            />
+                            <div className="flex items-center gap-3">
+                                <motion.div
+                                    animate={{ rotate: 360 }}
+                                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                                    className="w-6 h-6 border-2 border-amber-500/30 border-t-amber-500 rounded-full"
+                                />
+                                <div>
+                                    <p className="text-amber-400 font-medium text-sm">Authenticating...</p>
+                                    {progress > 0 && (
+                                        <div className="w-24 bg-gray-700 rounded-full h-1 mt-2">
+                                            <motion.div 
+                                                className="bg-gradient-to-r from-amber-500 to-orange-500 h-1 rounded-full"
+                                                initial={{ width: 0 }}
+                                                animate={{ width: `${progress}%` }}
+                                                transition={{ duration: 0.3 }}
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
                         </motion.div>
                     )}
 
-                    {/* Login Button */}
-                    <motion.div variants={itemVariants}>
+                    {/* Login Button with Side Loading */}
+                    <motion.div variants={itemVariants} className="relative">
                         <SerifButton
                             onClick={userLoginFunction}
                             disabled={!isFormValid || authLoading}
@@ -297,8 +344,29 @@ const Login = () => {
                             loading={authLoading}
                             icon={authLoading ? undefined : <FaArrowRight />}
                         >
-                            {authLoading ? 'Processing...' : 'Sign In'}
+                            {authLoading ? (
+                                <div className="flex items-center justify-center gap-2">
+                                    <motion.div
+                                        animate={{ rotate: 360 }}
+                                        transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                                        className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
+                                    />
+                                    Processing...
+                                </div>
+                            ) : 'Sign In'}
                         </SerifButton>
+                        
+                        {/* Side loading indicator */}
+                        {authLoading && (
+                            <motion.div
+                                initial={{ scale: 0, x: -20 }}
+                                animate={{ scale: 1, x: 0 }}
+                                exit={{ scale: 0, x: -20 }}
+                                className="absolute -right-12 top-1/2 -translate-y-1/2"
+                            >
+                                <div className="w-2 h-8 bg-gradient-to-b from-amber-500 to-orange-500 rounded-full animate-pulse" />
+                            </motion.div>
+                        )}
                     </motion.div>
 
                     {/* Sign-up Link */}

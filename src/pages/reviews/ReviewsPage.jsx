@@ -5,8 +5,8 @@ import Layout from '../../components/layout/Layout';
 import { FaStar, FaUsers, FaShieldAlt, FaCheckCircle, FaHeart, FaThumbsUp, FaAward, FaCrown, FaFire, FaPlay, FaPaperPlane, FaUserSecret, FaTimes } from 'react-icons/fa';
 import { HiSparkles, HiLightningBolt, HiTrendingUp } from 'react-icons/hi';
 import { BsStars, BsEmojiSmile } from 'react-icons/bs';
-import { collection, addDoc, getDocs, query, orderBy, limit, where } from 'firebase/firestore';
-import { fireDB } from '../../firebase/FirebaseConfig';
+import { supabase } from '../../supabase/supabaseConfig';
+import logger from '../../utils/logger';
 
 // Dynamically import all images from /public/img/w_image
 const galleryImages = [
@@ -14,44 +14,52 @@ const galleryImages = [
 ].map(name => `/img/w_image/${name}.jpg`);
 
 // Get all approved reviews for display
+const normalizeReviewRecord = (review) => {
+    if (!review) return null;
+    const createdAt = review.created_at || review.updated_at || review.timestamp || null;
+    const timestamp =
+        review.timestamp && typeof review.timestamp === 'object'
+            ? review.timestamp
+            : createdAt
+                ? {
+                    seconds: Math.floor(new Date(createdAt).getTime() / 1000),
+                    toDate: () => new Date(createdAt)
+                }
+                : null;
+
+    return {
+        ...review,
+        timestamp
+    };
+};
+
 const getApprovedReviews = async () => {
     try {
-        const reviewsRef = collection(fireDB, 'reviews');
-        
-        // First, try to get ALL reviews to see what's in the database
-        const allReviewsQuery = query(
-            reviewsRef,
-            orderBy('timestamp', 'desc')
-        );
-        
-        const allReviewsSnapshot = await getDocs(allReviewsQuery);
-        
-        const allReviews = [];
-        allReviewsSnapshot.forEach((doc) => {
-            const reviewData = { id: doc.id, ...doc.data() };
-            allReviews.push(reviewData);
+        const { data, error } = await supabase
+            .from('reviews')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            throw error;
+        }
+
+        const allReviews = (data || []).map(normalizeReviewRecord).filter(Boolean);
+
+        const approvedReviews = allReviews.filter((review) => {
+            const value = review.approved ?? review.status ?? review.isApproved;
+            if (typeof value === 'string') {
+                return ['true', 'approved'].includes(value.toLowerCase());
+            }
+            return Boolean(value);
         });
-        
-        // Check different approval field variations
-        const approvedReviews = allReviews.filter(review => {
-            const isApproved = review.approved === true || 
-                              review.approved === 'true' || 
-                              review.approved === 1 ||
-                              review.status === 'approved' ||
-                              review.status === 'Approved' ||
-                              review.isApproved === true ||
-                               review.isApproved === 'true';
-            return isApproved;
-        });
-        
-        // Always return all, but ensure approved reviews come first
-        const ordered = [
+
+        return [
             ...approvedReviews,
-            ...allReviews.filter(r => !approvedReviews.find(a => a.id === r.id))
+            ...allReviews.filter((review) => !approvedReviews.find((approved) => approved.id === review.id))
         ];
-        return ordered;
     } catch (error) {
-        console.error('Error fetching approved reviews:', error);
+        logger.error('Error fetching approved reviews:', { error: error.message || error });
         return [];
     }
 };
@@ -59,25 +67,18 @@ const getApprovedReviews = async () => {
 // Test function to fetch ALL reviews (for debugging)
 const getAllReviewsTest = async () => {
     try {
-        const reviewsRef = collection(fireDB, 'reviews');
-        
-        // Get ALL reviews without any filter
-        const q = query(
-            reviewsRef,
-            orderBy('timestamp', 'desc')
-        );
-        
-        const querySnapshot = await getDocs(q);
-        
-        const allReviews = [];
-        querySnapshot.forEach((doc) => {
-            const reviewData = { id: doc.id, ...doc.data() };
-            allReviews.push(reviewData);
-        });
-        
-        return allReviews;
+        const { data, error } = await supabase
+            .from('reviews')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            throw error;
+        }
+
+        return (data || []).map(normalizeReviewRecord).filter(Boolean);
     } catch (error) {
-        console.error('Error fetching all reviews:', error);
+        logger.error('Error fetching all reviews:', { error: error.message || error });
         return [];
     }
 };
@@ -336,20 +337,8 @@ const ReviewsPage = () => {
     useEffect(() => {
         const initialize = async () => {
             try {
-                console.log('🚀 Initializing Reviews page...');
-                
-                // Test Firebase connection
-                console.log('🔥 Testing Firebase connection...');
-                try {
-                    const testRef = collection(fireDB, 'reviews');
-                    const testQuery = query(testRef, limit(1));
-                    const testSnapshot = await getDocs(testQuery);
-                    console.log('✅ Firebase connection successful, collection accessible');
-                } catch (firebaseError) {
-                    console.error('❌ Firebase connection failed:', firebaseError);
-                    return;
-                }
-                
+                logger.debug('🚀 Initializing Reviews page...');
+
                 // Preload images
                 const imagePromises = [
                     "/img/digital.jpg",
@@ -383,7 +372,7 @@ const ReviewsPage = () => {
                 // Wait for images to load
                 await Promise.all(imagePromises);
             } catch (error) {
-                console.error('Error during initialization:', error);
+                logger.error('Error during initialization:', { error: error.message || error });
             } finally {
                 setIsLoading(false);
             }

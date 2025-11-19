@@ -1,7 +1,8 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
+import logger from '../../utils/logger';
 
 const categories = [
   { 
@@ -98,7 +99,7 @@ const Category = () => {
     const [showRightArrow, setShowRightArrow] = useState(true);
 
     const handleNavigation = (category) => {
-        console.log("Navigating to category:", category.id);
+        logger.debug('Navigating to category:', { context: category.id });
         navigate(`/category/${category.id}`);
     };
 
@@ -128,6 +129,8 @@ const Category = () => {
 
     useEffect(() => {
         const container = containerRef.current;
+        if (!container) return undefined;
+
         container.addEventListener('scroll', checkScrollPosition);
         return () => container.removeEventListener('scroll', checkScrollPosition);
     }, []);
@@ -157,7 +160,7 @@ const Category = () => {
                     onMouseEnter={() => setIsHovered(true)}
                     onMouseLeave={() => setIsHovered(false)}
                 >
-                    {categories.map((category, index) => (
+                    {categories.map((category) => (
                         <motion.div 
                             key={category.id}
                             whileHover={{ scale: 1.05 }}
@@ -201,7 +204,7 @@ const Category = () => {
             </div>
 
             {/* Custom Scrollbar Styles */}
-            <style jsx>{`
+            <style>{`
                 .hide-scroll-bar {
                     -ms-overflow-style: none;
                     scrollbar-width: none;

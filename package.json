@@ -6,10 +6,14 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
+    "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "predeploy": "vite build",
-    "deploy": "gh-pages -d dist"
+    "deploy": "gh-pages -d dist",
+    "clean-logs": "node scripts/replace-console-logs.js",
+    "build:production": "VITE_LOG_LEVEL=ERROR vite build",
+    "dev:debug": "VITE_LOG_LEVEL=DEBUG vite",
+    "dev:trace": "VITE_LOG_LEVEL=TRACE vite"
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
@@ -21,6 +25,7 @@
     "@mui/icons-material": "^6.0.2",
     "@mui/material": "^6.1.4",
     "@reduxjs/toolkit": "^2.2.7",
+    "@supabase/supabase-js": "^2.80.0",
     "@tailwindcss/forms": "^0.5.10",
     "antd": "^5.14.0",
     "apexcharts": "^4.5.0",
@@ -31,7 +36,6 @@
     "country-flag-emoji": "^1.0.3",
     "date-fns": "^4.1.0",
     "express": "^4.21.1",
-    "firebase": "^10.14.1",
     "framer-motion": "^12.5.0",
     "gh-pages": "^6.1.1",
     "html2canvas": "^1.4.1",
@@ -56,6 +60,7 @@
     "react-to-print": "^3.0.5",
     "react-toastify": "^10.0.6",
     "react-tsparticles": "^2.12.2",
+    "resend": "^6.4.2",
     "slick-carousel": "^1.8.1",
     "swiper": "^11.2.4",
     "tsparticles": "^3.8.1",

@@ -2,7 +2,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { serifTheme } from "../themes/serifTheme";
 import { createProductUrl } from "../../utils/slugUtils";
-import { FaHeart, FaRegHeart, FaEye, FaShoppingCart, FaTrash } from "react-icons/fa";
+import { FaEye, FaShoppingCart, FaTrash } from "react-icons/fa";
 import { BsStars } from "react-icons/bs";
 
 /**
@@ -12,14 +12,11 @@ import { BsStars } from "react-icons/bs";
 const SerifProductCard = ({
   product,
   isInCart = false,
-  isInWishlist = false,
   onAddToCart,
   onRemoveFromCart,
-  onToggleWishlist,
   onNavigate,
   onQuickView,
   showCategory = true,
-  showWishlist = true,
   className = "",
   index = 0,
 }) => {
@@ -41,12 +38,6 @@ const SerifProductCard = ({
     }
   };
 
-  const handleWishlistClick = (e) => {
-    e.stopPropagation();
-    if (onToggleWishlist) {
-      onToggleWishlist(product.id);
-    }
-  };
 
   const formatPrice = (priceValue) => {
     return `रु ${Number(priceValue || 0).toLocaleString('en-IN', { 
@@ -74,7 +65,7 @@ const SerifProductCard = ({
         ${serifTheme.colors.shadow.cardHover}
         ${serifTheme.transitions.default}
         hover:${serifTheme.colors.border.hover}
-        flex flex-col h-[420px] 
+        flex flex-col h-[280px] sm:h-[320px] md:h-[380px] lg:h-[420px]
         cursor-pointer 
         backdrop-blur-sm
         ${className}
@@ -85,26 +76,10 @@ const SerifProductCard = ({
         }
       }}
     >
-      {/* Wishlist Button */}
-      {showWishlist && (
-        <div className="absolute top-3 right-3 flex flex-col gap-2 z-20 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
+      {/* Quick View Button */}
+      {onQuickView && (
+        <div className="absolute top-2 right-2 sm:top-3 sm:right-3 flex flex-col gap-1.5 sm:gap-2 z-20 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
           <motion.button
-            onClick={handleWishlistClick}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            className={`
-              p-2 rounded-full backdrop-blur-md border ${serifTheme.transitions.default}
-              ${isInWishlist
-                ? 'bg-red-500/20 border-red-400/50 text-red-500'
-                : `${serifTheme.colors.button.secondary} ${serifTheme.colors.border.secondary} ${serifTheme.colors.text.secondary} hover:text-red-500 hover:bg-red-50`
-              }
-            `}
-          >
-            {isInWishlist ? <FaHeart size={14} /> : <FaRegHeart size={14} />}
-          </motion.button>
-
-          {onQuickView && (
-            <motion.button
               onClick={(e) => {
                 e.stopPropagation();
                 onQuickView(product);
@@ -112,7 +87,7 @@ const SerifProductCard = ({
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               className={`
-                p-2 rounded-full 
+                p-1.5 sm:p-2 rounded-full 
                 ${serifTheme.colors.button.secondary} 
                 ${serifTheme.colors.border.secondary} 
                 ${serifTheme.colors.text.secondary} 
@@ -120,38 +95,37 @@ const SerifProductCard = ({
                 ${serifTheme.transitions.default}
               `}
             >
-              <FaEye size={14} />
+              <FaEye size={12} className="sm:w-3.5 sm:h-3.5" />
             </motion.button>
-          )}
         </div>
       )}
 
       {/* Category Badge */}
       {showCategory && category && (
-        <div className="absolute top-3 left-3 z-10">
+        <div className="absolute top-2 left-2 sm:top-3 sm:left-3 z-10">
           <motion.span
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             className={`
-              inline-flex items-center gap-1 
+              inline-flex items-center gap-0.5 sm:gap-1 
               ${serifTheme.colors.accent.primary} 
               text-white 
-              text-[10px] font-bold 
-              px-3 py-1.5 
+              text-[8px] sm:text-[10px] font-bold 
+              px-2 sm:px-3 py-1 sm:py-1.5 
               ${serifTheme.radius.badge} 
               uppercase tracking-wider 
               ${serifTheme.colors.shadow.button} 
               backdrop-blur-sm
             `}
           >
-            <BsStars size={10} />
+            <BsStars size={8} className="sm:w-2.5 sm:h-2.5" />
             {category || 'Digital'}
           </motion.span>
         </div>
       )}
 
       {/* Product Image */}
-      <div className="relative h-60 w-full overflow-hidden group/image">
+      <div className="relative h-36 sm:h-44 md:h-52 lg:h-60 w-full overflow-hidden group/image">
         <motion.img
           className="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-105"
           src={productImageUrl || '/img/placeholder.png'}
@@ -182,11 +156,11 @@ const SerifProductCard = ({
       </div>
 
       {/* Product Info */}
-      <div className={`${serifTheme.spacing.cardPadding} flex flex-col flex-grow`}>
+      <div className={`p-3 sm:p-4 md:p-5 flex flex-col flex-grow`}>
         {/* Title */}
-        <div className="mb-3">
+        <div className="mb-2 sm:mb-3">
           <h3 className={`
-            text-lg font-bold 
+            text-xs sm:text-sm md:text-base lg:text-lg font-bold 
             ${serifTheme.colors.text.primary} 
             group-hover:${serifTheme.colors.text.accent} 
             ${serifTheme.transitions.default}
@@ -200,14 +174,14 @@ const SerifProductCard = ({
         <div className="flex-grow"></div>
 
         {/* Price Section */}
-        <div className="mb-4">
+        <div className="mb-2 sm:mb-3 md:mb-4">
           <motion.p
-            className={`text-2xl font-bold ${serifTheme.gradients.accent}`}
+            className={`text-sm sm:text-base md:text-lg lg:text-2xl font-bold ${serifTheme.gradients.accent}`}
             whileHover={{ scale: 1.05 }}
           >
             {formatPrice(price)}
           </motion.p>
-          <p className={`text-xs ${serifTheme.colors.text.tertiary} mt-1`}>
+          <p className={`text-[10px] sm:text-xs ${serifTheme.colors.text.tertiary} mt-1`}>
             Digital Product
           </p>
         </div>
@@ -215,11 +189,11 @@ const SerifProductCard = ({
         {/* Action Button */}
         <motion.button
           className={`
-            w-full py-3 px-4 
+            w-full py-2 sm:py-2.5 md:py-3 px-3 sm:px-4
             ${serifTheme.radius.button} 
-            text-sm font-bold 
+            text-xs sm:text-sm font-bold 
             ${serifTheme.transitions.default}
-            flex items-center justify-center gap-2.5 
+            flex items-center justify-center gap-2 
             ${serifTheme.colors.shadow.button}
             relative overflow-hidden
             ${isInCart
@@ -241,15 +215,15 @@ const SerifProductCard = ({
             />
           )}
 
-          <span className="relative z-10 flex items-center gap-2">
+          <span className="relative z-10 flex items-center gap-1.5 sm:gap-2">
             {isInCart ? (
               <>
-                <FaTrash size={14} />
+                <FaTrash size={12} className="sm:w-3.5 sm:h-3.5" />
                 <span>Remove</span>
               </>
             ) : (
               <>
-                <FaShoppingCart size={14} />
+                <FaShoppingCart size={12} className="sm:w-3.5 sm:h-3.5" />
                 <span>Add to Cart</span>
               </>
             )}

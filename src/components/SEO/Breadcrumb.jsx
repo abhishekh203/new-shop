@@ -32,7 +32,6 @@ const Breadcrumb = ({ customBreadcrumbs = null, className = "" }) => {
     'reviews': 'Reviews',
     'cart': 'Shopping Cart',
     'user-dashboard': 'User Dashboard',
-    'admin-dashboard': 'Admin Dashboard'
   };
 
   // Generate breadcrumbs from current path

@@ -4,6 +4,8 @@ import myContext from "../../context/myContext";
 import { useDispatch, useSelector } from "react-redux";
 import { useNotification } from "../../context/NotificationContext";
 import { addToCart, deleteFromCart } from "../../redux/cartSlice";
+import useCartSync from "../../hooks/cart/useCartSync";
+import LoginPopup from "../LoginPopup/LoginPopup";
 import { createProductUrl } from "../../utils/slugUtils";
 import { 
   SerifPageWrapper, 
@@ -18,12 +20,11 @@ import {
   FaShoppingCart, 
   FaTrash, 
   FaEye, 
-  FaHeart,
-  FaRegHeart,
   FaSearch,
   FaChevronDown,
   FaChevronUp
 } from "react-icons/fa";
+import logger from '../../utils/logger';
 // ============================================================================
 // CONSTANTS & CONFIGURATION
 // ============================================================================
@@ -63,66 +64,6 @@ const useHapticFeedback = () => {
   return { triggerHapticFeedback };
 };
 
-const useWishlist = (userId, notification) => {
-  const [wishlist, setWishlist] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    if (userId) {
-      try {
-        const saved = localStorage.getItem(`favorites_${userId}`);
-        if (saved) {
-          setWishlist(JSON.parse(saved));
-        }
-      } catch (error) {
-        console.error("Failed to load wishlist:", error);
-      }
-    }
-  }, [userId]);
-
-  useEffect(() => {
-    if (userId) {
-      try {
-        localStorage.setItem(`favorites_${userId}`, JSON.stringify(wishlist));
-      } catch (error) {
-        console.error("Failed to save wishlist:", error);
-      }
-    }
-  }, [wishlist, userId]);
-
-  const toggleWishlist = useCallback(async (productId) => {
-    if (!userId) {
-      notification?.error("Please log in to save items to your wishlist");
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      setWishlist(prev => {
-        const newWishlist = prev.includes(productId) 
-          ? prev.filter(id => id !== productId) 
-          : [...prev, productId];
-        
-        const isRemoved = prev.includes(productId);
-        notification?.[isRemoved ? "success" : "success"](
-          isRemoved ? "Removed from wishlist" : "Added to wishlist",
-          {
-            icon: isRemoved ? <FaRegHeart /> : <FaHeart />,
-            duration: 3000
-          }
-        );
-        
-        return newWishlist;
-      });
-    } catch (error) {
-      notification?.error("Failed to update wishlist");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [userId, notification]);
-
-  return { wishlist, toggleWishlist, isLoading };
-};
 
 // Helper function to get category icon
 const getCategoryIcon = (category) => {
@@ -189,10 +130,8 @@ const useProductFilters = (products) => {
 const ProductCard = React.memo(({ 
   product, 
   isInCart, 
-  isInWishlist, 
   onAddToCart, 
   onRemoveFromCart, 
-  onToggleWishlist, 
   onNavigate,
   isMobile,
   index = 0
@@ -206,10 +145,8 @@ const ProductCard = React.memo(({
     <SerifProductCard
       product={product}
       isInCart={isInCart}
-      isInWishlist={isInWishlist}
       onAddToCart={onAddToCart}
       onRemoveFromCart={onRemoveFromCart}
-      onToggleWishlist={onToggleWishlist}
       onNavigate={handleNavigate}
       index={index}
     />
@@ -242,6 +179,13 @@ const HomePageProductCard = () => {
 
   const cartItems = useSelector((state) => state.cart);
   const dispatch = useDispatch();
+  const { 
+    addToCartWithSync, 
+    removeFromCartWithSync, 
+    showLoginPopup, 
+    closeLoginPopup, 
+    pendingProduct 
+  } = useCartSync();
 
   const { isMobile, isTablet } = useResponsiveDesign();
   const { triggerHapticFeedback } = useHapticFeedback();
@@ -254,7 +198,6 @@ const HomePageProductCard = () => {
     }
   }, []);
   
-  const { wishlist, toggleWishlist, isLoading: wishlistLoading } = useWishlist(user?.uid, notification);
   const {
     activeCategory,
     setActiveCategory,
@@ -265,21 +208,26 @@ const HomePageProductCard = () => {
   // Cart actions
   const addCart = useCallback((item) => {
     triggerHapticFeedback();
-    dispatch(addToCart(item));
-    notification.success("Added to cart", {
-      icon: <FaShoppingCart />,
-      duration: 3000
-    });
-  }, [dispatch, triggerHapticFeedback, notification]);
+    const added = addToCartWithSync(item);
+    
+    // Only show success notification if item was actually added
+    if (added) {
+      notification.success("Added to cart", {
+        icon: <FaShoppingCart />,
+        duration: 3000
+      });
+    }
+    // If not added, the login popup will be shown by useCartSync
+  }, [addToCartWithSync, triggerHapticFeedback, notification]);
 
   const deleteCart = useCallback((item) => {
     triggerHapticFeedback();
-    dispatch(deleteFromCart(item));
+    removeFromCartWithSync(item);
     notification.success("Removed from cart", {
       icon: <FaTrash />,
       duration: 3000
     });
-  }, [dispatch, triggerHapticFeedback, notification]);
+  }, [removeFromCartWithSync, triggerHapticFeedback, notification]);
 
   // Removed sort functionality
 
@@ -342,17 +290,14 @@ const HomePageProductCard = () => {
                     >
               {productsToShow.map((item, index) => {
                           const isInCart = cartItems.some((p) => p.id === item.id);
-                          const isInWishlist = wishlist.includes(item.id);
 
                           return (
                             <ProductCard
                     key={`product-${item.id}`}
                               product={item}
                               isInCart={isInCart}
-                              isInWishlist={isInWishlist}
                               onAddToCart={addCart}
                               onRemoveFromCart={deleteCart}
-                              onToggleWishlist={toggleWishlist}
                               onNavigate={handleNavigate}
                               isMobile={isMobile}
                     index={index}
@@ -362,6 +307,13 @@ const HomePageProductCard = () => {
             </div>
           )}
       </div>
+      
+      {/* Login Popup */}
+      <LoginPopup
+        isOpen={showLoginPopup}
+        onClose={closeLoginPopup}
+        productTitle={pendingProduct?.title || "this item"}
+      />
     </SerifPageWrapper>
   );
 };

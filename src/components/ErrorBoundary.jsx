@@ -1,4 +1,6 @@
 import React from 'react';
+import PropTypes from 'prop-types';
+import logger from '../utils/logger';
 
 class ErrorBoundary extends React.Component {
     constructor(props) {
@@ -6,14 +8,17 @@ class ErrorBoundary extends React.Component {
         this.state = { hasError: false, error: null, errorInfo: null };
     }
 
-    static getDerivedStateFromError(error) {
+    static getDerivedStateFromError() {
         // Update state so the next render will show the fallback UI
         return { hasError: true };
     }
 
     componentDidCatch(error, errorInfo) {
         // Log error to console and any error reporting service
-        console.error('Error caught by boundary:', error, errorInfo);
+        logger.error('Error caught by boundary', { 
+            error: error.message || error.toString(), 
+            errorInfo: errorInfo 
+        });
         this.setState({
             error: error,
             errorInfo: errorInfo
@@ -47,7 +52,7 @@ class ErrorBoundary extends React.Component {
                                 Oops! Something went wrong
                             </h1>
                             <p className="text-gray-300 mb-6">
-                                We're sorry, but something unexpected happened. Please try refreshing the page.
+                                We&apos;re sorry, but something unexpected happened. Please try refreshing the page.
                             </p>
                         </div>
                         
@@ -67,7 +72,7 @@ class ErrorBoundary extends React.Component {
                             </button>
                         </div>
 
-                        {process.env.NODE_ENV === 'development' && this.state.error && (
+                        {typeof globalThis !== 'undefined' && globalThis.process?.env?.NODE_ENV === 'development' && this.state.error && (
                             <details className="mt-6 text-left">
                                 <summary className="text-gray-400 cursor-pointer hover:text-gray-300">
                                     Error Details (Development)
@@ -94,5 +99,9 @@ class ErrorBoundary extends React.Component {
         return this.props.children;
     }
 }
+
+ErrorBoundary.propTypes = {
+    children: PropTypes.node
+};
 
 export default ErrorBoundary; 

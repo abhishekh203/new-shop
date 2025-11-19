@@ -7,16 +7,18 @@ import {
   incrementQuantity 
 } from "../../redux/cartSlice";
 import { useEffect, useState } from "react";
-import { Timestamp, addDoc, collection } from "firebase/firestore";
-import { fireDB } from "../../firebase/FirebaseConfig";
-import BuyNowModal from "../../components/buyNowModal/BuyNowModal";
-import { Navigate, useNavigate } from "react-router-dom";
+import useCartSync from "../../hooks/cart/useCartSync";
+import { supabase } from "../../supabase/supabaseConfig";
+import BuyNowModal from "../../components/buy-now-modal/BuyNowModal";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { serifTheme } from "../../design-system/themes/serifTheme";
-import { SerifPageWrapper, SerifButton, SerifEmptyState, SerifBadge } from "../../design-system/components";
 import { useNotification } from "../../context/NotificationContext";
+import { SerifPageWrapper, SerifButton, SerifEmptyState, SerifBadge } from "../../design-system/components";
 import { FaShoppingCart, FaTrash } from "react-icons/fa";
+import useLocalStorage from "../../hooks/storage/useLocalStorage";
+import logger from '../../utils/logger';
 
 // Manual coupon system only
 const validCoupons = {
@@ -30,6 +32,7 @@ const CartPage = () => {
   const cartItems = useSelector((state) => state.cart);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { incrementQuantityWithSync, decrementQuantityWithSync, removeFromCartWithSync } = useCartSync();
   const notification = useNotification();
   const [parent] = useAutoAnimate({ duration: 300 });
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
@@ -48,34 +51,92 @@ const CartPage = () => {
     return `${minutes} minute${minutes !== 1 ? 's' : ''}`;
   };
 
-  const user = JSON.parse(localStorage.getItem("users"));
+  const [currentUser, setCurrentUser] = useState(null);
+  const [userLoading, setUserLoading] = useState(true);
+
+  // Secure user verification effect
+  useEffect(() => {
+    const verifyUser = async () => {
+      try {
+        const { data: { user }, error } = await supabase.auth.getUser();
+        
+        if (error || !user) {
+          // Allow cart viewing without login, but require login for checkout
+          setCurrentUser(null);
+          setUserLoading(false);
+          return;
+        }
+
+        // Get user details from database
+        const { data: userRecord, error: userError } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        if (userError || !userRecord) {
+          logger.error('Error fetching user data:', { error: userError.message || userError });
+          setCurrentUser(null);
+        } else {
+          setCurrentUser({
+            id: user.id,
+            email: user.email,
+            ...userRecord
+          });
+        }
+      } catch (error) {
+        logger.error('Error verifying user:', { error: error.message || error });
+        setCurrentUser(null);
+      } finally {
+        setUserLoading(false);
+      }
+    };
+
+    verifyUser();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_OUT' || !session) {
+        setCurrentUser(null);
+      } else if (event === 'SIGNED_IN') {
+        verifyUser();
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const [addressInfo, setAddressInfo] = useState({
     name: "",
     address: "",
+    country: "",
     whatsappNumber: "",
     mobileNumber: "",
-    time: Timestamp.now(),
-    date: new Date().toLocaleString("en-US", { 
-      month: "short", 
-      day: "2-digit", 
-      year: "numeric" 
+    time: new Date().toISOString(),
+    date: new Date().toLocaleString("en-US", {
+      month: "short",
+      day: "2-digit",
+      year: "numeric"
     }),
   });
 
-  // Manual coupon state only
+  // Manual coupon state using localStorage hook
+  const [couponCode, setCouponCode] = useLocalStorage("couponCode", "");
+  const [discount, setDiscount] = useLocalStorage("discount", 0);
+  
   const [couponState, setCouponState] = useState({
-    code: localStorage.getItem("couponCode") || "",
-    discount: parseFloat(localStorage.getItem("discount")) || 0,
-    applied: Boolean(localStorage.getItem("couponCode")),
+    code: couponCode,
+    discount: discount,
+    applied: Boolean(couponCode),
     discountPercentage: 0,
     description: ""
   });
 
+  // Update localStorage when coupon state changes
   useEffect(() => {
-    localStorage.setItem("discount", couponState.discount);
-    localStorage.setItem("couponCode", couponState.code);
-  }, [couponState]);
+    setDiscount(couponState.discount);
+    setCouponCode(couponState.code);
+  }, [couponState.discount, couponState.code, setDiscount, setCouponCode]);
 
   const validateCoupon = (code) => {
     if (!validCoupons[code]) {
@@ -145,7 +206,7 @@ const CartPage = () => {
   const handleRemoveItem = (item) => {
     setIsRemovingItem(item.id);
     setTimeout(() => {
-      dispatch(deleteFromCart(item));
+      removeFromCartWithSync(item);
       setIsRemovingItem(null);
       notification.success("Item removed from cart", {
         icon: <FaTrash className="text-base" />,
@@ -155,6 +216,7 @@ const CartPage = () => {
   };
 
   const finalPrice = cartSubtotal - couponState.discount;
+  const userId = currentUser?.id || null;
 
   // Updated buyNowFunction to navigate to purchase page with state
   const buyNowFunction = async () => {
@@ -163,30 +225,49 @@ const CartPage = () => {
       return;
     }
 
-    const orderInfo = {
-      cartItems,
-      addressInfo,
-      email: user.email,
-      userid: user.uid,
+    if (!userId) {
+      notification.error("Please log in to continue with your purchase.");
+      navigate("/login");
+      return;
+    }
+
+    const now = new Date();
+    const orderPayload = {
+      cart_items: cartItems,
+      address_info: {
+        ...addressInfo,
+        time: now.toISOString(),
+        date: now.toLocaleString("en-US", {
+          month: "short",
+          day: "2-digit",
+          year: "numeric"
+        })
+      },
+      email: currentUser?.email ?? null,
+      user_id: userId,
       status: "placed",
-      totalAmount: finalPrice,
-      discountApplied: couponState.discount,
-      discountPercentage: couponState.discountPercentage,
-      discountType: "Manual Coupon",
-      couponUsed: couponState.code || "None",
-      paymentScreenshot: null, // Will be updated by PurchasePage
-      paymentMethod: null, // Will be updated by PurchasePage
-      time: Timestamp.now(),
-      date: new Date().toLocaleString("en-US", { 
-        month: "short", 
-        day: "2-digit", 
-        year: "numeric" 
-      }),
+      payment_status: "pending",
+      total_amount: Number(finalPrice.toFixed(2)),
+      discount_applied: Number(couponState.discount.toFixed(2)),
+      discount_percentage: couponState.discountPercentage,
+      discount_type: "Manual Coupon",
+      coupon_used: couponState.code || "None",
+      payment_screenshot: null,
+      payment_method: null
     };
 
     try {
-      const orderRef = collection(fireDB, "order");
-      const docRef = await addDoc(orderRef, orderInfo);
+      const { data, error } = await supabase
+        .from("orders")
+        .insert(orderPayload)
+        .select("id")
+        .maybeSingle();
+
+      if (error) {
+        throw error;
+      }
+
+      const orderId = data?.id;
       
       // Navigate to purchase page with the total, discount info, and order ID
       navigate("/purchase", {
@@ -194,15 +275,22 @@ const CartPage = () => {
           totalAmount: finalPrice,
           discountApplied: couponState.discount,
           cartSubtotal: cartSubtotal,
-          orderId: docRef.id // Pass the order ID
+          orderId
         }
       });
       
-      setAddressInfo({ 
-        name: "", 
-        address: "", 
-        whatsappNumber: "", 
-        mobileNumber: "" 
+      setAddressInfo({
+        name: "",
+        address: "",
+        country: "",
+        whatsappNumber: "",
+        mobileNumber: "",
+        time: new Date().toISOString(),
+        date: new Date().toLocaleString("en-US", {
+          month: "short",
+          day: "2-digit",
+          year: "numeric"
+        })
       });
       
       // Clear coupon state
@@ -218,7 +306,7 @@ const CartPage = () => {
       localStorage.removeItem("couponCode");
       
     } catch (error) {
-      console.error(error);
+      logger.error(error);
       notification.error("Failed to place order. Please try again.", {
         icon: <X className="text-base" />,
         duration: 4000
@@ -375,7 +463,7 @@ const CartPage = () => {
                               <SerifButton
                                 variant={quantity <= 1 ? "ghost" : "outline"}
                                 size="small"
-                                onClick={() => dispatch(decrementQuantity(id))}
+                                onClick={() => decrementQuantityWithSync(id)}
                                 disabled={quantity <= 1}
                                 icon={<Minus size={16} />}
                                 className="h-10 w-10 p-0"
@@ -397,7 +485,7 @@ const CartPage = () => {
                               <SerifButton
                                 variant="primary"
                                 size="small"
-                                onClick={() => dispatch(incrementQuantity(id))}
+                                onClick={() => incrementQuantityWithSync(id)}
                                 icon={<Plus size={16} />}
                                 className="h-10 w-10 p-0"
                               />
@@ -416,11 +504,17 @@ const CartPage = () => {
                       })
                     ) : (
                       <SerifEmptyState
-                        icon={<ShoppingCart size={48} />}
+                        icon={ShoppingCart}
                         title="Your cart is empty"
                         description="Add some items to get started"
-                        actionLabel="Start Shopping"
-                        onAction={() => navigate('/allproduct')}
+                        actions={[
+                          {
+                            label: "Start Shopping",
+                            onClick: () => navigate("/allproduct"),
+                            variant: "primary",
+                            size: "large"
+                          }
+                        ]}
                       />
                     )}
                   </AnimatePresence>
@@ -638,7 +732,7 @@ const CartPage = () => {
                     </div>
 
                     <div className="mt-8">
-                      {user ? (
+                      {currentUser ? (
                         <BuyNowModal
                           addressInfo={addressInfo}
                           setAddressInfo={setAddressInfo}
@@ -647,7 +741,21 @@ const CartPage = () => {
                           itemCount={cartItemTotal}
                         />
                       ) : (
-                        <Navigate to="/login" />
+                        <div className="text-center p-6 bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl border border-amber-200">
+                          <div className="mb-4">
+                            <ShoppingCart className="w-12 h-12 text-amber-600 mx-auto mb-3" />
+                            <h3 className="text-lg font-semibold text-gray-800 mb-2">Ready to Checkout?</h3>
+                            <p className="text-gray-600 text-sm">Please log in to complete your purchase</p>
+                          </div>
+                          <SerifButton
+                            onClick={() => navigate('/login')}
+                            variant="primary"
+                            size="large"
+                            className="w-full"
+                          >
+                            Login to Continue
+                          </SerifButton>
+                        </div>
                       )}
                     </div>
                   </div>

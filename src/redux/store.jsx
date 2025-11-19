@@ -1,17 +1,18 @@
 import { configureStore } from '@reduxjs/toolkit' 
 import cartSlice from './cartSlice'
+import logger from '../utils/logger'
 
 // Middleware to persist cart to localStorage
 const localStorageMiddleware = (store) => (next) => (action) => {
   const result = next(action);
   
-  // Only persist if it's a cart-related action
+  // Persist cart to localStorage for all cart actions
   if (action.type?.startsWith('cart/')) {
     const state = store.getState();
     try {
       localStorage.setItem('cart', JSON.stringify(state.cart));
     } catch (error) {
-      console.error('Error saving cart to localStorage:', error);
+      logger.error('Error saving cart to localStorage', { error: error.message });
     }
   }
   

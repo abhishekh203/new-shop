@@ -1,3 +1,4 @@
+import logger from './logger';
 // Security utilities for data protection and validation
 
 // Input sanitization
@@ -65,7 +66,7 @@ export class SecureSession {
         try {
             localStorage.setItem(key, JSON.stringify(item));
         } catch (error) {
-            console.error('Failed to set secure item:', error);
+            logger.error('Failed to set secure item:', { error: error.message || error });
         }
     }
     
@@ -86,13 +87,13 @@ export class SecureSession {
             // Verify integrity
             if (this.generateChecksum(item.value) !== item.checksum) {
                 localStorage.removeItem(key);
-                console.warn('Data integrity check failed for:', key);
+                logger.warn('Data integrity check failed for:', { context: key });
                 return null;
             }
             
             return item.value;
         } catch (error) {
-            console.error('Failed to get secure item:', error);
+            logger.error('Failed to get secure item:', { error: error.message || error });
             localStorage.removeItem(key);
             return null;
         }
@@ -171,12 +172,12 @@ export const secureApiCall = async (url, options = {}) => {
         
         // Check for security headers in response
         if (!response.headers.get('X-Content-Type-Options')) {
-            console.warn('Missing X-Content-Type-Options header');
+            logger.warn('Missing X-Content-Type-Options header');
         }
         
         return response;
     } catch (error) {
-        console.error('Secure API call failed:', error);
+        logger.error('Secure API call failed:', { error: error.message || error });
         throw error;
     }
 };
@@ -243,7 +244,7 @@ export const securityChecks = {
             .map(([key]) => key);
             
         if (failed.length > 0) {
-            console.warn('Missing browser security features:', failed);
+            logger.warn('Missing browser security features:', { context: failed });
         }
         
         return failed.length === 0;

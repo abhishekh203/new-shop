@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import path from 'path'
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -16,7 +17,7 @@ export default defineConfig({
           ui: ['@mui/material', '@mui/icons-material'],
           animations: ['framer-motion'],
           icons: ['react-icons'],
-          firebase: ['firebase/app', 'firebase/auth', 'firebase/firestore'],
+          supabase: ['@supabase/supabase-js'],
           utils: ['react-hot-toast', 'react-redux', '@reduxjs/toolkit']
         }
       }
@@ -35,6 +36,14 @@ export default defineConfig({
       compress: {
         drop_console: true,
         drop_debugger: true,
+        // Remove console.log, console.info, console.debug, console.trace
+        pure_funcs: ['console.log', 'console.info', 'console.debug', 'console.trace'],
+        // Keep console.warn and console.error for critical issues
+        passes: 2,
+      },
+      mangle: {
+        // Preserve function names for better error reporting
+        keep_fnames: /^(error|warn)$/,
       },
     },
   },
@@ -50,9 +59,7 @@ export default defineConfig({
       'react-icons',
       '@mui/material',
       '@mui/icons-material',
-      'firebase/app',
-      'firebase/auth',
-      'firebase/firestore'
+      '@supabase/supabase-js'
     ]
   },
   // Server configuration for development
@@ -76,11 +83,20 @@ export default defineConfig({
   // Define aliases for better imports
   resolve: {
     alias: {
-      '@': '/src',
-      '@components': '/src/components',
-      '@pages': '/src/pages',
-      '@utils': '/src/utils',
-      '@hooks': '/src/hooks'
+      '@': path.resolve(__dirname, './src'),
+      '@components': path.resolve(__dirname, './src/components'),
+      '@pages': path.resolve(__dirname, './src/pages'),
+      '@utils': path.resolve(__dirname, './src/utils'),
+      '@hooks': path.resolve(__dirname, './src/hooks'),
+      '@context': path.resolve(__dirname, './src/context'),
+      '@design-system': path.resolve(__dirname, './src/design-system'),
+      '@assets': path.resolve(__dirname, './src/assets'),
+      '@config': path.resolve(__dirname, './src/config'),
+      '@redux': path.resolve(__dirname, './src/redux'),
+      '@routes': path.resolve(__dirname, './src/routes'),
+      '@providers': path.resolve(__dirname, './src/providers'),
+      '@supabase-config': path.resolve(__dirname, './src/supabase'),
+      '@protected-route': path.resolve(__dirname, './src/protectedRoute')
     }
   }
 })

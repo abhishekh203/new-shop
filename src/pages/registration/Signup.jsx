@@ -13,10 +13,13 @@ import {
   FaTimes,
   FaSpinner
 } from 'react-icons/fa';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from "../../hooks/auth/useAuth";
 import { serifTheme } from '../../design-system/themes/serifTheme';
 import { SerifButton, SerifPageWrapper } from '../../design-system/components';
 import { useNotification } from '../../context/NotificationContext';
+import useFormValidation from "../../hooks/forms/useFormValidation";
+import useResponsiveDesign from "../../hooks/ui/useResponsiveDesign";
+import logger from '../../utils/logger';
 
 // ============================================================================
 // CONFIGURATION & CONSTANTS
@@ -134,47 +137,6 @@ const getPasswordStrength = (password) => {
 // ============================================================================
 // CUSTOM HOOKS
 // ============================================================================
-const useFormValidation = (formData) => {
-  return useMemo(() => {
-    // Show validation errors only when user has started typing in each field
-    const errors = {
-      name: validateField('name', formData.name, '', formData.name.length > 0),
-      email: validateField('email', formData.email, '', formData.email.length > 0),
-      password: validateField('password', formData.password, '', formData.password.length > 0),
-      confirmPassword: validateField('confirmPassword', formData.confirmPassword, formData.password, formData.confirmPassword.length > 0),
-      terms: validateField('terms', formData.terms, '', false) // Only show when form is submitted
-    };
-
-    // For form validity, always check all fields (regardless of typing state)
-    const actualErrors = {
-      name: validateField('name', formData.name, '', true),
-      email: validateField('email', formData.email, '', true),
-      password: validateField('password', formData.password, '', true),
-      confirmPassword: validateField('confirmPassword', formData.confirmPassword, formData.password, true),
-      terms: validateField('terms', formData.terms, '', true)
-    };
-
-    const isValid = Object.values(actualErrors).every(error => !error) && 
-                   Object.values(formData).every(value => 
-                     typeof value === 'boolean' ? value : Boolean(value?.toString().trim())
-                   );
-
-    return { errors, isValid };
-  }, [formData]);
-};
-
-const useResponsiveDesign = () => {
-  const [isMobile, setIsMobile] = useState(false);
-  
-  useEffect(() => {
-    const checkDevice = () => setIsMobile(window.innerWidth < 768);
-    checkDevice();
-    window.addEventListener('resize', checkDevice);
-    return () => window.removeEventListener('resize', checkDevice);
-  }, []);
-  
-  return isMobile;
-};
 
 // ============================================================================
 // COMPONENTS
@@ -360,26 +322,48 @@ const Signup = () => {
     e.preventDefault();
     if (!isValid || loading) return;
     
-    const result = await signup({
-      name: formData.name.trim(),
-      email: formData.email.toLowerCase().trim(),
-      password: formData.password,
-      role: 'user'
-    });
-    
-    if (result.success) {
-      notification.success('Account created successfully!');
-      setTimeout(() => navigate('/login'), 1500);
+    try {
+      const result = await signup({
+        name: formData.name.trim(),
+        email: formData.email.toLowerCase().trim(),
+        password: formData.password,
+        role: 'user'
+      });
+      
+      if (result.success) {
+        if (result.requiresVerification) {
+          // Show email verification message
+          notification.success('Account created! Please check your email and click the verification link.');
+          // Don't redirect immediately - let user know they need to verify email
+        } else {
+          // Account created and user is logged in
+          notification.success('Account created successfully!');
+          setTimeout(() => navigate('/login'), 1500);
+        }
+      } else {
+        // Handle signup failure
+        notification.error(result.message || 'Failed to create account. Please try again.');
+      }
+    } catch (error) {
+      logger.error('Signup error:', { error: error.message || error });
+      notification.error('An unexpected error occurred. Please try again.');
     }
   }, [formData, isValid, loading, signup, navigate, notification]);
   
   const handleGoogleSignup = useCallback(async () => {
     if (loading) return;
     
-    const result = await signupWithGoogle();
-    if (result.success) {
-      notification.success('Account created successfully!');
-      setTimeout(() => navigate(result.redirectTo || '/'), 1500);
+    try {
+      const result = await signupWithGoogle();
+      if (result.success) {
+        notification.success('Account created successfully!');
+        setTimeout(() => navigate(result.redirectTo || '/'), 1500);
+      } else {
+        notification.error(result.message || 'Failed to sign up with Google. Please try again.');
+      }
+    } catch (error) {
+      logger.error('Google signup error:', { error: error.message || error });
+      notification.error('An unexpected error occurred with Google signup. Please try again.');
     }
   }, [loading, signupWithGoogle, navigate, notification]);
   

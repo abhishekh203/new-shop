@@ -1,0 +1,9 @@
+export { default as NetflixNepal } from './NetflixNepal';
+export { default as SpotifyNepal } from './SpotifyNepal';
+export { default as PrimeVideoNepal } from './PrimeVideoNepal';
+export { default as YouTubePremiumNepal } from './YouTubePremiumNepal';
+export { default as Zee5Nepal } from './Zee5Nepal';
+export { default as JioCinemaNepal } from './JiocinemaNepal';
+export { default as DisneyPlusHotstarNepal } from './DisneyPlusHotstarNepal';
+export { default as UlluNepal } from './UlluNepal';
+export { default as AltBalajiNepal } from './AltBalajiNepal';

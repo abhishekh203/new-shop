@@ -67,7 +67,8 @@ export const extractIdFromSlug = (slugWithId) => {
 export const isProductId = (str) => {
     if (!str) return false;
     
-    // Firebase document IDs are typically 20+ characters of alphanumeric
-    // and don't contain hyphens in the middle
-    return str.length >= 15 && !str.includes('-');
+    // Supabase UUIDs are typically 36 characters with hyphens
+    // Supabase uses UUID format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(str);
 };

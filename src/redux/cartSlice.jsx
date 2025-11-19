@@ -1,4 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit'
+import logger from '../utils/logger'
 
 // Safe localStorage getter with error handling
 const getInitialState = () => {
@@ -10,7 +11,7 @@ const getInitialState = () => {
         }
         return [];
     } catch (error) {
-        console.error('Error reading cart from localStorage:', error);
+        logger.error('Error reading cart from localStorage', { error: error.message });
         // Clear corrupted localStorage data
         localStorage.removeItem('cart');
         return [];
@@ -24,29 +25,27 @@ export const cartSlice = createSlice({
     initialState,
     reducers: {
         addToCart(state, action) {
-            state.push(action.payload)
+            const existingItem = state.find(item => item.id === action.payload.id);
+            if (existingItem) {
+                existingItem.quantity += action.payload.quantity || 1;
+            } else {
+                state.push(action.payload);
+            }
         },
         deleteFromCart(state, action) {
-            return state.filter(item => item.id != action.payload.id);
+            return state.filter(item => item.id !== action.payload.id);
         },
         incrementQuantity: (state, action) => {
-            state = state.map(item => {
-                if (item.id === action.payload) {
-                    item.quantity++;
-                }
-                return item;
-            });
+            const item = state.find(item => item.id === action.payload);
+            if (item) {
+                item.quantity++;
+            }
         },
         decrementQuantity: (state, action) => {
-            state = state.map(item => {
-                if (item.quantity !== 1) {
-                    if (item.id === action.payload) {
-                        item.quantity--;
-                    }
-                }
-                return item;
-
-            })
+            const item = state.find(item => item.id === action.payload);
+            if (item && item.quantity > 1) {
+                item.quantity--;
+            }
         },
         clearCart: (state) => {
             return [];
@@ -58,10 +57,17 @@ export const cartSlice = createSlice({
                 state[itemIndex] = { ...state[itemIndex], ...updates };
             }
         }
-    },
+    }
 })
 
 // Action creators are generated for each case reducer function
-export const { addToCart, deleteFromCart, incrementQuantity, decrementQuantity, clearCart, updateCartItem } = cartSlice.actions
+export const { 
+    addToCart, 
+    deleteFromCart, 
+    incrementQuantity, 
+    decrementQuantity, 
+    clearCart, 
+    updateCartItem
+} = cartSlice.actions
 
 export default cartSlice.reducer

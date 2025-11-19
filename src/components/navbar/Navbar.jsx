@@ -2,11 +2,13 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 // Assuming SearchBar is available as a separate component in your project.
 // If it is not, you would need to implement a placeholder component or remove its usage.
-import SearchBar from "../searchBar/SearchBar";
+import SearchBar from "../search-bar/SearchBar";
+import { serifTheme } from "../../design-system/themes";
 
 // Assuming react-redux is installed and configured in your project.
 // If not, you might need to manage cart state locally or set up Redux.
 import { useSelector } from "react-redux";
+import useLocalStorage from "../../hooks/storage/useLocalStorage";
 
 // Assuming react-icons/fa is installed in your project.
 // If not, you might need to use inline SVG or unicode characters for icons.
@@ -44,20 +46,16 @@ const NavLink = ({ to, icon, text, delay = 0, onClick = () => {} }) => (
     </motion.div>
 );
 
-// Enhanced Mobile NavLink with better touch targets
+// Enhanced Mobile NavLink - Simple Serif Style
 const MobileNavLink = ({ to, icon, text, onClick }) => (
     <Link
         to={to}
-        onClick={onClick} // Close menu on click
-        className="group flex items-center justify-between w-full px-6 py-5 text-left text-gray-200 hover:bg-gradient-to-r hover:from-gray-800/90 hover:to-gray-700/70 rounded-2xl transition-all duration-300 focus:outline-none focus-visible:bg-gray-800 focus-visible:ring-2 focus-visible:ring-teal-500 border border-transparent hover:border-teal-400/20 backdrop-blur-sm active:scale-95"
+        onClick={onClick}
+        className={`flex items-center w-full px-6 py-4 text-left ${serifTheme.colors.text.secondary} hover:text-gray-800 hover:bg-amber-50 focus:outline-none border-b ${serifTheme.colors.border.secondary} last:border-b-0`}
+        style={{ fontFamily: serifTheme.fontFamily.serif }}
     >
-        <div className="flex items-center">
-            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-teal-400/10 group-hover:bg-teal-400/20 transition-colors duration-300 mr-4 shadow-sm">
-                <span className="text-teal-400 text-xl group-hover:scale-110 transition-transform duration-200">{icon}</span>
-            </div>
-            <span className="font-medium text-base group-hover:text-white transition-colors duration-200">{text}</span>
-        </div>
-        <FaChevronRight className="text-gray-500 text-sm group-hover:text-teal-400 group-hover:translate-x-1 transition-all duration-200" />
+        <span className="mr-4 text-lg">{icon}</span>
+        <span className="text-base font-medium">{text}</span>
     </Link>
 );
 
@@ -107,8 +105,7 @@ const AccountDropdown = ({ user, logout, isOpen, onToggle, onClose }) => {
     const navigate = useNavigate();
     
     const handleDashboardClick = () => {
-        const dashboardPath = user?.role === 'admin' ? '/admin-dashboard' : '/user-dashboard';
-        navigate(dashboardPath);
+        navigate('/user-dashboard');
         onClose();
     };
 
@@ -118,18 +115,18 @@ const AccountDropdown = ({ user, logout, isOpen, onToggle, onClose }) => {
     };
 
     return (
-        <div className="relative">
+        <div className="relative" style={{ fontFamily: serifTheme.fontFamily.serif }}>
             {/* Dropdown Trigger */}
             <motion.button
                 onClick={onToggle}
                 whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.95 }}
-                className="group relative flex items-center px-4 py-2 text-gray-700 hover:text-gray-900 transition-all duration-300 text-sm font-medium focus:outline-none focus-visible:text-gray-900 rounded-xl hover:bg-white/20"
+                className={`group relative flex items-center px-4 py-2 ${serifTheme.colors.text.secondary} hover:text-gray-800 ${serifTheme.transitions.default} text-sm font-medium focus:outline-none focus-visible:text-gray-800 ${serifTheme.radius.button} hover:bg-orange-50`}
                 initial={{ opacity: 0, y: -15 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4, type: 'spring', stiffness: 200, damping: 15 }}
             >
-                <FaUser className="mr-2 text-base group-hover:scale-110 transition-transform duration-200" />
+                <FaUser className={`mr-2 text-base group-hover:scale-110 ${serifTheme.transitions.default}`} />
                 <span className="relative font-medium">
                     My Account
                 </span>
@@ -150,33 +147,27 @@ const AccountDropdown = ({ user, logout, isOpen, onToggle, onClose }) => {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -10, scale: 0.95 }}
                         transition={{ duration: 0.2, ease: "easeOut" }}
-                        className="absolute right-0 mt-2 w-48 bg-white/90 backdrop-blur-xl border border-gray-200 rounded-xl shadow-2xl z-50 overflow-hidden"
+                        className={`absolute right-0 mt-2 w-48 ${serifTheme.colors.background.overlay} backdrop-blur-xl border ${serifTheme.colors.border.primary} ${serifTheme.radius.card} ${serifTheme.colors.shadow.cardHover} z-50 overflow-hidden`}
                     >
                         <div className="py-2">
                             {/* Dashboard Link */}
                             <motion.button
                                 onClick={handleDashboardClick}
-                                whileHover={{ backgroundColor: "rgba(59, 130, 246, 0.1)" }}
-                                className="w-full text-left px-4 py-3 text-gray-700 hover:text-blue-600 transition-all duration-200 flex items-center text-sm font-medium"
+                                whileHover={{ backgroundColor: "rgba(251, 191, 36, 0.1)" }}
+                                className={`w-full text-left px-4 py-3 ${serifTheme.colors.text.secondary} hover:text-amber-700 ${serifTheme.transitions.default} flex items-center text-sm font-medium`}
                             >
-                                {user?.role === 'admin' ? (
-                                    <FaUserShield className="mr-3 text-base" />
-                                ) : (
-                                    <FaUser className="mr-3 text-base" />
-                                )}
-                                <span>
-                                    {user?.role === 'admin' ? 'Admin Dashboard' : 'Dashboard'}
-                                </span>
+                                <FaUser className="mr-3 text-base" />
+                                <span>Dashboard</span>
                             </motion.button>
 
                             {/* Divider */}
-                            <div className="h-px bg-gray-200 mx-2 my-1"></div>
+                            <div className={`h-px ${serifTheme.colors.border.secondary} mx-2 my-1`}></div>
 
                             {/* Logout Button */}
                             <motion.button
                                 onClick={handleLogoutClick}
                                 whileHover={{ backgroundColor: "rgba(239, 68, 68, 0.1)" }}
-                                className="w-full text-left px-4 py-3 text-gray-700 hover:text-red-600 transition-all duration-200 flex items-center text-sm font-medium"
+                                className={`w-full text-left px-4 py-3 ${serifTheme.colors.text.secondary} hover:text-red-600 ${serifTheme.transitions.default} flex items-center text-sm font-medium`}
                             >
                                 <FaSignInAlt className="mr-3 text-base rotate-180" />
                                 <span>Logout</span>
@@ -347,8 +338,6 @@ const BottomNavigationBar = ({ user, cartCount }) => {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('home');
     const [isPressed, setIsPressed] = useState(null);
-    const [isHidden, setIsHidden] = useState(false);
-    const [showCloseButton, setShowCloseButton] = useState(false);
     
     // Update active tab based on current location
     useEffect(() => {
@@ -360,36 +349,20 @@ const BottomNavigationBar = ({ user, cartCount }) => {
         else if (path.includes('dashboard') || path === '/login') setActiveTab('account');
     }, []);
 
-    // Show close button after a delay when navigation appears
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            setShowCloseButton(true);
-        }, 3000); // Show close button after 3 seconds
-
-        return () => clearTimeout(timer);
-    }, []);
-
-    // Auto-show navigation if user navigates to cart page
-    useEffect(() => {
-        if (activeTab === 'cart') {
-            setIsHidden(false);
-        }
-    }, [activeTab]);
-
     const navItems = [
         { 
             id: 'home', 
             icon: <FaHome />, 
             label: 'Home', 
             path: '/',
-            color: 'from-blue-500 to-blue-600'
+            color: 'from-amber-600 to-orange-600'
         },
         { 
             id: 'products', 
             icon: <FaBoxes />, 
             label: 'Products', 
             path: '/allproduct',
-            color: 'from-purple-500 to-purple-600'
+            color: 'from-amber-600 to-orange-600'
         },
         { 
             id: 'cart', 
@@ -397,7 +370,7 @@ const BottomNavigationBar = ({ user, cartCount }) => {
             label: 'Cart', 
             path: '/cart', 
             badge: cartCount,
-            color: 'from-green-500 to-green-600',
+            color: 'from-amber-600 to-orange-600',
             isSpecial: true // Mark cart as special for enhanced styling
         },
         { 
@@ -405,14 +378,14 @@ const BottomNavigationBar = ({ user, cartCount }) => {
             icon: <FaEnvelope />, 
             label: 'Contact', 
             path: '/ContactUs',
-            color: 'from-orange-500 to-orange-600'
+            color: 'from-amber-600 to-orange-600'
         },
         { 
             id: 'account', 
-            icon: user ? (user.role === 'admin' ? <FaUserShield /> : <FaUser />) : <FaUser />, 
+            icon: user ? <FaUser /> : <FaUser />, 
             label: user ? 'Account' : 'Login', 
-            path: user ? (user.role === 'admin' ? '/admin-dashboard' : '/user-dashboard') : '/login',
-            color: 'from-indigo-500 to-indigo-600'
+            path: user ? '/user-dashboard' : '/login',
+            color: 'from-amber-600 to-orange-600'
         },
     ];
 
@@ -434,52 +407,6 @@ const BottomNavigationBar = ({ user, cartCount }) => {
         setIsPressed(null);
     };
 
-    const handleHideNavigation = () => {
-        setIsHidden(true);
-        // Add haptic feedback
-        if (navigator.vibrate) {
-            navigator.vibrate(50);
-        }
-    };
-
-    const handleShowNavigation = () => {
-        setIsHidden(false);
-        setShowCloseButton(true);
-    };
-
-    // Don't render if hidden
-    if (isHidden) {
-        return (
-            <motion.div
-                initial={{ scale: 0, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0, opacity: 0 }}
-                className="fixed bottom-4 right-4 z-50 md:hidden"
-            >
-                <motion.button
-                    onClick={handleShowNavigation}
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    className="w-12 h-12 bg-gradient-to-r from-teal-500 to-blue-600 rounded-full shadow-2xl flex items-center justify-center text-white focus:outline-none"
-                    style={{
-                        boxShadow: "0 8px 32px rgba(20, 184, 166, 0.4)"
-                    }}
-                >
-                    <FaBars className="text-lg" />
-                </motion.button>
-                {cartCount > 0 && (
-                    <motion.div
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full min-w-[20px] h-5 flex items-center justify-center shadow-lg border-2 border-white"
-                    >
-                        {cartCount > 99 ? '99+' : cartCount}
-                    </motion.div>
-                )}
-            </motion.div>
-        );
-    }
-
     return (
         <motion.div
             initial={{ y: 100, opacity: 0, scale: 0.95 }}
@@ -496,28 +423,13 @@ const BottomNavigationBar = ({ user, cartCount }) => {
                 duration: 0.4
             }}
             className="fixed bottom-0 left-0 right-0 z-40 md:hidden"
-            style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+            style={{ 
+                paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+                fontFamily: serifTheme.fontFamily.serif
+            }}
         >
-            {/* Enhanced background with gradient and blur */}
-            <div className="absolute inset-0 bg-gradient-to-t from-white via-white/98 to-white/95 backdrop-blur-2xl border-t border-gray-200/80 shadow-2xl" />
-            
-            {/* Close button */}
-            <AnimatePresence>
-                {showCloseButton && (
-                    <motion.button
-                        initial={{ scale: 0, opacity: 0, rotate: -180 }}
-                        animate={{ scale: 1, opacity: 1, rotate: 0 }}
-                        exit={{ scale: 0, opacity: 0, rotate: 180 }}
-                        whileHover={{ scale: 1.1, rotate: 90 }}
-                        whileTap={{ scale: 0.9 }}
-                        onClick={handleHideNavigation}
-                        className="absolute top-2 right-2 w-6 h-6 bg-gray-400/80 hover:bg-red-500/80 rounded-full flex items-center justify-center text-white text-xs transition-colors duration-200 z-10 shadow-lg"
-                        style={{ backdropFilter: 'blur(10px)' }}
-                    >
-                        <FaTimes />
-                    </motion.button>
-                )}
-            </AnimatePresence>
+            {/* Enhanced background with serif theme */}
+            <div className={`absolute inset-0 ${serifTheme.gradients.card} backdrop-blur-xl border-t ${serifTheme.colors.border.primary} ${serifTheme.colors.shadow.card}`} />
             
             {/* Navigation items container */}
             <div className="relative flex items-center justify-around px-2 py-3">
@@ -545,20 +457,16 @@ const BottomNavigationBar = ({ user, cartCount }) => {
                                 stiffness: 500,
                                 damping: 25
                             }}
-                            className={`relative flex flex-col items-center justify-center min-w-[60px] h-16 rounded-2xl transition-all duration-300 ${
+                            className={`relative flex flex-col items-center justify-center min-w-[60px] h-16 ${serifTheme.radius.card} transition-all duration-300 ${
                                 isActive 
                                     ? `bg-gradient-to-br ${item.color} text-white shadow-lg transform scale-105` 
                                     : isPressedItem
-                                    ? 'bg-gray-200 text-gray-700 scale-95'
-                                    : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100/80'
-                            } ${isCartWithItems ? 'ring-2 ring-green-400/50 ring-offset-2' : ''}`}
+                                    ? `${serifTheme.colors.background.secondary} ${serifTheme.colors.text.secondary} scale-95`
+                                    : `${serifTheme.colors.text.tertiary} hover:${serifTheme.colors.text.primary} hover:${serifTheme.colors.background.secondary}`
+                            } ${isCartWithItems ? `ring-2 ${serifTheme.colors.border.accent} ring-offset-2` : ''}`}
                             style={{
                                 boxShadow: isActive 
-                                    ? `0 8px 25px -8px ${item.color.includes('green') ? 'rgba(34, 197, 94, 0.4)' : 
-                                         item.color.includes('blue') ? 'rgba(59, 130, 246, 0.4)' :
-                                         item.color.includes('purple') ? 'rgba(147, 51, 234, 0.4)' :
-                                         item.color.includes('orange') ? 'rgba(249, 115, 22, 0.4)' :
-                                         'rgba(99, 102, 241, 0.4)'}` 
+                                    ? `0 8px 25px -8px rgba(217, 119, 6, 0.4)` 
                                     : 'none'
                             }}
                         >
@@ -610,7 +518,7 @@ const BottomNavigationBar = ({ user, cartCount }) => {
                             {/* Label with better typography */}
                             <motion.span 
                                 className={`text-xs font-semibold leading-tight ${
-                                    isActive ? 'text-white' : 'text-gray-600'
+                                    isActive ? 'text-white' : serifTheme.colors.text.tertiary
                                 } transition-colors duration-200`}
                                 animate={{ 
                                     scale: isActive ? 1.05 : 1,
@@ -672,9 +580,8 @@ const BottomNavigationBar = ({ user, cartCount }) => {
 // --- Main Navbar Component ---
 
 const Navbar = () => {
-    // Retrieve user data from localStorage
-    const userString = localStorage.getItem("users");
-    const user = userString ? JSON.parse(userString) : null;
+    // Retrieve user data from localStorage using hook
+    const [user, setUser, removeUser] = useLocalStorage("users", null);
     const navigate = useNavigate();
     // Get cart items from Redux store
     const cartItems = useSelector((state) => state.cart);
@@ -763,7 +670,7 @@ const Navbar = () => {
 
     // Logout function: clears user from localStorage and navigates to login
     const logout = () => {
-        localStorage.removeItem("users");
+        removeUser();
         navigate("/login");
     };
 
@@ -901,12 +808,11 @@ const Navbar = () => {
     // Determine account link props based on user role
     const getAccountLinkProps = () => {
         if (user) {
-            const isAdmin = user.role === 'admin';
             return {
-                to: isAdmin ? '/admin-dashboard' : '/user-dashboard',
-                icon: isAdmin ? <FaUserShield className="text-xl" /> : <FaUser className="text-xl" />,
+                to: '/user-dashboard',
+                icon: <FaUser className="text-xl" />,
                 label: "Account Dashboard",
-                text: isAdmin ? "Admin" : "My Account"
+                text: "My Account"
             };
         } else {
             return {
@@ -976,7 +882,8 @@ const Navbar = () => {
                                 </>
                             )}
                             
-                            <CartLink count={cartItems.length} isMobile={false} delay={0.6} />
+                            {/* Cart link only for authenticated users on desktop */}
+                            {user && <CartLink count={cartItems.length} isMobile={false} delay={0.6} />}
                             
                             {/* Account dropdown after cart for authenticated users */}
                             {user && (
@@ -1041,7 +948,8 @@ const Navbar = () => {
                                 </>
                             )}
                             
-                            <CartLink count={cartItems.length} isMobile={false} delay={0.6} />
+                            {/* Cart link only for authenticated users on desktop */}
+                            {user && <CartLink count={cartItems.length} isMobile={false} delay={0.6} />}
                             
                             {/* Account dropdown after cart for authenticated users */}
                             {user && (
@@ -1067,7 +975,8 @@ const Navbar = () => {
                                 onClick={toggleMenu}
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
-                                className="relative flex items-center justify-center w-12 h-12 sm:w-13 sm:h-13 text-gray-300 hover:text-teal-400 focus:outline-none focus-visible:bg-gray-700 rounded-xl bg-gray-700/80 hover:bg-gray-600/90 border border-gray-600/90 hover:border-teal-500/70 transition-all duration-300 z-[60] shadow-lg active:scale-90"
+                                className={`relative flex items-center justify-center w-12 h-12 sm:w-13 sm:h-13 ${serifTheme.colors.text.accent} hover:text-amber-800 focus:outline-none focus-visible:bg-orange-50 ${serifTheme.radius.button} ${serifTheme.colors.background.card} hover:bg-white border ${serifTheme.colors.border.primary} hover:border-amber-300/80 ${serifTheme.transitions.default} z-[60] ${serifTheme.colors.shadow.button} active:scale-90`}
+                                style={{ fontFamily: serifTheme.fontFamily.serif }}
                                 aria-label="Toggle menu"
                                 aria-controls="mobile-menu-drawer"
                                 aria-expanded={isMenuOpen}
@@ -1080,7 +989,7 @@ const Navbar = () => {
                                 </motion.div>
                                 {/* Menu button glow effect */}
                                 <motion.div
-                                    className="absolute inset-0 rounded-xl bg-teal-400/20 opacity-0"
+                                    className={`absolute inset-0 ${serifTheme.radius.button} bg-amber-400/20 opacity-0`}
                                     animate={isMenuOpen ? { opacity: 1, scale: 1.1 } : { opacity: 0, scale: 1 }}
                                     transition={{ duration: 0.3 }}
                                 />
@@ -1117,7 +1026,8 @@ const Navbar = () => {
                                 <Link
                                     to="/allproduct"
                                     onClick={closeMobileElements}
-                                    className="flex items-center justify-center w-12 h-12 sm:w-13 sm:h-13 text-gray-300 hover:text-teal-400 focus:outline-none focus-visible:bg-gray-700 rounded-xl bg-gray-700/80 hover:bg-gray-600/90 border border-gray-600/90 hover:border-teal-500/70 transition-all duration-300 shadow-lg active:scale-90"
+                                    className={`flex items-center justify-center w-12 h-12 sm:w-13 sm:h-13 ${serifTheme.colors.text.accent} hover:text-amber-800 focus:outline-none focus-visible:bg-orange-50 ${serifTheme.radius.button} ${serifTheme.colors.background.card} hover:bg-white border ${serifTheme.colors.border.primary} hover:border-amber-300/80 ${serifTheme.transitions.default} ${serifTheme.colors.shadow.button} active:scale-90`}
+                                    style={{ fontFamily: serifTheme.fontFamily.serif }}
                                     aria-label="Search products"
                                 >
                                     <FaSearch className="text-lg sm:text-xl" />
@@ -1128,7 +1038,8 @@ const Navbar = () => {
                                 <Link
                                     to={accountLinkProps.to}
                                     onClick={closeMobileElements}
-                                    className="flex items-center justify-center w-12 h-12 sm:w-13 sm:h-13 text-gray-300 hover:text-teal-400 focus:outline-none focus-visible:bg-gray-700 rounded-xl bg-gray-700/80 hover:bg-gray-600/90 border border-gray-600/90 hover:border-teal-500/70 transition-all duration-300 shadow-lg active:scale-90"
+                                    className={`flex items-center justify-center w-12 h-12 sm:w-13 sm:h-13 ${serifTheme.colors.text.accent} hover:text-amber-800 focus:outline-none focus-visible:bg-orange-50 ${serifTheme.radius.button} ${serifTheme.colors.background.card} hover:bg-white border ${serifTheme.colors.border.primary} hover:border-amber-300/80 ${serifTheme.transitions.default} ${serifTheme.colors.shadow.button} active:scale-90`}
+                                    style={{ fontFamily: serifTheme.fontFamily.serif }}
                                     aria-label={accountLinkProps.label}
                                 >
                                     {React.cloneElement(accountLinkProps.icon, { className: "text-lg sm:text-xl" })}
@@ -1141,244 +1052,118 @@ const Navbar = () => {
                         </div>
                     </div>
                     </div>
-                    {/* Enhanced Mobile Menu Drawer */}
-                    <AnimatePresence>
+                    {/* Simple Mobile Menu Drawer - No Animations */}
                     {isMenuOpen && (
                         <>
-                            {/* Enhanced Backdrop Overlay */}
-                            <motion.div
-                                variants={backdropVariants}
-                                initial="closed"
-                                animate="open"
-                                exit="closed"
+                            {/* Simple Backdrop Overlay */}
+                            <div
                                 onClick={toggleMenu}
-                                className="fixed inset-0 bg-black/60 backdrop-blur-md z-40 md:hidden"
+                                className="fixed inset-0 bg-black/40 z-40 md:hidden"
                             />
 
-                            {/* Enhanced Menu Drawer */}
-                            <motion.div
+                            {/* Simple Menu Drawer */}
+                            <div
                                 id="mobile-menu-drawer"
                                 ref={menuRef}
-                                variants={menuVariants}
-                                initial="closed"
-                                animate="open"
-                                exit="closed"
-                                className="fixed top-32 sm:top-36 left-4 right-4 max-h-[75vh] bg-gray-900/95 backdrop-blur-xl border border-teal-400/30 shadow-2xl rounded-3xl z-50 flex flex-col md:hidden overflow-hidden"
+                                className={`fixed top-40 sm:top-44 left-4 right-4 max-h-[75vh] bg-white border ${serifTheme.colors.border.primary} ${serifTheme.colors.shadow.card} ${serifTheme.radius.card} z-50 flex flex-col md:hidden overflow-hidden`}
                                 style={{
-                                    boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(20, 184, 166, 0.1)"
+                                    fontFamily: serifTheme.fontFamily.serif,
+                                    boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)"
                                 }}
                             >
-                                {/* Enhanced Grab Handle */}
+                                {/* Simple Grab Handle */}
                                 <div className="p-3 flex-shrink-0">
-                                    <motion.div 
-                                        className="w-12 h-2 bg-gray-600 rounded-full mx-auto"
-                                        initial={{ scaleX: 0.5, opacity: 0.5 }}
-                                        animate={{ scaleX: 1, opacity: 1 }}
-                                        transition={{ delay: 0.2, duration: 0.3 }}
-                                    />
+                                    <div className={`w-12 h-2 bg-gray-400 ${serifTheme.radius.badge} mx-auto opacity-50`} />
                                 </div>
 
-                                {/* Enhanced User Profile Section (if user is logged in) */}
+                                {/* Simple User Profile Section (if user is logged in) */}
                                 {user && (
-                                    <motion.div 
-                                        variants={mobileNavMenuItemVariants} 
-                                        className="px-6 pt-3 pb-5 border-b border-gray-700/50 bg-gradient-to-r from-gray-800/30 to-gray-800/20 flex-shrink-0 mx-4 rounded-2xl mb-2"
-                                    >
+                                    <div className={`px-6 pt-4 pb-4 border-b ${serifTheme.colors.border.secondary} flex-shrink-0`}>
                                         <div className="flex items-center">
-                                            <div className="bg-gradient-to-r from-teal-600 to-blue-600 rounded-2xl p-3 mr-4 shadow-lg">
-                                                {user.role === 'admin' ? <FaUserShield className="text-white text-xl" /> : <FaUser className="text-white text-xl" />}
+                                            <div className={`${serifTheme.colors.accent.primary} ${serifTheme.radius.button} p-3 mr-4`}>
+                                                <FaUser className="text-white text-xl" />
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <h4 className="text-white font-bold text-base truncate">{user.name}</h4>
-                                                <p className="text-gray-300 text-sm truncate">{user.email}</p>
-                                                <span className="inline-block px-2 py-1 mt-1 text-xs font-medium text-teal-400 bg-teal-400/10 rounded-lg border border-teal-400/20">
-                                                    {user.role === 'admin' ? 'Administrator' : 'Member'}
+                                                <h4 className={`${serifTheme.colors.text.primary} font-bold text-base`}>{user.name}</h4>
+                                                <p className={`${serifTheme.colors.text.tertiary} text-sm`}>{user.email}</p>
+                                                <span className={`inline-block px-2 py-1 mt-1 text-xs font-medium ${serifTheme.colors.text.accent} bg-amber-100 ${serifTheme.radius.input} border ${serifTheme.colors.border.secondary}`}>
+                                                    Member
                                                 </span>
                                             </div>
                                         </div>
-                                    </motion.div>
+                                    </div>
                                 )}
 
-                                {/* Enhanced Scrollable Content Area */}
-                                <div className="flex-1 overflow-y-auto py-4 space-y-3 px-4">
-                                    {/* Quick Navigation Section */}
-                                    <div className="px-3 pb-2">
-                                        <motion.h4 
-                                            variants={mobileNavMenuItemVariants}
-                                            className="text-gray-400 uppercase text-xs font-bold tracking-wider mb-3 ml-3 flex items-center"
-                                        >
-                                            <FaCompass className="mr-2 text-teal-400" />
+                                {/* Simple Scrollable Content Area */}
+                                <div className="flex-1 overflow-y-auto py-4">
+                                    {/* Navigation Section */}
+                                    <div className="mb-4">
+                                        <h4 className={`${serifTheme.colors.text.tertiary} uppercase text-xs font-bold mb-3 px-6`} style={{ fontFamily: serifTheme.fontFamily.serif }}>
                                             Navigate
-                                        </motion.h4>
-                                        <div className="space-y-2">
-                                            <motion.div variants={mobileNavMenuItemVariants}>
-                                                <MobileNavLink to="/" icon={<FaHome />} text="Home" onClick={toggleMenu} />
-                                            </motion.div>
-                                            <motion.div variants={mobileNavMenuItemVariants}>
-                                                <MobileNavLink to="/allproduct" icon={<FaBoxes />} text="All Products" onClick={toggleMenu} />
-                                            </motion.div>
-                                            <motion.div variants={mobileNavMenuItemVariants}>
-                                                <MobileNavLink to="/cart" icon={<FaShoppingCart />} text={`Shopping Cart ${cartItems.length > 0 ? `(${cartItems.length})` : ''}`} onClick={toggleMenu} />
-                                            </motion.div>
+                                        </h4>
+                                        <div>
+                                            <MobileNavLink to="/" icon={<FaHome />} text="Home" onClick={toggleMenu} />
+                                            <MobileNavLink to="/allproduct" icon={<FaBoxes />} text="All Products" onClick={toggleMenu} />
+                                            <MobileNavLink to="/cart" icon={<FaShoppingCart />} text={`Shopping Cart ${cartItems.length > 0 ? `(${cartItems.length})` : ''}`} onClick={toggleMenu} />
                                         </div>
                                     </div>
 
-                                    {/* Enhanced Divider */}
-                                    <motion.div 
-                                        variants={mobileNavMenuItemVariants}
-                                        className="pt-2 pb-2 px-3"
-                                    >
-                                        <div className="border-t border-gray-700/60"></div>
-                                    </motion.div>
+                                    {/* Divider */}
+                                    <div className={`border-t ${serifTheme.colors.border.secondary} my-4`}></div>
 
                                     {/* Support Section */}
-                                    <div className="px-3 pb-2">
-                                        <motion.h4 
-                                            variants={mobileNavMenuItemVariants}
-                                            className="text-gray-400 uppercase text-xs font-bold tracking-wider mb-3 ml-3 flex items-center"
-                                        >
-                                            <FaHeadset className="mr-2 text-teal-400" />
+                                    <div className="mb-4">
+                                        <h4 className={`${serifTheme.colors.text.tertiary} uppercase text-xs font-bold mb-3 px-6`} style={{ fontFamily: serifTheme.fontFamily.serif }}>
                                             Support
-                                        </motion.h4>
-                                        <div className="space-y-2">
-                                            <motion.div variants={mobileNavMenuItemVariants}>
-                                                <MobileNavLink to="/ContactUs" icon={<FaEnvelope />} text="Contact Us" onClick={toggleMenu} />
-                                            </motion.div>
+                                        </h4>
+                                        <div>
+                                            <MobileNavLink to="/ContactUs" icon={<FaEnvelope />} text="Contact Us" onClick={toggleMenu} />
                                         </div>
                                     </div>
 
-                                    {/* Enhanced Divider */}
-                                    <motion.div 
-                                        variants={mobileNavMenuItemVariants}
-                                        className="pt-4 pb-2 px-3"
-                                    >
-                                        <div className="border-t border-gray-700/60"></div>
-                                    </motion.div>
+                                    {/* Divider */}
+                                    <div className={`border-t ${serifTheme.colors.border.secondary} my-4`}></div>
 
-                                    {/* Enhanced Account Section */}
-                                    <div className="px-3 pb-3 pt-2">
-                                        <motion.h4 
-                                            variants={mobileNavMenuItemVariants}
-                                            className="text-gray-400 uppercase text-xs font-bold tracking-wider mb-3 ml-3 flex items-center"
-                                        >
-                                            <FaUser className="mr-2 text-teal-400" />
+                                    {/* Account Section */}
+                                    <div className="mb-4">
+                                        <h4 className={`${serifTheme.colors.text.tertiary} uppercase text-xs font-bold mb-3 px-6`} style={{ fontFamily: serifTheme.fontFamily.serif }}>
                                             Account
-                                        </motion.h4>
-                                        <div className="space-y-2">
+                                        </h4>
+                                        <div>
                                         {!user ? (
                                             <>
-
-                                                <motion.div variants={mobileNavMenuItemVariants}>
-                                                    <MobileNavLink to="/login" icon={<FaSignInAlt />} text="Login" onClick={toggleMenu} />
-                                                </motion.div>
-                                                <motion.div variants={mobileNavMenuItemVariants}>
-                                                    <MobileNavLink to="/signup" icon={<FaUserPlus />} text="Sign Up" onClick={toggleMenu} />
-                                                </motion.div>
+                                                <MobileNavLink to="/login" icon={<FaSignInAlt />} text="Login" onClick={toggleMenu} />
+                                                <MobileNavLink to="/signup" icon={<FaUserPlus />} text="Sign Up" onClick={toggleMenu} />
                                             </>
                                         ) : (
                                             <>
-                                                {user?.role === "user" && (
-                                                    <motion.div variants={mobileNavMenuItemVariants}>
-                                                        <MobileNavLink to="/user-dashboard" icon={<FaUser />} text="My Account" onClick={toggleMenu} />
-                                                    </motion.div>
-                                                )}
-                                                {user?.role === "admin" && (
-                                                    <motion.div variants={mobileNavMenuItemVariants}>
-                                                        <MobileNavLink to="/admin-dashboard" icon={<FaUserShield />} text="Admin Panel" onClick={toggleMenu} />
-                                                    </motion.div>
-                                                )}
-                                                <motion.div variants={mobileNavMenuItemVariants}>
-                                                    <button
-                                                        onClick={() => { logout(); toggleMenu(); }}
-                                                        className="group flex items-center justify-between w-full px-6 py-5 text-left text-gray-200 hover:bg-gradient-to-r hover:from-red-500/20 hover:to-red-600/20 rounded-2xl transition-all duration-300 focus:outline-none focus-visible:bg-red-500/10 focus-visible:ring-2 focus-visible:ring-red-500 border border-transparent hover:border-red-400/20 backdrop-blur-sm active:scale-95"
-                                                    >
-                                                        <div className="flex items-center">
-                                                            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-red-400/10 group-hover:bg-red-400/20 transition-colors duration-300 mr-4 shadow-sm">
-                                                                <span className="text-red-400 text-xl group-hover:scale-110 transition-transform duration-200"><FaSignInAlt className="rotate-180" /></span>
-                                                            </div>
-                                                            <span className="font-medium text-base group-hover:text-white transition-colors duration-200">Logout</span>
-                                                        </div>
-                                                        <FaChevronRight className="text-gray-500 text-sm group-hover:text-red-400 group-hover:translate-x-1 transition-all duration-200" />
-                                                    </button>
-                                                </motion.div>
+                                                <MobileNavLink to="/user-dashboard" icon={<FaUser />} text="My Account" onClick={toggleMenu} />
+                                                <button
+                                                    onClick={() => { logout(); toggleMenu(); }}
+                                                    className={`flex items-center w-full px-6 py-4 text-left ${serifTheme.colors.text.secondary} hover:text-red-600 hover:bg-red-50 focus:outline-none border-b ${serifTheme.colors.border.secondary} last:border-b-0`}
+                                                    style={{ fontFamily: serifTheme.fontFamily.serif }}
+                                                >
+                                                    <span className="mr-4 text-lg"><FaSignInAlt className="rotate-180" /></span>
+                                                    <span className="text-base font-medium">Logout</span>
+                                                </button>
                                             </>
                                         )}
                                         </div>
                                     </div>
-
-                                    {/* Enhanced Divider */}
-                                    <motion.div 
-                                        variants={mobileNavMenuItemVariants}
-                                        className="pt-4 pb-2 px-3"
-                                    >
-                                        <div className="border-t border-gray-700/60"></div>
-                                    </motion.div>
-
-                                    {/* Enhanced Help Section */}
-                                    <div className="px-3 pt-2 pb-6">
-                                        <motion.h4 
-                                            variants={mobileNavMenuItemVariants}
-                                            className="text-gray-400 uppercase text-xs font-bold tracking-wider mb-4 ml-3 flex items-center"
-                                        >
-                                            <FaQuestionCircle className="mr-2 text-teal-400" />
-                                            Help & Support
-                                        </motion.h4>
-                                        <motion.div 
-                                            variants={mobileNavMenuItemVariants} 
-                                            className="bg-gradient-to-br from-gray-800/60 to-gray-800/40 rounded-2xl p-5 border border-gray-700/50 shadow-lg"
-                                        >
-                                            <div className="flex items-start mb-4">
-                                                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-teal-400/10 mr-3 flex-shrink-0">
-                                                    <FaQuestionCircle className="text-teal-400 text-lg" />
-                                                </div>
-                                                <div className="flex-1">
-                                                    <h3 className="text-white font-semibold text-base mb-1">Need Help?</h3>
-                                                    <p className="text-gray-300 text-sm leading-relaxed">
-                                                        Having issues with a product or order? Report it here and we'll help you.
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <motion.button
-                                                onClick={toggleComplaintFormVisibility}
-                                                whileHover={{ scale: 1.02 }}
-                                                whileTap={{ scale: 0.98 }}
-                                                className="w-full bg-gradient-to-r from-teal-600 to-blue-700 hover:from-teal-700 hover:to-blue-800 text-white py-3 px-5 rounded-xl text-sm font-bold transition-all shadow-lg flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-800 focus-visible:ring-teal-500 active:scale-95"
-                                                aria-expanded={showComplaintForm}
-                                                aria-controls="complaint-form-section"
-                                            >
-                                                <FaInfoCircle className="mr-2" />
-                                                {showComplaintForm ? 'Close Support Form' : 'Report an Issue'}
-                                            </motion.button>
-
-                                            {/* Complaint Form (Conditionally Rendered) */}
-                                            <div id="complaint-form-section">
-                                                <ComplaintFormSection
-                                                    user={user}
-                                                    isVisible={showComplaintForm}
-                                                    onSubmit={handleComplaintSubmit}
-                                                    isSubmitting={isSubmittingComplaint}
-                                                    onClose={toggleComplaintFormVisibility}
-                                                />
-                                            </div>
-                                        </motion.div>
-                                    </div>
                                 </div>
 
-                                {/* Enhanced Menu Footer */}
-                                <motion.div 
-                                    variants={mobileNavMenuItemVariants}
-                                    className="px-6 py-4 border-t border-gray-700/50 text-center text-gray-400 text-xs flex-shrink-0 bg-gray-800/20"
-                                >
+                                {/* Simple Menu Footer */}
+                                <div className={`px-6 py-4 border-t ${serifTheme.colors.border.secondary} text-center ${serifTheme.colors.text.tertiary} text-xs flex-shrink-0`}
+                                     style={{ fontFamily: serifTheme.fontFamily.serif }}>
                                     <div className="flex items-center justify-center space-x-2">
                                         <span>© {new Date().getFullYear()}</span>
-                                        <span className="w-1 h-1 bg-gray-600 rounded-full"></span>
-                                        <span className="font-medium text-teal-400">Digital Shop Nepal</span>
+                                        <span className="w-1 h-1 bg-gray-400 rounded-full"></span>
+                                        <span className={`font-medium ${serifTheme.colors.text.accent}`}>Digital Shop Nepal</span>
                                     </div>
-                                </motion.div>
-                            </motion.div>
+                                </div>
+                            </div>
                         </>
                     )}
-                </AnimatePresence>
                 </nav>
             </header>
 

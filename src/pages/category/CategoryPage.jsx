@@ -1,76 +1,87 @@
 import { useNavigate, useParams } from "react-router-dom";
 import Layout from "../../components/layout/Layout";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import myContext from "../../context/myContext";
 import Loader from "../../components/loader/Loader";
 import { useDispatch, useSelector } from "react-redux";
 import { addToCart, deleteFromCart } from "../../redux/cartSlice";
 import toast from "react-hot-toast";
 import { createProductUrl } from "../../utils/slugUtils";
-import { 
-  Button, 
-  Card, 
-  CardContent, 
-  CardMedia, 
-  Typography, 
-  Chip, 
+import {
+  Button,
+  Card,
+  CardContent,
+  CardMedia,
+  Typography,
+  Chip,
   Box,
   Grid,
   Container
 } from "@mui/material";
 import { AddShoppingCart, RemoveShoppingCart } from "@mui/icons-material";
-import { collection, getDocs } from "firebase/firestore";
-import { fireDB } from "../../firebase/FirebaseConfig";
+import logger from '../../utils/logger';
 
 const CategoryPage = () => {
     const { categoryname } = useParams();
-    const context = useContext(myContext);
-    const { loading, setLoading } = context;
-    const [products, setProducts] = useState([]);
+    const context = useContext(myContext) || {};
+    const {
+        loading: globalLoading = false,
+        getAllProduct = [],
+        getAllProductFunction
+    } = context;
+    const [pageLoading, setPageLoading] = useState(false);
     const [filteredProducts, setFilteredProducts] = useState([]);
     
     const navigate = useNavigate();
     const cartItems = useSelector((state) => state.cart);
     const dispatch = useDispatch();
 
-    const getAllProducts = async () => {
-        setLoading(true);
-        try {
-            const querySnapshot = await getDocs(collection(fireDB, "products"));
-            const allProducts = querySnapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            }));
-            
-            console.log("All products:", allProducts.length);
-            console.log("Category name:", categoryname);
-            
-            setProducts(allProducts);
-            const filtered = allProducts.filter(product => {
-                if (!product.category) return false;
-                
-                // Handle both string and array categories
-                if (Array.isArray(product.category)) {
-                    return product.category.some(cat => 
-                        cat.toLowerCase().includes(categoryname.toLowerCase())
-                    );
-                } else {
-                    return product.category.toLowerCase().includes(categoryname.toLowerCase());
-                }
-            });
-            
-            console.log("Filtered products:", filtered.length);
-            setFilteredProducts(filtered);
-        } catch (error) {
-            console.error("Error fetching products:", error);
-            toast.error("Failed to load products");
-        }
-        setLoading(false);
-    };
+    useEffect(() => {
+        const ensureProducts = async () => {
+            if (!getAllProductFunction) return;
+            if (Array.isArray(getAllProduct) && getAllProduct.length > 0) return;
+            setPageLoading(true);
+            try {
+                await getAllProductFunction();
+            } catch (error) {
+                logger.error('Error fetching products:', { error: error.message || error });
+                toast.error("Failed to load products");
+            } finally {
+                setPageLoading(false);
+            }
+        };
+
+        ensureProducts();
+    }, [getAllProduct, getAllProductFunction]);
 
     useEffect(() => {
-        getAllProducts();
-    }, [categoryname]);
+        if (!Array.isArray(getAllProduct)) {
+            setFilteredProducts([]);
+            return;
+        }
+
+        const normalizedCategoryName = categoryname?.toLowerCase() ?? "";
+
+        const filtered = getAllProduct.filter((product) => {
+            const categoryField = product.category ?? product.categoryId ?? product.category_id;
+            if (!categoryField || !normalizedCategoryName) return false;
+
+            if (Array.isArray(categoryField)) {
+                return categoryField.some((cat) =>
+                    String(cat).toLowerCase().includes(normalizedCategoryName)
+                );
+            }
+
+            return String(categoryField).toLowerCase().includes(normalizedCategoryName);
+        });
+
+        setFilteredProducts(filtered);
+    }, [getAllProduct, categoryname]);
+
+    const isLoading = useMemo(
+        () => Boolean(globalLoading || pageLoading),
+        [globalLoading, pageLoading]
+    );
 
     const addCart = (item) => {
         dispatch(addToCart(item));
@@ -113,7 +124,7 @@ const CategoryPage = () => {
                 </Container>
 
                 {/* Products Grid */}
-                {loading ? (
+                {isLoading ? (
                     <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
                         <Loader />
                     </Box>
@@ -178,8 +189,12 @@ const CategoryPage = () => {
                                                             </Typography>
                                                         )}
                                                     </Box>
-                                                    <Chip 
-                                                        label={item.category[0]}
+                                                    <Chip
+                                                        label={
+                                                            Array.isArray(item.category)
+                                                                ? item.category[0]
+                                                                : (item.category || item.category_id || "Category")
+                                                        }
                                                         sx={{
                                                             backgroundColor: 'rgba(30, 136, 229, 0.2)',
                                                             color: '#1e88e5',

@@ -6,52 +6,12 @@ import { FiCamera } from "react-icons/fi"; // Added FiCamera for mobile upload
 // Using Material UI components for form elements
 import { TextField, Button as MuiButton, CircularProgress } from "@mui/material";
 import { createTheme, ThemeProvider } from '@mui/material/styles'; // For theming MUI components
-import { doc, updateDoc, collection, query, where, orderBy, getDocs, getDoc, addDoc } from "firebase/firestore";
-import { fireDB } from "../../firebase/FirebaseConfig";
 import { serifTheme } from "../../design-system/themes/serifTheme";
 import { SerifPageWrapper, SerifButton } from "../../design-system/components";
 import { useNotification } from "../../context/NotificationContext";
-
-// --- Payment Methods Configuration ---
-// Ensure image paths are correct relative to the public folder or served correctly
-const paymentMethods = {
-  esewa: {
-    qr: "/img/esewa.jpg",
-    number: "9807677391",
-    color: "#5e35b1", // Purple
-    name: "eSewa",
-    icon: "🟢",
-    bgColor: "bg-[#5e35b1]",
-    textColor: "text-white",
-    borderColor: "border-[#5e35b1]",
-    description: "Most popular digital wallet in Nepal",
-    features: ["Instant transfer", "No fees", "24/7 support"]
-  },
-  khalti: {
-    qr: "/img/khalti.jpg",
-    number: "9807677391",
-    color: "#5c2d91", // Darker Purple
-    name: "Khalti",
-    icon: "💜",
-    bgColor: "bg-[#5c2d91]",
-    textColor: "text-white",
-    borderColor: "border-[#5c2d91]",
-    description: "Fast and secure digital payments",
-    features: ["Quick payments", "Secure", "Widely accepted"]
-  },
-  banktransfer: {
-    qr: "/img/banktransfer.jpg", // You'll need to add your bank QR image here
-    number: "9807677391",
-    color: "#059669", // Green
-    name: "Bank Transfer",
-    icon: "🏦",
-    bgColor: "bg-[#059669]",
-    textColor: "text-white",
-    borderColor: "border-[#059669]",
-    description: "Direct bank transfer with QR code",
-    features: ["Direct transfer", "Secure", "Bank QR code"]
-  },
-};
+import { supabase } from "../../supabase/supabaseConfig";
+import logger from "../../utils/logger";
+import { fetchPaymentMethods, verifyPaymentMethod } from "../../services/paymentService";
 
 // --- MUI Theme for Serif Theme ---
 // Customizes Material UI components to fit the serif theme
@@ -182,9 +142,16 @@ const PurchasePage = () => {
 
   // --- State ---
   const { totalAmount = 0, discountApplied = 0, orderId = null } = location.state || {}; // Get orderId if passed
-  const user = JSON.parse(localStorage.getItem('users')); // Get user info
-
-  const [selectedMethod, setSelectedMethod] = useState("esewa"); // Default payment method
+  const [currentUser, setCurrentUser] = useState(null);
+  const [userLoading, setUserLoading] = useState(true);
+  
+  // Payment methods state - loaded securely from database
+  const [paymentMethods, setPaymentMethods] = useState(null);
+  const [paymentMethodsLoading, setPaymentMethodsLoading] = useState(true);
+  const [paymentMethodsError, setPaymentMethodsError] = useState(null);
+  
+  // All other state hooks - moved to top to fix React hooks rule
+  const [selectedMethod, setSelectedMethod] = useState(null); // Will be set after loading methods
   const [paymentConfirmed, setPaymentConfirmed] = useState(false); // Checkbox state
   const [copied, setCopied] = useState(false); // Copy button state
   const [screenshot, setScreenshot] = useState(null); // Screenshot file object
@@ -193,70 +160,201 @@ const PurchasePage = () => {
   const [error, setError] = useState(null); // Screenshot upload/validation error
   const [showHelp, setShowHelp] = useState(false); // Help tooltip visibility
   const [formData, setFormData] = useState({ // State for email form
-    name: user?.name || "",
-    email: user?.email || "",
+    name: currentUser?.name || "",
+    email: currentUser?.email || "",
     message: "", // Purchased items description (required in form)
     orderId: orderId || "N/A",
-    paymentMethod: paymentMethods[selectedMethod].name,
-    paymentAmount: totalAmount.toFixed(2),
+    paymentMethod: "",
+    paymentAmount: totalAmount ? totalAmount.toFixed(2) : "0.00",
   });
   const [isLoading, setIsLoading] = useState(false); // Loading state for WhatsApp processing
   const [isMobile, setIsMobile] = useState(false); // Detect mobile device
 
-  // --- Effects ---
+  // Secure user verification effect
+  useEffect(() => {
+    const verifyUser = async () => {
+      try {
+        const { data: { user }, error } = await supabase.auth.getUser();
+        
+        if (error || !user) {
+          notification.error('Please login to complete your purchase');
+          navigate('/login');
+          return;
+        }
+
+        // Get user details from database
+        const { data: userRecord, error: userError } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        if (userError || !userRecord) {
+          logger.error('Error fetching user data', { error: userError?.message });
+          notification.error('Failed to verify user');
+          navigate('/login');
+          return;
+        }
+
+        setCurrentUser({
+          id: user.id,
+          email: user.email,
+          ...userRecord
+        });
+      } catch (error) {
+        logger.error('Error verifying user', { error: error.message });
+        notification.error('Authentication failed');
+        navigate('/login');
+      } finally {
+        setUserLoading(false);
+      }
+    };
+
+    verifyUser();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_OUT' || !session) {
+        navigate('/login');
+      } else if (event === 'SIGNED_IN') {
+        verifyUser();
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate, notification]);
 
   // Check if mobile on mount/resize
   useEffect(() => {
     const checkIfMobile = () => setIsMobile(window.innerWidth < 768); // Use 768px as breakpoint for md
     checkIfMobile();
+    
     window.addEventListener('resize', checkIfMobile);
     return () => window.removeEventListener('resize', checkIfMobile);
   }, []);
 
-
-  // Update formData's paymentMethod when selectedMethod changes
+  // Fetch payment methods securely from database
   useEffect(() => {
-      setFormData(prev => ({...prev, paymentMethod: paymentMethods[selectedMethod].name}));
-  }, [selectedMethod]);
+    const loadPaymentMethods = async () => {
+      if (!currentUser) {
+        return;
+      }
 
-  // Test Firebase connection on mount
-  useEffect(() => {
-    const testFirebaseConnection = async () => {
       try {
-        console.log("Testing Firebase connection...");
+        setPaymentMethodsLoading(true);
+        setPaymentMethodsError(null);
         
-        // Test 1: Basic connection
-        const testRef = doc(fireDB, "order", "test");
-        await getDoc(testRef);
-        console.log("✅ Firebase connection successful");
+        const methods = await fetchPaymentMethods();
         
-        // Test 2: Check if we can read orders
-        const ordersRef = collection(fireDB, "order");
-        const q = query(ordersRef, orderBy("time", "desc"));
-        const querySnapshot = await getDocs(q);
-        console.log("✅ Can read orders collection, found", querySnapshot.size, "orders");
-        
-        // Test 3: Check if we can write to orders (if user is authenticated)
-        if (user?.uid) {
-          console.log("✅ User is authenticated:", user.uid);
-        } else {
-          console.log("❌ User not authenticated");
+        if (!methods || Object.keys(methods).length === 0) {
+          throw new Error('No payment methods available');
         }
+
+        setPaymentMethods(methods);
+        
+        // Set default method to first available method
+        const firstMethod = Object.keys(methods)[0];
+        setSelectedMethod(firstMethod);
         
       } catch (error) {
-        console.error("❌ Firebase connection test failed:", error);
-        console.error("Error code:", error.code);
-        console.error("Error message:", error.message);
+        logger.error('Error loading payment methods:', { error: error.message });
+        setPaymentMethodsError('Failed to load payment methods. Please refresh the page.');
+        notification.error('Failed to load payment methods');
+      } finally {
+        setPaymentMethodsLoading(false);
       }
     };
-    
-    testFirebaseConnection();
-  }, [user?.uid]);
+
+    loadPaymentMethods();
+  }, [currentUser, notification]);
+
+  // Update form data when payment method changes
+  useEffect(() => {
+    if (paymentMethods && selectedMethod && paymentMethods[selectedMethod]) {
+      setFormData(prev => ({...prev, paymentMethod: paymentMethods[selectedMethod].name}));
+    }
+  }, [selectedMethod, paymentMethods]);
+
+  // Show loading while verifying user or loading payment methods
+  if (userLoading || paymentMethodsLoading) {
+    return (
+      <SerifPageWrapper>
+        <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+          <CircularProgress />
+          <p className={`text-sm ${serifTheme.colors.text.secondary}`}>
+            {userLoading ? 'Verifying user...' : 'Loading secure payment methods...'}
+          </p>
+        </div>
+      </SerifPageWrapper>
+    );
+  }
+
+  // Don't render if no user
+  if (!currentUser) {
+    return null;
+  }
+
+  // Show error if payment methods failed to load
+  if (paymentMethodsError) {
+    return (
+      <SerifPageWrapper>
+        <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+          <p className={`text-lg font-semibold ${serifTheme.colors.text.primary}`}>
+            {paymentMethodsError}
+          </p>
+          <SerifButton 
+            onClick={() => window.location.reload()}
+            variant="primary"
+          >
+            Refresh Page
+          </SerifButton>
+        </div>
+      </SerifPageWrapper>
+    );
+  }
+
+  // Don't render if no payment methods loaded
+  if (!paymentMethods || Object.keys(paymentMethods).length === 0) {
+    return (
+      <SerifPageWrapper>
+        <div className="min-h-screen flex items-center justify-center">
+          <p className={`text-lg ${serifTheme.colors.text.secondary}`}>
+            No payment methods available at this time.
+          </p>
+        </div>
+      </SerifPageWrapper>
+    );
+  }
+
 
   // --- Helper Functions ---
 
+  // Handle payment method selection with verification
+  const handleMethodSelection = async (method) => {
+    if (!paymentMethods || !paymentMethods[method]) {
+      notification.error('Invalid payment method');
+      return;
+    }
+
+    // Verify the payment method is still valid
+    const isValid = await verifyPaymentMethod(method);
+    
+    if (!isValid) {
+      notification.error('Selected payment method is no longer available');
+      logger.warn('Invalid payment method selected', { method });
+      return;
+    }
+    
+    setSelectedMethod(method);
+  };
+
   // Copy payment number to clipboard
   const copyToClipboard = () => {
+    if (!paymentMethods || !selectedMethod || !paymentMethods[selectedMethod]) {
+      notification.error('Payment method not available');
+      return;
+    }
+
     navigator.clipboard.writeText(paymentMethods[selectedMethod].number)
         .then(() => {
             setCopied(true);
@@ -267,13 +365,18 @@ const PurchasePage = () => {
             setTimeout(() => setCopied(false), 2500); // Reset copied state after 2.5s
         })
         .catch(err => {
-            console.error('Failed to copy text: ', err);
+            logger.error('Failed to copy text', { error: err.message });
             notification.error("Failed to copy number.");
         });
   };
 
   // Download QR code image
   const downloadQR = () => {
+    if (!paymentMethods || !selectedMethod || !paymentMethods[selectedMethod]) {
+      notification.error('Payment method not available');
+      return;
+    }
+
     const link = document.createElement("a");
     link.href = paymentMethods[selectedMethod].qr; // Path to the QR image
     link.download = `${selectedMethod}-QR.jpg`; // Filename for download
@@ -324,57 +427,67 @@ const PurchasePage = () => {
 
   // Function to update order with payment screenshot and method
   const updateOrderWithPayment = async () => {
+    if (!orderId) {
+      notification.error("Could not save payment information - order ID missing");
+      return;
+    }
+
+    if (!paymentMethods || !selectedMethod || !paymentMethods[selectedMethod]) {
+      notification.error("Invalid payment method selected");
+      return;
+    }
+
     try {
-      console.log("Updating order with payment info...");
-      console.log("Order ID:", orderId);
-      console.log("User ID:", user?.uid);
-      console.log("Payment Method:", paymentMethods[selectedMethod].name);
-      console.log("Screenshot available:", !!previewImage);
+      // Verify the payment method is valid before saving
+      const isValidMethod = await verifyPaymentMethod(selectedMethod);
       
-      // Use the specific order ID passed from CartPage
-      if (orderId) {
-        const orderRef = doc(fireDB, "order", orderId);
-        
-        // First check if the order exists
-        const orderDoc = await getDoc(orderRef);
-        if (!orderDoc.exists()) {
-          console.error("Order not found:", orderId);
-          notification.error("Order not found - cannot save payment information");
-          return;
-        }
-        
-        console.log("Order found, updating with payment info...");
-        
-        const updateData = {
-          paymentScreenshot: previewImage, // Base64 image data
-          paymentMethod: paymentMethods[selectedMethod].name,
-          paymentStatus: "completed",
-          paymentDate: new Date().toISOString()
-        };
-        
-        console.log("Update data:", updateData);
-        
-        // Update the order with payment information
-        await updateDoc(orderRef, updateData);
-        
-        console.log("Order updated with payment information successfully");
-        notification.success("Payment information saved successfully!", {
-          icon: <CheckCircle className="text-base" />,
-          duration: 3000
+      if (!isValidMethod) {
+        notification.error("Invalid payment method selected");
+        logger.error('Attempted to use invalid payment method', { 
+          selectedMethod,
+          orderId 
         });
-      } else {
-        console.error("No order ID available");
-        notification.error("Could not save payment information - order ID missing");
+        return;
       }
-    } catch (error) {
-      console.error("Error updating order with payment:", error);
-      console.error("Error details:", {
-        code: error.code,
-        message: error.message,
-        orderId: orderId,
-        userUid: user?.uid
+
+      const updateData = {
+        payment_screenshot: previewImage || null,
+        payment_method: paymentMethods[selectedMethod].name,
+        payment_method_key: selectedMethod, // Add this for tracking
+        payment_status: "completed",
+        payment_confirmed_at: new Date().toISOString(),
+        user_message: userMessage?.trim() || null
+      };
+
+      const { data, error } = await supabase
+        .from("orders")
+        .update(updateData)
+        .eq("id", orderId)
+        .eq("user_id", currentUser.id) // Add user verification
+        .select("id")
+        .maybeSingle();
+
+      if (error) {
+        throw error;
+      }
+
+      if (!data) {
+        notification.error("Order not found - cannot save payment information");
+        return;
+      }
+
+      notification.success("Payment information saved successfully!", {
+        icon: <CheckCircle className="text-base" />,
+        duration: 3000
       });
-      notification.error("Failed to save payment information: " + error.message);
+      setPaymentConfirmed(true);
+    } catch (error) {
+      logger.error("Error updating order with payment", { 
+        error: error.message,
+        orderId,
+        userId: currentUser?.id 
+      });
+      notification.error("Failed to save payment information.");
     }
   };
 
@@ -420,7 +533,7 @@ const PurchasePage = () => {
       const whatsappNumber = "+9779807677391";
       const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
 
-      console.log("Opening WhatsApp with URL:", whatsappUrl);
+      logger.debug("Opening WhatsApp with URL", { url: whatsappUrl });
 
       // Try to open WhatsApp link with better error handling
       const newWindow = window.open(whatsappUrl, '_blank');
@@ -449,11 +562,12 @@ const PurchasePage = () => {
 
   // Handle click on the main "Confirm via WhatsApp" button
   const handleWhatsAppClick = async () => {
-    console.log("WhatsApp button clicked");
-    console.log("Payment confirmed:", paymentConfirmed);
-    console.log("Is mobile:", isMobile);
-    console.log("Screenshot exists:", !!screenshot);
-    console.log("Preview image exists:", !!previewImage);
+    logger.debug("WhatsApp button clicked", {
+      paymentConfirmed,
+      isMobile,
+      hasScreenshot: !!screenshot,
+      hasPreviewImage: !!previewImage
+    });
     
     // Show loading state immediately
     setIsLoading(true);
@@ -474,7 +588,7 @@ const PurchasePage = () => {
       await sendViaWhatsApp();
       
     } catch (error) {
-      console.error("Error opening WhatsApp:", error);
+      logger.error("Error opening WhatsApp", { error: error.message });
       notification.error("Failed to open WhatsApp: " + error.message);
     } finally {
       // Stop loading after WhatsApp process completes
@@ -489,7 +603,7 @@ const PurchasePage = () => {
   const formattedAmount = totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const formattedDiscount = discountApplied.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const formattedSubtotal = subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  const currentMethod = paymentMethods[selectedMethod]; // Get current payment method details
+  const currentMethod = paymentMethods && selectedMethod ? paymentMethods[selectedMethod] : null; // Get current payment method details
 
   // --- JSX Structure ---
   return (
@@ -691,7 +805,7 @@ const PurchasePage = () => {
                           {Object.keys(paymentMethods).map((method) => (
                               <motion.button
                                   key={method}
-                                  onClick={() => setSelectedMethod(method)}
+                                  onClick={() => handleMethodSelection(method)}
                                   className={`p-4 ${serifTheme.radius.button} text-sm font-semibold ${serifTheme.transitions.default} flex flex-col items-center gap-2 border backdrop-blur-sm relative overflow-hidden ${
                                     selectedMethod === method
                                       ? `${paymentMethods[method].bgColor} ${paymentMethods[method].textColor} border-transparent ${serifTheme.colors.shadow.card} scale-105`
